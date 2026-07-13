@@ -35,9 +35,26 @@ Verdex addresses each of these issues through careful product design, transparen
 
 ## 3. The Verdex Ecosystem
 
-The Verdex platform consists of four tightly integrated products. Each product serves a distinct user need while contributing value back to the broader protocol.
+### 3.1 The Complete Ecosystem Flow
 
-### 3.1 Verdex Swap
+```mermaid
+graph TD
+    classDef user fill:#00ff88,stroke:#000,stroke-width:2px,color:#000
+    classDef protocol fill:#1a1a1a,stroke:#00ff88,stroke-width:2px,color:#00ff88
+    classDef chain fill:#003311,stroke:#00ff88,stroke-width:2px,color:#fff
+    
+    U((Users)):::user --> |Swaps & Provides Liquidity| D[Verdex DEX]:::protocol
+    U --> |Downloads & Runs| M[Verdex Desktop Miner]:::protocol
+    
+    M --> |Validates Transactions| N[(Verdex PRC20 Testnet)]:::chain
+    D --> |Executes Smart Contracts| N
+    
+    N --> |Rewards Block Validation| M
+    M --> |Mines VP Points| U
+    D --> |Yields LP Fees & Farming| U
+```
+
+### 3.2 Verdex Swap
 
 Verdex Swap is the primary interface for exchanging tokens. It operates as a decentralized AMM aggregator, routing trades through the most efficient paths across Verdex liquidity pools. Unlike simple single-pool routers, Verdex Swap evaluates multi-hop routes, split orders, and depth-weighted pricing to deliver optimal output for traders.
 
@@ -117,6 +134,15 @@ The VERDEX token (ticker: VDX) is the protocol's native utility and governance a
 
 **Total fixed supply: 1,000,000,000 VDX**
 
+```mermaid
+pie title VDX Token Distribution
+    "Liquidity Mining & Farms (40%)" : 40
+    "Treasury & Ecosystem (20%)" : 20
+    "Team & Advisors (15%)" : 15
+    "Community & Airdrops (15%)" : 15
+    "Private Sale (10%)" : 10
+```
+
 | Allocation | Percentage |
 |------------|------------|
 | Liquidity Mining & Farms | 40% |
@@ -159,15 +185,46 @@ Verdex is deployed as a collection of non-upgradeable, auditable smart contracts
 
 Verdex pools can be configured to expose time-weighted average price (TWAP) oracles. These oracles provide manipulation-resistant price feeds for external protocols, lending markets, and derivatives platforms, creating additional utility for deep Verdex pools.
 
-### 5.3 Cross-Chain Strategy
+### 5.3 Cross-Chain Strategy & BNB Smart Chain Integration
 
-While initial deployment targets a single EVM chain, Verdex is architected for multi-chain expansion. Future versions will leverage cross-chain messaging protocols to enable unified liquidity, single-sided deposits, and cross-chain yield aggregation without requiring users to manage bridges manually.
+Verdex is architected for a multi-chain future, beginning with a strategic integration with the **BNB Smart Chain (BSC)**. The PRC20 standard implements a lock-and-mint decentralized bridge protocol, allowing assets to flow seamlessly between the Verdex Network and the BNB chain without centralized custodians.
+
+```mermaid
+sequenceDiagram
+    participant User as User Wallet
+    participant BNB as BNB Smart Chain (BSC)
+    participant Bridge as Verdex Bridge Node
+    participant PRC20 as Verdex PRC20 Network
+    
+    User->>BNB: Deposit Asset (e.g. USDT) to Bridge Contract
+    BNB-->>Bridge: Emit 'Lock' Event
+    Bridge->>Bridge: Validate & Achieve Multi-sig Consensus
+    Bridge->>PRC20: Mint Equivalent PRC20-USDT
+    PRC20-->>User: Transfer PRC20-USDT to User Wallet
+```
+
+Future versions will expand this interoperability to Ethereum and Layer-2 rollups, enabling unified liquidity, single-sided deposits, and cross-chain yield aggregation.
 
 ### 5.4 Verdex Custom L1 Blockchain Protocol
 
 Verdex operates its own custom Layer-1 Proof-of-Authority (PoA) blockchain ecosystem engineered for maximum speed and security. The core protocol features include:
 
 - **EIP-1559 Native Gas Adjustments & Burning**: Dynamic base fee calculations adjust block gas prices based on historical block space utilization. The entire base fee is permanently burned to `0x000000000000000000000000000000000000dead` at the end of each block execution, creating persistent structural supply deflation.
+
+```mermaid
+graph LR
+    classDef node fill:#1a1a1a,stroke:#00ff88,stroke-width:2px,color:#fff
+    classDef db fill:#003311,stroke:#00ff88,stroke-width:2px,color:#fff
+    
+    Tx[User Transactions]:::node --> |Mempool| MN[Miner Node 1]:::node
+    Tx --> |Mempool| MN2[Miner Node 2]:::node
+    
+    MN --> |PoA Consensus| Block[New Block Proposed]:::db
+    MN2 --> |PoA Consensus| Block
+    
+    Block --> |Base Fee Burned| Burn[(Dead Address)]:::node
+    Block --> |Block Reward| VP[VP Points Minted]:::node
+```
 - **Proof-of-Authority (PoA) Epochs**: Validator nodes participate in epochs of rotation, proposing blocks sequentially in a weighted round-robin sequence. Consensus is anchored by finality checkpoints at defined block depths.
 - **Validator Slashing & Reputation Scoring**: Active validator performance, double-signing detection, and uptime parameters are monitored continuously. Rogue or unresponsive validator nodes suffer scoring degradation, block reward slashing, temporary jailing, or permanent bans.
 - **Priority Mempool Queue**: Features a priority-sorted transaction pool supporting Replace-By-Fee (RBF) overrides. Transactions are evaluated based on EIP-1559 maxPriorityFeePerGas (tips), defending against front-running and spam.
