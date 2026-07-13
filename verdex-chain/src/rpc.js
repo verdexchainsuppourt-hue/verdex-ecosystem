@@ -504,6 +504,11 @@ class RPCServer {
     // JSON-RPC COMPATIBLE
     // ══════════════════════════════════════════════════════════════════════
 
+    // Helpful message if someone visits /rpc in a web browser
+    this.app.get('/rpc', (req, res) => {
+      res.send('Verdex PRC20 JSON-RPC Endpoint. Please send HTTP POST requests with JSON-RPC payloads.');
+    });
+
     this.app.post('/rpc', async (req, res) => {
       try {
         const { jsonrpc, method, params, id } = req.body;
