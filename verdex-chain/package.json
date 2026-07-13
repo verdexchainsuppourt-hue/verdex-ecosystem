@@ -1,0 +1,28 @@
+{
+  "name": "verdex-chain",
+  "version": "1.0.0",
+  "description": "Verdex Native Blockchain — Testnet",
+  "main": "src/main.js",
+  "bin": {
+    "verdex": "./bin/verdex.js"
+  },
+  "scripts": {
+    "start": "node src/main.js",
+    "dev": "node src/main.js --port 8545 --peers",
+    "start-node": "node scripts/start-node.js",
+    "deploy-contract": "node scripts/deploy-test-contract.js",
+    "explorer": "node src/explorer-server.js",
+    "wallet": "node src/wallet.js",
+    "test": "node test/run.js",
+    "init-testnet": "node scripts/init-testnet.js",
+    "simulate-traffic": "node scripts/tx-simulator.js"
+  },
+  "dependencies": {
+    "bip39": "^3.1.0",
+    "commander": "^11.1.0",
+    "elliptic": "^6.5.4",
+    "express": "^4.18.2",
+    "level": "^8.0.1",
+    "ws": "^8.16.0"
+  }
+}
