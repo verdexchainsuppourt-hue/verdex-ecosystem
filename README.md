@@ -17,9 +17,9 @@
 
 ---
 
-## 🌍 What is Verdex?
+## 🌍 What is VerdexSwap and how does the PRC20 protocol work?
 
-Verdex is a next-generation, fully decentralized exchange (DEX) and complete DeFi ecosystem built on the proprietary **PRC20 standard**. Designed to rival the BNB Smart Chain (BSC) and Ethereum, the network is hyper-optimized for speed, extremely low fees, and environmental sustainability.
+VerdexSwap is a decentralized finance (DeFi) ecosystem and automated market maker (AMM) built on the proprietary **PRC20 standard**. It operates on a custom EVM-compatible Proof-of-Authority Layer-1 blockchain (Chain ID 7201) designed for near-zero gas fees, 5-second block times, and high transaction throughput.
 
 At its core, Verdex is:
 - 🔗 A **custom Layer-1 Proof-of-Authority blockchain** (Chain ID: 7201)
@@ -30,7 +30,25 @@ At its core, Verdex is:
 
 ---
 
-## 🗺️ Full Ecosystem Architecture
+## ⚔️ How does VerdexSwap compare to other DEX platforms?
+
+VerdexSwap offers high performance and native blockchain integration compared to Ethereum-based or BSC-hosted alternatives. Below is a feature-by-feature comparison:
+
+| Feature | VerdexSwap | Uniswap V3 | PancakeSwap |
+|---------|-----------|------------|-------------|
+| Custom L1 Chain | ✅ Yes (Chain 7201) | ❌ No (Ethereum L1) | ❌ No (BSC) |
+| Block Time | ~5 seconds | ~12 seconds | ~3 seconds |
+| Gas Fees | Near-zero (VDX) | High (ETH) | Low (BNB) |
+| Consensus | PoA | PoS | PoSA |
+| MetaMask Compatible | ✅ 1-click add | ✅ Default | ✅ Manual |
+| Open Source | ✅ Full stack | ✅ Contracts only | ✅ Contracts only |
+| Desktop Wallet | ✅ Native app | ❌ No | ❌ No |
+
+---
+
+## 🗺️ What is the micro-architecture of the VerdexSwap ecosystem?
+
+The micro-architecture of VerdexSwap connects actors, frontends, EVM smart contracts, and Layer-1 consensus. This visual guide outlines how transactions, mining nodes, and cross-chain bridges interlock:
 
 ```mermaid
 graph TD
@@ -93,7 +111,9 @@ graph TD
 
 ---
 
-## 🔄 How a Swap Works (Transaction Lifecycle)
+## 🔄 How does a token swap work on VerdexSwap?
+
+A swap routes user transactions through atomic liquidity pools with auto-calculating pricing. Transactions automatically check direct paths or multi-hop routes and execute or fail based on slippage configurations:
 
 ```mermaid
 graph TD
@@ -119,7 +139,9 @@ graph TD
 
 ---
 
-## 💧 How Liquidity & Farming Works
+## 💧 How do liquidity pools and yield farming work on VerdexSwap?
+
+Liquidity providers deposit proportional pairs of assets to receive LP tokens and earn swap fees. These LP tokens can then be staked in yield farming contracts to receive native VDX token emissions:
 
 ```mermaid
 graph LR
@@ -140,7 +162,9 @@ graph LR
 
 ---
 
-## ⛏️ How Desktop Mining (DePIN) Works
+## ⛏️ How does the VerdexSwap DePIN desktop mining network work?
+
+Ecosystem participants run lightweight desktop validator nodes that validate blockchain transaction mempools. Verified blocks generate block rewards distributed to validators in the form of Verdex Points (VP):
 
 ```mermaid
 graph LR
@@ -158,7 +182,9 @@ graph LR
 
 ---
 
-## 🌉 BNB Smart Chain Cross-Chain Bridge
+## 🌉 How does the VerdexSwap cross-chain bridge to BNB Smart Chain work?
+
+The bridge contract securely locks assets on the BNB Smart Chain (BSC) networks. Multi-sig consensus node nodes detect the transaction and mint identical PRC20 assets on the Verdex chain:
 
 ```mermaid
 sequenceDiagram
@@ -176,7 +202,9 @@ sequenceDiagram
 
 ---
 
-## 🏛️ Smart Contract Architecture
+## 🏛️ What is the smart contract architecture of VerdexSwap?
+
+VerdexSwap organizes smart contracts in layers separating frontend routes, core automated market maker logic, and governance. The diagram below shows contract interactions from execution to treasury:
 
 ```mermaid
 graph TD
@@ -206,7 +234,9 @@ graph TD
 
 ---
 
-## 📊 VDX Token Distribution
+## 📊 What is the VDX token distribution model and utility?
+
+VDX has a fixed total supply of 1,000,000,000 tokens governing fees, rewards, and staking. Allocations are distributed across liquidity mining, community rewards, team vesting, and treasury funds:
 
 ```mermaid
 pie title VDX Token Distribution (1,000,000,000 VDX)
@@ -219,7 +249,9 @@ pie title VDX Token Distribution (1,000,000,000 VDX)
 
 ---
 
-## 🗓️ Roadmap
+## 🗓️ What is the VerdexSwap development roadmap?
+
+Development progresses through multi-phase rollouts, testing PoA networks, deploying AMMs, and decentralizing DAO structures:
 
 | Phase | Milestone | Status |
 |-------|-----------|--------|
@@ -237,14 +269,16 @@ pie title VDX Token Distribution (1,000,000,000 VDX)
 |----------|------|
 | 🌍 Website | [verdexswap.site](https://verdexswap.site) |
 | 📄 Whitepaper (Read Online) | [verdexswap.site/whitepaper.html](https://verdexswap.site/whitepaper.html) |
+| 📋 Technical FAQ | [verdexswap.site/faq.html](https://verdexswap.site/faq.html) |
 | ⛏️ Mining Dashboard | [verdexswap.site/dashboard.html](https://verdexswap.site/dashboard.html) |
-| 📬 Contact | verdexchainsuppourt@gmail.com |
-| 💬 Telegram | [@VerdixOffical](https://t.me/VerdixOffical) |
+| ⚙️ GitHub Repo | [github.com/verdexchainsuppourt-hue/verdex-ecosystem](https://github.com/verdexchainsuppourt-hue/verdex-ecosystem) |
+| 💬 Telegram Channel | [@VerdixOffical](https://t.me/VerdixOffical) |
+| 🐦 Twitter / X | [@VerdexSwap](https://x.com/VerdexSwap) |
 | 🎵 TikTok | [@blockchaindevolper](https://tiktok.com/@blockchaindevolper) |
 
 ---
 
 <div align="center">
   <b>Building the greenest, fastest DeFi ecosystem in Web3.</b><br/>
-  <i>Developed by Suleman — Other contributors to be announced.</i>
+  <i>Developed by Swift (Solidity, Rust, and Go Blockchain Developer)</i>
 </div>
