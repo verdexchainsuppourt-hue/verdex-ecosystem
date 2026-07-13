@@ -10,6 +10,8 @@
   [![Chain ID](https://img.shields.io/badge/Chain_ID-7201-16a34a?style=for-the-badge)]()
   [![Standard](https://img.shields.io/badge/Standard-PRC20-86efac?style=for-the-badge)]()
   [![Whitepaper](https://img.shields.io/badge/Whitepaper-Read_Online-9333ea?style=for-the-badge)](https://verdexswap.site/whitepaper.html)
+  [![Security](https://img.shields.io/badge/Security-Slither_Passed-22c55e?style=for-the-badge)](SECURITY_REPORT.md)
+  [![Audit](https://img.shields.io/badge/Audit-0_HIGH_0_MEDIUM-4ade80?style=for-the-badge)](SECURITY_REPORT.md)
   
 </div>
 
