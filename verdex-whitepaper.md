@@ -105,6 +105,45 @@ graph TD
     Bridge <-->|Cross-Chain Liquidity| Pools
 ```
 
+### 3.1.1 Transaction Lifecycle Logic
+
+To illustrate the underlying protocol logic, here is the algorithmic flowchart mapping the exact decision tree for a Verdex swap transaction. This demonstrates how the smart contracts evaluate liquidity, route trades, and trigger network mining rewards.
+
+```mermaid
+graph TD
+    %% Custom styling to match standard algorithmic diagrams
+    classDef startStop fill:#9333ea,stroke:#c084fc,stroke-width:2px,color:#fff
+    classDef process fill:#7e22ce,stroke:#c084fc,stroke-width:2px,color:#fff
+    classDef decision fill:#6b21a8,stroke:#00ff88,stroke-width:2px,color:#fff
+    classDef io fill:#a855f7,stroke:#c084fc,stroke-width:2px,color:#fff
+    classDef endNode fill:#9333ea,stroke:#00ff88,stroke-width:3px,color:#fff
+
+    Start([Start: User Initiates Swap]):::startStop --> A[/Declare Tx: Token A to Token B/]:::io
+    A --> B[Query Router for Liquidity]:::process
+    B --> C{Is Liquidity Sufficient?}:::decision
+    
+    C -- False --> D[/Return Error: High Slippage/]:::io
+    D --> Stop1([Stop]):::endNode
+    
+    C -- True --> E{Is Multi-Hop Cheaper?}:::decision
+    
+    E -- True --> F[Route Tx through Pools C & D]:::process
+    E -- False --> G[Route Tx Direct to Pool A-B]:::process
+    
+    F --> H[/Deduct 0.25% Protocol Fee/]:::io
+    G --> H
+    
+    H --> I[Execute Atomic Swap]:::process
+    I --> J{Is Node Miner Active?}:::decision
+    
+    J -- True --> K[Mint VP Reward to Miner]:::process
+    J -- False --> L[Burn Base Fee]:::process
+    
+    K --> L
+    L --> M[/Output: Send Tokens to Wallet/]:::io
+    M --> End([End Transaction]):::startStop
+```
+
 ### 3.2 Verdex Swap
 
 Verdex Swap is the primary interface for exchanging tokens. It operates as a decentralized AMM aggregator, routing trades through the most efficient paths across Verdex liquidity pools. Unlike simple single-pool routers, Verdex Swap evaluates multi-hop routes, split orders, and depth-weighted pricing to deliver optimal output for traders.
