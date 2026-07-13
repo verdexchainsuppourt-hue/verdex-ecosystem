@@ -52,9 +52,9 @@ module.exports = {
   GENESIS_HASH: '0x0000000000000000000000000000000000000000000000000000000000000000',
 
   // ── Network ────────────────────────────────────────────────────────────
-  DEFAULT_PORT: 8545,
-  P2P_PORT: 8546,
-  WS_PORT: 8547,
+  DEFAULT_PORT: process.env.PORT || 8545,
+  P2P_PORT: process.env.P2P_PORT || 8546,
+  WS_PORT: process.env.WS_PORT || 8547,
   MAX_PEERS: 50,
 
   // ── Storage ────────────────────────────────────────────────────────────
