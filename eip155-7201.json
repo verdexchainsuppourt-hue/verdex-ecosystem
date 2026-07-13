@@ -1,8 +1,9 @@
 {
   "name": "Verdex PRC20 Testnet",
   "chain": "VDX",
+  "icon": "verdex",
   "rpc": [
-    "https://verdex-ecosystem-production.up.railway.app"
+    "https://rpc.verdexswap.site"
   ],
   "faucets": [
     "https://verdexswap.site/faucet"
