@@ -1,6 +1,6 @@
 {
   "name": "verdex-chain",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Verdex Native Blockchain — Testnet",
   "main": "src/main.js",
   "bin": {
@@ -22,8 +22,8 @@
     "commander": "^11.1.0",
     "elliptic": "^6.5.4",
     "express": "^4.18.2",
-    "js-sha3": "^0.9.3",
     "level": "^8.0.1",
-    "ws": "^8.16.0"
+    "ws": "^8.16.0",
+    "js-sha3": "^0.9.3"
   }
 }
