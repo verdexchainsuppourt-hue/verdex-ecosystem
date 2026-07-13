@@ -35,23 +35,74 @@ Verdex addresses each of these issues through careful product design, transparen
 
 ## 3. The Verdex Ecosystem
 
-### 3.1 The Complete Ecosystem Flow
+### 3.1 Master Architecture & Full Ecosystem Overview
+
+The following flowchart illustrates the complete macro-architecture of the Verdex ecosystem, mapping out how users, client interfaces, decentralized smart contracts, the proprietary PRC20 blockchain, and external networks (like BNB Smart Chain) all interlock to create a seamless DeFi engine.
 
 ```mermaid
 graph TD
-    classDef user fill:#00ff88,stroke:#000,stroke-width:2px,color:#000
-    classDef protocol fill:#1a1a1a,stroke:#00ff88,stroke-width:2px,color:#00ff88
-    classDef chain fill:#003311,stroke:#00ff88,stroke-width:2px,color:#fff
-    
-    U((Users)):::user --> |Swaps & Provides Liquidity| D[Verdex DEX]:::protocol
-    U --> |Downloads & Runs| M[Verdex Desktop Miner]:::protocol
-    
-    M --> |Validates Transactions| N[(Verdex PRC20 Testnet)]:::chain
-    D --> |Executes Smart Contracts| N
-    
-    N --> |Rewards Block Validation| M
-    M --> |Mines VP Points| U
-    D --> |Yields LP Fees & Farming| U
+    %% Styling
+    classDef user fill:#0a0a0a,stroke:#00ff88,stroke-width:2px,color:#fff,shape:rect,rx:10
+    classDef frontend fill:#1a2b1f,stroke:#22c55e,stroke-width:2px,color:#fff
+    classDef contract fill:#053f1f,stroke:#4ade80,stroke-width:2px,color:#fff
+    classDef network fill:#001100,stroke:#86efac,stroke-width:3px,color:#fff
+    classDef ext fill:#1e1e1e,stroke:#f3ba2f,stroke-width:2px,color:#fff
+
+    %% Actors
+    subgraph Users ["👥 Ecosystem Participants"]
+        T(Traders):::user
+        LP(Liquidity Providers):::user
+        M(Node Miners):::user
+    end
+
+    %% Frontends
+    subgraph Interfaces ["💻 Client Interfaces"]
+        W[Web Swap UI & Dashboard]:::frontend
+        App[Verdex Desktop Miner]:::frontend
+    end
+
+    %% Smart Contracts / DEX
+    subgraph CoreContracts ["⚙️ PRC20 Smart Contracts (DEX)"]
+        Router[Verdex Router]:::contract
+        Pools[Liquidity Pools]:::contract
+        Farm[Yield Farms]:::contract
+        Stake[Staking Vaults]:::contract
+        Treasury[Protocol Treasury]:::contract
+    end
+
+    %% Blockchain Network
+    subgraph Network ["🌐 Verdex L1 Blockchain (Chain ID 7201)"]
+        Mempool[(Transaction Mempool)]:::network
+        Consensus{PoA Consensus Engine}:::network
+        Burn[Dead Address / Burn]:::network
+        Bridge[Cross-Chain Bridge Node]:::network
+    end
+
+    %% External
+    BSC(((BNB Smart Chain))):::ext
+
+    %% Connections
+    T -->|Executes Swaps| W
+    LP -->|Supplies Assets| W
+    M -->|Runs Validation| App
+
+    W -->|Routes Trades| Router
+    Router -->|Queries Liquidity| Pools
+    Pools -->|Swap Fees| Treasury
+    Pools -->|LP Tokens| LP
+    LP -->|Stakes LP| Farm
+    Farm -->|Emits VDX| LP
+    T -->|Stakes VDX| Stake
+    Stake -->|Fee Discounts & Gov| T
+
+    App -->|Pulls Txns| Mempool
+    Mempool -->|Batching| Consensus
+    Consensus -->|Validates Blocks| Pools
+    Consensus -->|Base Fee| Burn
+    Consensus -->|Block Reward (VP)| App
+
+    Bridge <-->|Lock & Mint| BSC
+    Bridge <-->|Cross-Chain Liquidity| Pools
 ```
 
 ### 3.2 Verdex Swap
