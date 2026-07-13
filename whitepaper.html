@@ -11,6 +11,11 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
   <!-- Smooth Scroll (Lenis) -->
   <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
+  <!-- Mermaid for architectural diagrams -->
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+  </script>
   <style>
     :root {
       --color-bg: #010301;
@@ -289,8 +294,26 @@
 
       <h2>3. The Verdex Ecosystem</h2>
       <p>The Verdex platform consists of four tightly integrated products. Each product serves a distinct user need while contributing value back to the broader protocol.</p>
+      
+      <h3>3.1 The Complete Ecosystem Flow</h3>
+      <div class="mermaid" style="margin: 32px 0; background: rgba(0,0,0,0.4); padding: 24px; border-radius: 12px; border: 1px solid var(--color-border); text-align: center;">
+graph TD
+    classDef user fill:#00ff88,stroke:#000,stroke-width:2px,color:#000
+    classDef protocol fill:#1a1a1a,stroke:#00ff88,stroke-width:2px,color:#00ff88
+    classDef chain fill:#003311,stroke:#00ff88,stroke-width:2px,color:#fff
+    
+    U((Users)):::user --> |Swaps & Provides Liquidity| D[Verdex DEX]:::protocol
+    U --> |Downloads & Runs| M[Verdex Desktop Miner]:::protocol
+    
+    M --> |Validates Transactions| N[(Verdex PRC20 Testnet)]:::chain
+    D --> |Executes Smart Contracts| N
+    
+    N --> |Rewards Block Validation| M
+    M --> |Mines VP Points| U
+    D --> |Yields LP Fees & Farming| U
+      </div>
 
-      <h3>3.1 Verdex Swap</h3>
+      <h3>3.2 Verdex Swap</h3>
       <p>Verdex Swap is the primary interface for exchanging tokens. It operates as a decentralized AMM aggregator, routing trades through the most efficient paths across Verdex liquidity pools. Unlike simple single-pool routers, Verdex Swap evaluates multi-hop routes, split orders, and depth-weighted pricing to deliver optimal output for traders.</p>
       
       <h4>How Swapping Works</h4>
@@ -413,13 +436,42 @@
       <h3>5.2 Oracle & Pricing</h3>
       <p>Verdex pools can be configured to expose time-weighted average price (TWAP) oracles. These oracles provide manipulation-resistant price feeds for external protocols, lending markets, and derivatives platforms, creating additional utility for deep Verdex pools.</p>
 
-      <h3>5.3 Cross-Chain Strategy</h3>
-      <p>While initial deployment targets a single EVM chain, Verdex is architected for multi-chain expansion. Future versions will leverage cross-chain messaging protocols to enable unified liquidity, single-sided deposits, and cross-chain yield aggregation without requiring users to manage bridges manually.</p>
+      <h3>5.3 Cross-Chain Strategy & BNB Smart Chain Integration</h3>
+      <p>Verdex is architected for a multi-chain future, beginning with a strategic integration with the <strong>BNB Smart Chain (BSC)</strong>. The PRC20 standard implements a lock-and-mint decentralized bridge protocol, allowing assets to flow seamlessly between the Verdex Network and the BNB chain without centralized custodians.</p>
+      
+      <div class="mermaid" style="margin: 32px 0; background: rgba(0,0,0,0.4); padding: 24px; border-radius: 12px; border: 1px solid var(--color-border); text-align: center;">
+sequenceDiagram
+    participant User as User Wallet
+    participant BNB as BNB Smart Chain (BSC)
+    participant Bridge as Verdex Bridge Node
+    participant PRC20 as Verdex PRC20 Network
+    
+    User->>BNB: Deposit Asset (e.g. USDT) to Bridge Contract
+    BNB-->>Bridge: Emit 'Lock' Event
+    Bridge->>Bridge: Validate & Achieve Multi-sig Consensus
+    Bridge->>PRC20: Mint Equivalent PRC20-USDT
+    PRC20-->>User: Transfer PRC20-USDT to User Wallet
+      </div>
+      <p>Future versions will expand this interoperability to Ethereum and Layer-2 rollups, enabling unified liquidity, single-sided deposits, and cross-chain yield aggregation without requiring users to manage bridges manually.</p>
 
       <h3>5.4 Verdex Custom L1 Blockchain Protocol</h3>
       <p>Verdex operates its own custom Layer-1 Proof-of-Authority (PoA) blockchain ecosystem engineered for maximum speed and security. The core protocol features include:</p>
       <ul>
         <li><strong>EIP-1559 Native Gas Adjustments & Burning:</strong> Dynamic base fee calculations adjust block gas prices based on historical block space utilization. The entire base fee is permanently burned to <code>0x000000000000000000000000000000000000dead</code> at the end of each block execution, creating persistent structural supply deflation.</li>
+        <div class="mermaid" style="margin: 32px 0; background: rgba(0,0,0,0.4); padding: 24px; border-radius: 12px; border: 1px solid var(--color-border); text-align: center;">
+graph LR
+    classDef node fill:#1a1a1a,stroke:#00ff88,stroke-width:2px,color:#fff
+    classDef db fill:#003311,stroke:#00ff88,stroke-width:2px,color:#fff
+    
+    Tx[User Transactions]:::node --> |Mempool| MN[Miner Node 1]:::node
+    Tx --> |Mempool| MN2[Miner Node 2]:::node
+    
+    MN --> |PoA Consensus| Block[New Block Proposed]:::db
+    MN2 --> |PoA Consensus| Block
+    
+    Block --> |Base Fee Burned| Burn[(Dead Address)]:::node
+    Block --> |Block Reward| VP[VP Points Minted]:::node
+        </div>
         <li><strong>Proof-of-Authority (PoA) Epochs:</strong> Validator nodes participate in epochs of rotation, proposing blocks sequentially in a weighted round-robin sequence. Consensus is anchored by finality checkpoints at defined block depths.</li>
         <li><strong>Validator Slashing & Reputation Scoring:</strong> Active validator performance, double-signing detection, and uptime parameters are monitored continuously. Rogue or unresponsive validator nodes suffer scoring degradation, block reward slashing, temporary jailing, or permanent bans.</li>
         <li><strong>Priority Mempool Queue:</strong> Features a priority-sorted transaction pool supporting Replace-By-Fee (RBF) overrides. Transactions are evaluated based on EIP-1559 <em>maxPriorityFeePerGas</em> (tips), defending against front-running and spam.</li>
