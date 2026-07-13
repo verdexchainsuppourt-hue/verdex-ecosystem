@@ -1,0 +1,49 @@
+{
+  "name": "verdex-miner",
+  "version": "3.0.0",
+  "description": "Verdex DePIN Desktop Miner — Mine VDX with CPU & GPU",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --windows"
+  },
+  "author": "Verdex",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "node-fetch": "^2.6.7",
+    "systeminformation": "^5.22.0"
+  },
+  "devDependencies": {
+    "electron": "^28.2.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.verdex.miner",
+    "productName": "Verdex Miner",
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "package.json",
+      "splash.html",
+      "auth.html",
+      "ui/**/*",
+      "assets/**/*",
+      "handle/**/*",
+      "!node_modules/.cache/**",
+      "!dist/**",
+      "!build/**",
+      "!temp_asar_extract/**",
+      "!temp_asar_check_extract/**"
+    ]
+  }
+}
