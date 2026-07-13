@@ -1,0 +1,3200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verdex Dashboard — Mine VDX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <!-- Crypto Libraries for VDX Native Wallet -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/elliptic/6.5.4/elliptic.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-sha3@0.8.0/src/sha3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+  <script src="/js/network-config.js"></script>
+  <style>
+    :root {
+      --color-bg: #030503;
+      --color-surface: rgba(10, 20, 10, 0.6);
+      --color-surface-2: rgba(15, 30, 15, 0.8);
+      --color-primary: #00ff00;
+      --color-primary-light: #39ff14;
+      --color-primary-dark: #00cc00;
+      --color-text: #ffffff;
+      --color-text-muted: #86a389;
+      --color-border: rgba(0, 255, 0, 0.2);
+      --color-border-hover: rgba(0, 255, 0, 0.6);
+      --color-danger: #ff003c;
+      --color-warning: #ffcc00;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at 30% 20%, rgba(34,197,94,0.03) 0%, transparent 60%),
+                  radial-gradient(ellipse at 70% 80%, rgba(74,222,128,0.02) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+      animation: bgShift 20s ease-in-out infinite;
+    }
+
+    @keyframes bgShift {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(2%, 1%) rotate(1deg); }
+      66% { transform: translate(-1%, -1%) rotate(-0.5deg); }
+    }
+
+    a { color: var(--color-primary-light); text-decoration: none; }
+
+    /* === NAV === */
+    .dashboard-nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(1, 3, 1, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--color-border);
+      padding: 16px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 12px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px; font-weight: 700; color: var(--color-text);
+      letter-spacing: -0.5px;
+    }
+    .nav-logo img { width: 28px; height: 28px; }
+    .nav-links { display: flex; gap: 28px; align-items: center; }
+    .nav-links a { color: var(--color-text-muted); font-size: 14px; font-weight: 500; transition: color 0.2s; position: relative; }
+    .nav-links a:hover { color: var(--color-primary-light); }
+    .nav-links a::after {
+      content: '';
+      position: absolute; bottom: -4px; left: 0;
+      width: 0; height: 2px;
+      background: var(--color-primary);
+      transition: width 0.3s;
+      border-radius: 2px;
+    }
+    .nav-links a:hover::after { width: 100%; }
+    .nav-user {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .user-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 2px solid var(--color-primary);
+      object-fit: cover;
+    }
+    .user-email { font-size: 13px; color: var(--color-text-muted); }
+    .sign-out-btn {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--color-danger);
+      padding: 8px 16px; border-radius: 8px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .sign-out-btn:hover { background: rgba(239, 68, 68, 0.2); }
+
+    /* === SIGN IN SCREEN === */
+    .signin-screen {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: calc(100vh - 65px);
+      padding: 40px 20px;
+      text-align: center;
+      position: relative; z-index: 1;
+    }
+    .signin-screen.hidden { display: none; }
+
+    .signin-glow {
+      position: absolute;
+      width: 400px; height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(34,197,94,0.08) 0%, transparent 70%);
+      animation: glowPulse 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.2); opacity: 1; }
+    }
+
+    .signin-logo {
+      width: 80px; height: 80px;
+      filter: drop-shadow(0 0 24px rgba(74, 222, 128, 0.5));
+      margin-bottom: 24px;
+      animation: logoFloat 6s ease-in-out infinite;
+    }
+
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .signin-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 36px; font-weight: 700;
+      letter-spacing: -1px; margin-bottom: 12px;
+      background: linear-gradient(135deg, #f0fdf4 0%, #4ade80 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .signin-subtitle {
+      color: var(--color-text-muted); font-size: 16px;
+      max-width: 420px; margin-bottom: 32px; line-height: 1.6;
+    }
+    .auth-tabs {
+      display: flex; gap: 4px; margin-bottom: 24px;
+      background: rgba(34, 197, 94, 0.05);
+      border: 1px solid var(--color-border);
+      border-radius: 10px; padding: 4px;
+    }
+    .auth-tab {
+      flex: 1; padding: 10px 20px; border: none; background: transparent;
+      color: var(--color-text-muted); font-size: 14px; font-weight: 600;
+      border-radius: 8px; cursor: pointer; transition: all 0.2s;
+      font-family: inherit;
+    }
+    .auth-tab.active {
+      background: var(--color-primary); color: #000;
+    }
+    .auth-form { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 360px; }
+    .auth-input {
+      width: 100%; padding: 14px 18px;
+      background: rgba(34, 197, 94, 0.05);
+      border: 1px solid var(--color-border);
+      border-radius: 10px; color: var(--color-text);
+      font-size: 15px; font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .auth-input:focus {
+      outline: none; border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(34,197,94,0.1);
+    }
+    .auth-input::placeholder { color: var(--color-text-muted); }
+    .auth-submit {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+      color: #000; border: none; border-radius: 10px;
+      font-size: 16px; font-weight: 700; cursor: pointer;
+      font-family: inherit; transition: all 0.2s;
+      box-shadow: 0 4px 20px rgba(34, 197, 94, 0.2);
+    }
+    .auth-submit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 28px rgba(34, 197, 94, 0.3);
+    }
+    .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .auth-divider {
+      display: flex; align-items: center; gap: 16px;
+      margin: 24px 0; width: 100%; max-width: 360px;
+    }
+    .auth-divider::before, .auth-divider::after {
+      content: ""; flex: 1; height: 1px; background: var(--color-border);
+    }
+    .auth-divider span { color: var(--color-text-muted); font-size: 13px; }
+    .google-btn {
+      display: inline-flex; align-items: center; gap: 12px;
+      background: #ffffff; color: #1a1a1a;
+      padding: 14px 32px; border-radius: 12px;
+      font-size: 16px; font-weight: 600; cursor: pointer;
+      border: none; transition: all 0.3s;
+      box-shadow: 0 4px 20px rgba(34, 197, 94, 0.2);
+      position: relative; overflow: hidden;
+    }
+    .google-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(34, 197, 94, 0.3);
+    }
+    .google-btn:active { transform: translateY(0); }
+    .google-btn svg { width: 20px; height: 20px; }
+    .btn-metamask {
+      border: 1px solid #e2761b !important;
+      background: rgba(226, 118, 27, 0.1) !important;
+      color: #fff !important;
+      transition: all 0.3s ease !important;
+    }
+    .btn-metamask:hover {
+      background: rgba(226, 118, 27, 0.2) !important;
+      box-shadow: 0 0 16px rgba(226, 118, 27, 0.4) !important;
+      transform: translateY(-1px);
+    }
+    .btn-metamask:active {
+      transform: translateY(0);
+    }
+    .auth-error {
+      display: none; margin-top: 16px; padding: 12px 20px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px; color: var(--color-danger); font-size: 14px;
+      width: 100%; max-width: 360px;
+      animation: slideIn 0.3s ease-out;
+    }
+    .auth-success {
+      display: none; margin-top: 16px; padding: 12px 20px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 8px; color: var(--color-primary-light); font-size: 14px;
+      width: 100%; max-width: 360px;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .auth-switch-hint {
+      margin-top: 16px; font-size: 13px; color: var(--color-text-muted);
+      width: 100%; max-width: 360px;
+    }
+    .auth-switch-hint a {
+      color: var(--color-primary-light); cursor: pointer; font-weight: 600;
+      text-decoration: none;
+    }
+    .auth-switch-hint a:hover { text-decoration: underline; }
+
+    /* === DASHBOARD === */
+    .dashboard { display: none; max-width: 1200px; margin: 0 auto; padding: 40px 24px; position: relative; z-index: 1; }
+    .dashboard.active { display: block; }
+    
+    .dash-header { margin-bottom: 32px; }
+    .dash-header h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px; font-weight: 700; letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #f0fdf4 0%, #4ade80 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .dash-header p { color: var(--color-text-muted); margin-top: 4px; }
+
+    /* === GRID === */
+    .dash-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    /* === CARDS === */
+    .dash-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 20px; padding: 28px;
+      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+      animation: fadeUp 0.6s ease-out both;
+    }
+
+    .dash-card:nth-child(1) { animation-delay: 0.1s; }
+    .dash-card:nth-child(2) { animation-delay: 0.2s; }
+    .dash-card:nth-child(3) { animation-delay: 0.3s; }
+    .dash-card:nth-child(4) { animation-delay: 0.4s; }
+    .dash-card:nth-child(5) { animation-delay: 0.5s; }
+    .dash-card:nth-child(6) { animation-delay: 0.6s; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .dash-card:hover { 
+      border-color: var(--color-border-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(34,197,94,0.05);
+    }
+    .dash-card.full { grid-column: 1 / -1; }
+
+    .card-label {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 2px;
+      color: var(--color-primary-light); font-weight: 600; margin-bottom: 12px;
+    }
+    .card-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px; font-weight: 700; margin-bottom: 16px;
+    }
+
+    /* === WALLET CARD === */
+    .wallet-balance {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 48px; font-weight: 700;
+      color: var(--color-primary-light);
+      letter-spacing: -2px;
+    }
+    .wallet-balance .vp-label {
+      font-size: 18px; color: var(--color-text-muted); font-weight: 500;
+      margin-left: 8px;
+    }
+    .wallet-meta {
+      display: flex; gap: 24px; margin-top: 20px; flex-wrap: wrap;
+    }
+    .wallet-meta-item { display: flex; flex-direction: column; gap: 4px; }
+    .wallet-meta-label { font-size: 11px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 1px; }
+    .wallet-meta-value { font-size: 16px; font-weight: 600; }
+    .streak-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 100px; font-size: 13px; font-weight: 600; color: var(--color-warning);
+    }
+
+    /* === MINING STATS === */
+    .mining-status {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+    }
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--color-text-muted);
+    }
+    .status-dot.active {
+      background: var(--color-primary);
+      box-shadow: 0 0 12px var(--color-primary);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .status-text { font-size: 15px; font-weight: 600; }
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .stat-mini { text-align: center; padding: 16px 8px; background: rgba(34,197,94,0.05); border-radius: 12px; }
+    .stat-mini-value { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; color: var(--color-primary-light); }
+    .stat-mini-label { font-size: 10px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+    /* === DOWNLOAD SECTION === */
+    .download-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .download-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      padding: 24px 16px; background: rgba(34,197,94,0.08);
+      border: 1px solid var(--color-border);
+      border-radius: 16px; cursor: pointer; transition: all 0.3s;
+      text-decoration: none;
+    }
+    .download-btn:hover {
+      border-color: var(--color-primary);
+      background: rgba(34,197,94,0.12);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(34,197,94,0.1);
+    }
+    .download-btn.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+    .download-os { font-size: 18px; font-weight: 700; color: var(--color-text); }
+    .download-desc { font-size: 12px; color: var(--color-text-muted); }
+    .download-icon { font-size: 32px; margin-bottom: 4px; }
+
+    /* === TOKEN SECTION === */
+    .token-list { display: flex; flex-direction: column; gap: 12px; }
+    .token-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px; background: rgba(34,197,94,0.05); border-radius: 12px;
+      border: 1px solid var(--color-border);
+    }
+    .token-info { display: flex; flex-direction: column; gap: 4px; }
+    .token-name { font-weight: 600; font-size: 14px; }
+    .token-meta { font-size: 12px; color: var(--color-text-muted); }
+    .token-prefix { font-family: monospace; color: var(--color-primary-light); }
+    .token-status-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 100px;
+      font-size: 11px; font-weight: 600;
+    }
+    .token-status-badge.active { background: rgba(34,197,94,0.15); color: var(--color-primary-light); border: 1px solid rgba(34,197,94,0.3); }
+    .token-status-badge.inactive { background: rgba(239,68,68,0.1); color: var(--color-danger); border: 1px solid rgba(239,68,68,0.2); }
+    .revoke-btn {
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+      color: var(--color-danger); padding: 6px 14px; border-radius: 8px;
+      font-size: 12px; cursor: pointer; transition: all 0.2s;
+    }
+    .revoke-btn:hover { background: rgba(239,68,68,0.2); }
+    .no-tokens { color: var(--color-text-muted); font-size: 14px; text-align: center; padding: 24px; }
+
+    /* === TRANSACTIONS === */
+    .tx-list { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; }
+    .tx-list::-webkit-scrollbar { width: 4px; }
+    .tx-list::-webkit-scrollbar-track { background: transparent; }
+    .tx-list::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+    .tx-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; background: rgba(34,197,94,0.04);
+      border-radius: 10px; border: 1px solid var(--color-border);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .tx-item:hover { border-color: var(--color-border-hover); background: rgba(34,197,94,0.07); }
+    .tx-left { display: flex; flex-direction: column; gap: 2px; }
+    .tx-type { font-size: 13px; font-weight: 600; text-transform: capitalize; }
+    .tx-date { font-size: 11px; color: var(--color-text-muted); }
+    .tx-amount { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; }
+    .tx-amount.positive { color: var(--color-primary-light); }
+    .tx-amount.negative { color: var(--color-danger); }
+    .no-tx { color: var(--color-text-muted); font-size: 14px; text-align: center; padding: 24px; }
+
+    /* === REFERRAL === */
+    .referral-box {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px; background: rgba(34,197,94,0.08);
+      border: 1px solid var(--color-border); border-radius: 12px;
+    }
+    .referral-link {
+      flex: 1; font-family: monospace; font-size: 14px;
+      color: var(--color-primary-light); overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
+    }
+    .copy-btn {
+      background: var(--color-primary); color: #000;
+      padding: 8px 20px; border-radius: 8px;
+      font-size: 13px; font-weight: 600; cursor: pointer; border: none;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover { background: var(--color-primary-light); transform: scale(1.02); }
+    .referral-stats { display: flex; gap: 24px; margin-top: 16px; }
+    .referral-stat { display: flex; flex-direction: column; gap: 2px; }
+    .referral-stat-value { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700; }
+    .referral-stat-label { font-size: 11px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+    /* === LOADING === */
+    .loading-overlay {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 60vh;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* === TOAST === */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 999;
+      padding: 16px 24px; border-radius: 12px;
+      font-size: 14px; font-weight: 600;
+      display: none; animation: slideUp 0.3s ease-out;
+      max-width: 360px;
+    }
+    .toast.success { background: var(--color-primary-dark); color: #000; border: 1px solid var(--color-primary); }
+    .toast.error { background: rgba(239,68,68,0.9); color: #fff; border: 1px solid var(--color-danger); }
+    .toast.show { display: block; }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* === MODAL === */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+      z-index: 200; display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal {
+      background: var(--color-surface); border: 1px solid var(--color-border);
+      border-radius: 20px; padding: 32px; max-width: 480px; width: 100%;
+      animation: fadeUp 0.3s ease-out; max-height: 90vh; overflow-y: auto;
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .modal-close {
+      background: none; border: none; color: var(--color-text-muted);
+      font-size: 28px; cursor: pointer; padding: 0 4px; line-height: 1;
+      transition: color 0.2s;
+    }
+    .modal-close:hover { color: var(--color-text); }
+    .create-token-btn {
+      background: var(--color-primary); color: #000; border: none;
+      padding: 8px 20px; border-radius: 8px; font-size: 13px;
+      font-weight: 700; cursor: pointer; font-family: inherit;
+      transition: all 0.2s;
+    }
+    .create-token-btn:hover { background: var(--color-primary-light); transform: scale(1.02); }
+    .token-display-box {
+      background: rgba(0,0,0,0.3); border: 1px solid var(--color-border);
+      border-radius: 10px; padding: 16px; font-family: monospace;
+      font-size: 13px; color: var(--color-primary-light); word-break: break-all;
+      user-select: all; cursor: text;
+    }
+    .token-result { margin-top: 20px; }
+    .copy-token-btn {
+      background: var(--color-primary); color: #000; border: none;
+      padding: 10px 24px; border-radius: 8px; font-size: 14px;
+      font-weight: 700; cursor: pointer; font-family: inherit; width: 100%;
+      margin-top: 12px; transition: all 0.2s;
+    }
+    .copy-token-btn:hover { background: var(--color-primary-light); }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 768px) {
+      .dashboard-nav { padding: 12px 16px; }
+      .nav-links { display: none; }
+      .dash-grid { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: 1fr; }
+      .download-grid { grid-template-columns: 1fr; }
+      .wallet-balance { font-size: 36px; }
+      .dashboard { padding: 24px 16px; }
+      .signin-title { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- NAV -->
+  <nav class="dashboard-nav">
+    <a href="/" class="nav-logo">
+      <img src="assets/verdex-logo-email.png" alt="Verdex">
+      VERDEX
+    </a>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/whitepaper.html">Whitepaper</a>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/faucet">Faucet</a>
+      <a href="/developer-docs" target="_blank">Docs</a>
+      <a href="/explorer/" target="_blank">Explorer</a>
+    </div>
+    <div class="nav-user" id="nav-user" style="display:none;">
+      <img class="user-avatar" id="user-avatar" src="" alt="">
+      <span class="user-email" id="user-email"></span>
+      <button class="sign-out-btn" onclick="signOut()">Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- LOADING -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- SIGN IN SCREEN -->
+  <div class="signin-screen hidden" id="signin-screen">
+    <div class="signin-glow"></div>
+    <img src="assets/verdex-logo-email.png" class="signin-logo" alt="Verdex">
+    <h1 class="signin-title">Welcome to Verdex</h1>
+    <p class="signin-subtitle">Create an account or sign in to access your mining dashboard, wallet, and download the Verdex CLI miner.</p>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-signin" onclick="switchAuthTab('signin')">Sign In</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Sign Up</button>
+    </div>
+
+    <form class="auth-form" id="auth-form" onsubmit="handleAuthSubmit(event)">
+      <input type="email" class="auth-input" id="auth-email" placeholder="Enter your email" required autocomplete="email">
+      <input type="password" class="auth-input" id="auth-password" placeholder="Enter your password (min 6 chars)" required minlength="6" autocomplete="current-password">
+      <button type="submit" class="auth-submit" id="auth-submit-btn">Sign In</button>
+    </form>
+
+    <div class="auth-error" id="auth-error"></div>
+    <div class="auth-success" id="auth-success"></div>
+
+    <div class="auth-divider"><span>or</span></div>
+
+    <button class="google-btn" onclick="signInWithGoogle()">
+      <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continue with Google
+    </button>
+  </div>
+
+  <!-- VERIFICATION CODE SCREEN -->
+  <div class="signin-screen hidden" id="verification-screen">
+    <div class="signin-glow"></div>
+    <img src="assets/verdex-logo-email.png" class="signin-logo" alt="Verdex">
+    <h1 class="signin-title">Verify Your Email</h1>
+    <p class="signin-subtitle">We have sent a 6-digit verification code to <span id="verification-email-display" style="color: var(--color-primary-light); font-weight: 600;">your email</span>. Enter it below to secure and authenticate your account.</p>
+
+    <form class="auth-form" id="verification-form" onsubmit="handleVerificationSubmit(event)">
+      <input type="text" class="auth-input" id="verification-code" placeholder="Enter 6-digit code" required pattern="[0-9]{6}" maxlength="6" style="text-align: center; letter-spacing: 6px; font-size: 24px; font-weight: 700;">
+      <button type="submit" class="auth-submit" id="verification-submit-btn">Verify Account</button>
+    </form>
+
+    <div class="auth-error" id="verification-error"></div>
+    <div class="auth-success" id="verification-success"></div>
+
+    <div class="auth-switch-hint" style="margin-top: 16px; font-size: 13px; color: var(--color-text-muted);">
+      Didn't receive the code? <a onclick="resendVerificationCode()" style="color: var(--color-primary-light); cursor: pointer; font-weight: 600; text-decoration: none;">Resend Code</a>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard" id="dashboard">
+
+    <div class="dash-header">
+      <h1>Mining Dashboard</h1>
+      <p>Welcome back, <span id="display-name">Miner</span></p>
+    </div>
+
+    <!-- DASHBOARD VIEW TABS -->
+    <div class="dash-tabs" style="display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--color-border); padding-bottom: 12px;">
+      <button class="dash-tab active" id="tab-overview" onclick="switchDashboardView('overview')" style="background: rgba(34, 197, 94, 0.1); border: 1px solid var(--color-primary); color: var(--color-primary); padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit;">📊 Overview</button>
+      <button class="dash-tab" id="tab-explorer" onclick="switchDashboardView('explorer')" style="background: transparent; border: 1px solid transparent; color: var(--color-text-muted); padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit;">🔍 Block Explorer</button>
+    </div>
+
+    <!-- OVERVIEW VIEW WRAPPER -->
+    <div id="overview-view" style="display: flex; flex-direction: column; gap: 20px;">
+      <div class="dash-grid">
+      
+      <div class="dash-card">
+        <div class="card-label">Your Wallet</div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px;">
+          <div class="wallet-balance" style="margin: 0;">
+            <span id="vp-balance">0</span><span class="vp-label" style="font-size: 16px; margin-left: 4px;">VP</span>
+          </div>
+          <button class="create-token-btn" id="btn-convert-payout" onclick="requestMiningPayout()" style="padding: 6px 14px; font-size:11px; width:auto; border-radius:6px; background:linear-gradient(135deg, #00ff88 0%, #00b35f 100%); color:#000;">Convert to Testnet VDXL</button>
+        </div>
+        <div style="font-size: 11px; color: var(--color-text-muted); margin-top: 10px; line-height: 1.4; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+          💡 Mined VP converts to <strong>Testnet VDXL</strong>. Main token launch is scheduled for <strong>December 12, 2026</strong>.
+        </div>
+        <div class="wallet-meta">
+          <div class="wallet-meta-item">
+            <span class="wallet-meta-label">VDX Address</span>
+            <span class="wallet-meta-value" id="vdx-address">Not set up</span>
+          </div>
+          <div class="wallet-meta-item">
+            <span class="wallet-meta-label">Current Streak</span>
+            <span class="streak-badge" id="streak-badge">0 days</span>
+          </div>
+          <div class="wallet-meta-item">
+            <span class="wallet-meta-label">Best Streak</span>
+            <span class="wallet-meta-value" id="longest-streak">0 days</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-card">
+        <div class="card-label">Mining Status</div>
+        <div class="mining-status">
+          <div class="status-dot" id="status-dot"></div>
+          <div class="status-text" id="status-text">Not mining</div>
+        </div>
+        <div class="stats-row">
+          <div class="stat-mini">
+            <div class="stat-mini-value" id="uptime-today">0h</div>
+            <div class="stat-mini-label">Uptime Today</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-value" id="total-uptime">0h</div>
+            <div class="stat-mini-label">Total Uptime</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-value" id="rank">#—</div>
+            <div class="stat-mini-label">Rank</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VDX ON-CHAIN WALLET CARD -->
+    <div class="dash-card full" style="margin-bottom: 20px; border-color: rgba(0, 255, 100, 0.2);">
+      <div class="card-label" style="color: var(--color-primary-light); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+        <span>Verdex L1 On-Chain VDX Wallet <span style="font-size:11px;opacity:0.85;font-weight:500;">· Chain ID 7201</span> <span id="vdx-wallet-type-badge" style="margin-left: 8px;"></span></span>
+        <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <button type="button" id="btn-add-metamask" onclick="window.addVerdexToWallet && addVerdexToWallet().then(()=>showToast('Verdex Testnet ready in MetaMask','success')).catch(e=>showToast(e.message||String(e),'error'))" style="font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid var(--color-border);background:rgba(34,197,94,0.1);color:var(--color-primary);cursor:pointer;font-weight:600;">Add MetaMask Network</button>
+          <a href="/faucet" style="font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid var(--color-border);color:var(--color-primary);text-decoration:none;font-weight:600;">Faucet</a>
+          <span id="rpc-status" class="streak-badge" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: var(--color-danger); font-size: 11px;">RPC Offline</span>
+        </span>
+      </div>
+      
+      <!-- Wallet Setup State (Hidden when wallet exists) -->
+      <div id="vdx-wallet-setup" style="display: flex; flex-direction: column; align-items: center; padding: 24px; text-align: center; gap: 16px;">
+        <span style="font-size: 32px;">👛</span>
+        <h3 class="card-title" style="margin:0;">No VDX Wallet Active</h3>
+        <p style="color: var(--color-text-muted); font-size: 14px; max-width: 480px;">
+          Generate a secure, non-custodial 12-word seed phrase wallet, import your credentials, or connect using your MetaMask wallet.
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; width: 100%; max-width: 480px;">
+          <button class="auth-submit" onclick="createVDXWallet()" style="grid-column: span 1; padding: 12px; font-size: 14px;">Generate Wallet</button>
+          <button class="btn btn-outline" onclick="showImportWallet()" style="grid-column: span 1; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; color: #fff; border: 1px solid var(--color-border); background: transparent;">Import Wallet</button>
+          <button class="btn btn-metamask" onclick="connectMetaMaskWallet()" style="grid-column: span 2; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; color: #fff; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s ease;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" style="width: 20px; height: 20px;"> Connect MetaMask Wallet
+          </button>
+        </div>
+
+        <!-- Mnemonic Display Box (Shown after generation) -->
+        <div id="vdx-mnemonic-creation-display" style="display: none; width: 100%; max-width: 450px; background: rgba(34, 197, 94, 0.05); border: 1px solid var(--color-primary); border-radius: 12px; padding: 20px; margin-top: 16px; text-align: left; flex-direction: column; gap: 12px;">
+          <span style="font-size: 13px; font-weight: 700; color: var(--color-primary-light);">📝 Save Your 12-Word Mnemonic Seed Phrase</span>
+          <p style="color: var(--color-text-muted); font-size: 12px; line-height: 1.4; margin: 0;">
+            Write down these 12 words in order. You can use them to recover your wallet on any device. <strong>Do not share this phrase with anyone!</strong>
+          </p>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 8px; border: 1px solid var(--color-border); margin: 8px 0;" id="vdx-mnemonic-words-grid">
+            <!-- Words fill dynamically -->
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="auth-submit" onclick="confirmSavedMnemonic()" style="padding: 10px 20px; font-size: 13px; width: auto;">I Have Saved It</button>
+          </div>
+        </div>
+        
+        <!-- Import form inline -->
+        <div id="vdx-import-form" style="display: none; width: 100%; max-width: 420px; margin-top: 16px; text-align: left; gap: 12px; flex-direction: column;">
+          <div style="display: flex; gap: 8px; margin-bottom: 4px;">
+            <button id="btn-import-type-mnemonic" class="auth-submit" onclick="setImportType('mnemonic')" style="padding: 6px 14px; font-size: 12px; width: auto; font-weight: 600;">Seed Phrase</button>
+            <button id="btn-import-type-key" class="btn btn-outline" onclick="setImportType('key')" style="padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; color: #fff; border: 1px solid var(--color-border); background: transparent;">Private Key</button>
+          </div>
+          
+          <div id="vdx-import-mnemonic-section" style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-size:12px; font-weight:600; color:var(--color-text-muted);">Enter 12-word seed phrase:</label>
+            <input type="text" class="auth-input" id="vdx-import-mnemonic-input" placeholder="word1 word2 ... word12">
+          </div>
+          
+          <div id="vdx-import-key-section" style="display: none; flex-direction: column; gap: 6px;">
+            <label style="font-size:12px; font-weight:600; color:var(--color-text-muted);">Enter 64-character private key (hex):</label>
+            <input type="text" class="auth-input" id="vdx-import-key-input" placeholder="e.g. 95a82e7b579128f73111f1853d9e52c8032fa65a25b3e21e64906f0e4b854a8a">
+          </div>
+          
+          <div style="display:flex; gap:10px; margin-top:6px;">
+            <button class="auth-submit" onclick="submitImportWallet()" style="padding: 10px 20px; font-size: 13px; width: auto;">Confirm Import</button>
+            <button class="btn btn-outline" onclick="hideImportWallet()" style="padding: 10px 20px; font-size: 13px; color:#fff; border: 1px solid var(--color-border); background:transparent;">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Wallet State (Hidden by default) -->
+      <div id="vdx-wallet-active" style="display: none; flex-direction: column; gap: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;">
+          <div>
+            <div style="display: flex; gap: 24px; align-items: baseline; flex-wrap: wrap;">
+              <div class="wallet-balance" style="font-size: 32px; margin: 0;">
+              <span id="vdx-onchain-balance">0.0000</span><span class="vp-label" style="color: var(--color-primary-light); font-size:14px; margin-left:4px;">VDX</span>
+              <button onclick="requestFaucetVDX()" style="margin-left:12px;padding:4px 12px;font-size:11px;border-radius:6px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#000;border:none;cursor:pointer;font-weight:700;" title="Get free testnet VDX">Request VDX</button>
+            </div>
+              <div class="wallet-balance" style="font-size: 32px; margin: 0; border-left: 1px solid var(--color-border); padding-left: 24px;">
+                <span id="vdxl-onchain-balance">0.0000</span><span class="vp-label" style="color: #af52de; font-size:14px; margin-left:4px; text-shadow: 0 0 10px rgba(175,82,222,0.4);">VDXL</span>
+              </div>
+              <div class="wallet-balance" style="font-size: 32px; margin: 0; border-left: 1px solid var(--color-border); padding-left: 24px;">
+                <span id="vdxu-onchain-balance">0.0000</span><span class="vp-label" style="color: #00e5ff; font-size:14px; margin-left:4px; text-shadow: 0 0 10px rgba(0,229,255,0.4);">VDXU</span>
+              </div>
+            </div>
+            <div style="margin-top: 8px; font-size: 13px; display: flex; align-items: center; gap: 8px; color: var(--color-text-muted);">
+              <span>Address:</span>
+              <span id="vdx-address-full" style="font-family: monospace; color: #fff; font-weight: 500;">0x...</span>
+              <button class="copy-btn" onclick="copyVDXAddress()" style="padding: 4px 10px; font-size: 10px;">Copy</button>
+            </div>
+          </div>
+          
+          <!-- Actions -->
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button class="create-token-btn" onclick="showSendPanel()">📤 Send VDX</button>
+            <button class="btn btn-outline" onclick="showReceivePanel()" style="padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; color: #fff; border: 1px solid var(--color-border); background: transparent;">📥 Receive VDX</button>
+            <button class="btn btn-outline" id="vdx-btn-show-key" onclick="revealPrivateKey()" style="padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--color-warning); border: 1px solid rgba(245, 158, 11, 0.3); background: transparent;">🔑 Show Key</button>
+            <button class="btn btn-outline" id="vdx-btn-show-seed" onclick="revealMnemonic()" style="padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--color-primary-light); border: 1px solid var(--color-border); background: transparent;">📝 Show Seed Phrase</button>
+            <button class="btn btn-outline" id="vdx-btn-disconnect" onclick="disconnectVDXWallet()" style="padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--color-danger); border: 1px solid rgba(239, 68, 68, 0.3); background: transparent;">❌ Log Out Wallet</button>
+          </div>
+        </div>
+
+        <!-- Reveal Private Key Dialog -->
+        <div id="vdx-pkey-display" style="display: none; padding: 16px; background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 12px; margin-top: 10px;">
+          <span style="font-size: 12px; font-weight: 600; color: var(--color-warning); display: block; margin-bottom: 6px;">⚠️ YOUR PRIVATE KEY (DO NOT SHARE!):</span>
+          <div style="font-family: monospace; font-size: 13px; word-break: break-all; color: #fff; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 6px;" id="vdx-pkey-raw"></div>
+        </div>
+
+        <!-- Reveal Mnemonic Dialog -->
+        <div id="vdx-mnemonic-display" style="display: none; padding: 16px; background: rgba(34, 197, 94, 0.05); border: 1px solid var(--color-primary); border-radius: 12px; margin-top: 10px;">
+          <span style="font-size: 12px; font-weight: 600; color: var(--color-primary-light); display: block; margin-bottom: 6px;">📝 YOUR 12-WORD MNEMONIC SEED PHRASE (KEEP SECRET!):</span>
+          <div style="font-family: monospace; font-size: 14px; word-break: break-all; color: #fff; padding: 12px; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid var(--color-border); line-height: 1.6;" id="vdx-mnemonic-raw"></div>
+        </div>
+
+        <!-- Send Panel (Inline Rebuild) -->
+        <div id="vdx-send-panel" style="display: none; padding: 24px; background: rgba(34, 197, 94, 0.02); border: 1px solid var(--color-border); border-radius: 16px; animation: slideIn 0.3s ease-out; margin-top: 15px;">
+          <h4 class="card-title" style="margin-bottom: 16px; display:flex; justify-content:space-between; align-items:center;">
+            <span>📤 Send Digital Assets</span>
+            <span style="font-size: 11px; text-transform: uppercase; color: var(--color-primary-light); letter-spacing:1px; background: var(--color-surface-2); padding: 4px 8px; border-radius:6px; border:1px solid var(--color-border);">L1 Instant Settlement</span>
+          </h4>
+          
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div>
+                <label style="font-size: 11px; text-transform: uppercase; color: var(--color-text-muted); display: block; margin-bottom: 6px; font-weight:600;">Asset Type</label>
+                <select class="auth-input" id="vdx-send-asset-type" style="background:rgba(0,0,0,0.4); color:#fff; border:1px solid var(--color-border); padding: 12px;" onchange="updateSendPanelLabels(); calculateEstimatedFees();">
+                  <option value="VDX">VDX (Native Gas Coin)</option>
+                  <option value="VDXU">VDXU (Verdex Utility Token)</option>
+                  <option value="VDXL">VDXL (Verdex Liquidity Token)</option>
+                  <option value="CUSTOM">Custom PRC-20 Token</option>
+                </select>
+              </div>
+              <div>
+                <label id="vdx-send-amount-label" style="font-size: 11px; text-transform: uppercase; color: var(--color-text-muted); display: block; margin-bottom: 6px; font-weight:600;">Amount (VDX)</label>
+                <input type="number" step="any" class="auth-input" id="vdx-send-amount" placeholder="0.0" style="padding: 12px;" oninput="calculateEstimatedFees()">
+              </div>
+            </div>
+
+            <!-- Custom Token Address Input (Conditional) -->
+            <div id="vdx-custom-token-address-container" style="display: none;">
+              <label style="font-size: 11px; text-transform: uppercase; color: var(--color-text-muted); display: block; margin-bottom: 6px; font-weight:600;">Token Contract Address</label>
+              <input type="text" class="auth-input" id="vdx-send-token-contract" placeholder="0x..." style="padding: 12px; font-family: monospace;" oninput="calculateEstimatedFees()">
+            </div>
+
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <label style="font-size: 11px; text-transform: uppercase; color: var(--color-text-muted); font-weight:600;">Recipient Address</label>
+                <span id="address-book-toggle" onclick="toggleAddressBookDropdown()" style="font-size:11px; color: var(--color-primary-light); cursor:pointer; font-weight:500;">📖 Address Book</span>
+              </div>
+              <div style="position:relative;">
+                <input type="text" class="auth-input" id="vdx-send-to" placeholder="0x..." style="padding: 12px; font-family: monospace;" oninput="calculateEstimatedFees()">
+                
+                <!-- Address Book Dropdown -->
+                <div id="vdx-address-book-dropdown" style="display:none; position:absolute; top:100%; left:0; right:0; background:#0c1a0e; border:1px solid var(--color-border); border-radius:8px; z-index:100; max-height:150px; overflow-y:auto; margin-top:4px; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+                  <div style="padding:8px 12px; font-size:11px; color:var(--color-text-muted); border-bottom:1px solid rgba(0,255,0,0.1);">Select Saved Recipient:</div>
+                  <div id="address-book-items"></div>
+                </div>
+              </div>
+              
+              <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                <input type="checkbox" id="vdx-save-address-check" style="accent-color:var(--color-primary); cursor:pointer;">
+                <label for="vdx-save-address-check" style="font-size:12px; color:var(--color-text-muted); cursor:pointer;">Save to Address Book</label>
+                <input type="text" id="vdx-save-address-name" placeholder="Contact Name" style="display:none; background:rgba(0,0,0,0.4); border:1px solid var(--color-border); border-radius:4px; padding:2px 8px; font-size:11px; color:#fff; width:120px;">
+              </div>
+            </div>
+
+            <!-- Gas Selector (EIP-1559 Style) -->
+            <div>
+              <label style="font-size: 11px; text-transform: uppercase; color: var(--color-text-muted); display: block; margin-bottom: 6px; font-weight:600;">Transaction Speed (Gas Fee)</label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                <div id="gas-speed-standard" class="btn btn-outline" style="padding: 10px; text-align: center; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; border-color: var(--color-primary);" onclick="selectGasSpeed('standard')">
+                  <span style="font-weight:600; font-size:12px; color:#fff;">Standard</span>
+                  <span style="font-size:10px; color:var(--color-text-muted);" id="gas-cost-standard">~0.000021 VDX</span>
+                </div>
+                <div id="gas-speed-fast" class="btn btn-outline" style="padding: 10px; text-align: center; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; gap: 4px;" onclick="selectGasSpeed('fast')">
+                  <span style="font-weight:600; font-size:12px; color:#fff;">Fast (Priority)</span>
+                  <span style="font-size:10px; color:var(--color-text-muted);" id="gas-cost-fast">~0.000042 VDX</span>
+                </div>
+                <div id="gas-speed-custom" class="btn btn-outline" style="padding: 10px; text-align: center; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; gap: 4px;" onclick="selectGasSpeed('custom')">
+                  <span style="font-weight:600; font-size:12px; color:#fff;">Custom (EIP-1559)</span>
+                  <span style="font-size:10px; color:var(--color-text-muted);">Manual limits</span>
+                </div>
+              </div>
+
+              <!-- Custom Gas Inputs -->
+              <div id="custom-gas-inputs" style="display: none; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 14px; background: rgba(0,0,0,0.2); border: 1px solid var(--color-border); border-radius: 8px; margin-bottom: 12px;">
+                <div>
+                  <label style="font-size:10px; color:var(--color-text-muted); display:block; margin-bottom:4px;">Gas Limit</label>
+                  <input type="number" class="auth-input" id="vdx-custom-gas-limit" value="21000" style="padding: 8px; font-size:12px;" oninput="calculateEstimatedFees()">
+                </div>
+                <div>
+                  <label style="font-size:10px; color:var(--color-text-muted); display:block; margin-bottom:4px;">Max Fee (Gwei)</label>
+                  <input type="number" class="auth-input" id="vdx-custom-max-fee" value="2.0" step="0.1" style="padding: 8px; font-size:12px;" oninput="calculateEstimatedFees()">
+                </div>
+                <div>
+                  <label style="font-size:10px; color:var(--color-text-muted); display:block; margin-bottom:4px;">Priority Tip (Gwei)</label>
+                  <input type="number" class="auth-input" id="vdx-custom-priority-fee" value="1.0" step="0.1" style="padding: 8px; font-size:12px;" oninput="calculateEstimatedFees()">
+                </div>
+              </div>
+            </div>
+
+            <!-- Transaction Summary -->
+            <div style="padding:14px; background:rgba(0,255,0,0.02); border:1px solid rgba(0,255,0,0.1); border-radius:10px; font-size:13px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <span style="color:var(--color-text-muted);">Asset Subtotal:</span>
+                <span id="summary-subtotal" style="color:#fff; font-weight:600;">0.00 VDX</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <span style="color:var(--color-text-muted);">Estimated Network Fee:</span>
+                <span id="summary-fee" style="color:#fff;">0.00 VDX</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-top:1px solid rgba(0,255,0,0.1); padding-top:6px; font-weight:600;">
+                <span style="color:var(--color-primary-light);">Total Estimate:</span>
+                <span id="summary-total" style="color:var(--color-primary-light);">0.00 VDX</span>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 6px;">
+              <button class="auth-submit" onclick="submitVDXTransfer()" style="padding: 12px 24px; font-size: 14px; width: auto;">🚀 Confirm & Broadcast</button>
+              <button class="btn btn-outline" onclick="hideSendPanel()" style="padding: 12px 24px; font-size: 14px; color:#fff; border: 1px solid var(--color-border); background:transparent;">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Receive Panel (Inline Rebuild) -->
+        <div id="vdx-receive-panel" style="display: none; padding: 24px; background: rgba(34, 197, 94, 0.02); border: 1px solid var(--color-border); border-radius: 16px; animation: slideIn 0.3s ease-out; text-align: center; margin-top: 15px;">
+          <h4 class="card-title" style="margin-bottom: 16px; text-align: left;">📥 Receive VDX / VDXL</h4>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+            <p style="color: var(--color-text-muted); font-size: 13px; max-width:400px; line-height:1.5;">
+              Scan the QR code below or copy your deposit address to receive Verdex native coin (VDX) or liquidity tokens (VDXL) from other wallets.
+            </p>
+            <div style="padding: 16px; background: #fff; border-radius: 16px; display: inline-block; box-shadow: 0 4px 20px rgba(0,255,0,0.15);">
+              <img id="vdx-qr-code" src="" alt="QR Code" style="width: 160px; height: 160px; display: block;">
+            </div>
+            <div style="width:100%; max-width:440px; padding:12px; background:rgba(0,0,0,0.4); border:1px solid var(--color-border); border-radius:8px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+              <span id="vdx-deposit-address-display" style="font-family:monospace; font-size:12px; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">0x...</span>
+              <button class="copy-btn" onclick="copyVDXAddress()" style="flex-shrink:0; padding:6px 12px; font-size:11px;">Copy</button>
+            </div>
+            <button class="btn btn-outline" onclick="hideReceivePanel()" style="padding: 8px 24px; font-size: 13px; color:#fff; border: 1px solid var(--color-border); background:transparent;">Close Deposit Window</button>
+          </div>
+        </div>
+
+        <!-- Send Success Notification Block (Premium Receipt Slip) -->
+        <div id="vdx-send-success" style="display: none; padding: 24px; background: linear-gradient(135deg, rgba(10, 10, 10, 0.95), rgba(20, 20, 20, 0.95)); border: 1px solid var(--color-primary-light); border-radius: 16px; text-align: left; box-shadow: 0 8px 32px rgba(34, 197, 94, 0.15); margin-top: 15px; font-family: 'Inter', sans-serif; position: relative; overflow: hidden; animation: slideIn 0.3s ease-out;">
+          <div style="position: absolute; top: -50px; right: -50px; width: 100px; height: 100px; background: var(--color-primary-light); opacity: 0.05; filter: blur(50px); border-radius: 50%;"></div>
+          
+          <!-- Header -->
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 12px;">
+            <div style="width: 28px; height: 28px; background: rgba(34,197,94,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--color-primary-light); font-weight: bold; border: 1px solid rgba(34,197,94,0.2);">✓</div>
+            <div>
+              <h4 style="font-size: 14px; font-weight: 700; color: #fff; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">Transaction Receipt</h4>
+              <span style="font-size: 9px; color: var(--color-primary-light); text-transform: uppercase; font-weight: 600; letter-spacing: 1px;">Status: Broadcasted</span>
+            </div>
+          </div>
+
+          <!-- Receipt Details Grid -->
+          <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--color-text-muted);">Asset Type:</span>
+              <span id="web-receipt-asset" style="color: #fff; font-weight: 600;">VDX</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--color-text-muted);">Amount Sent:</span>
+              <span id="web-receipt-amount" style="color: var(--color-primary-light); font-weight: 700; font-size: 14px;">0.00 VDX</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">
+              <span style="color: var(--color-text-muted); flex-shrink: 0;">Recipient:</span>
+              <span id="web-receipt-to" style="color: #fff; font-family: monospace; word-break: break-all; text-align: right; font-size: 12px;">0x...</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--color-text-muted);">Nonce:</span>
+              <span id="web-receipt-nonce" style="color: #fff; font-weight: 600;">0</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 10px; margin-top: 5px;">
+              <span style="color: var(--color-text-muted); flex-shrink: 0;">TX Hash:</span>
+              <span id="web-send-success-hash" style="color: var(--color-primary-light); font-family: monospace; word-break: break-all; text-align: right; font-size: 11px;">0x...</span>
+            </div>
+          </div>
+
+          <!-- Buttons -->
+          <div style="display: flex; gap: 12px;">
+            <a id="web-btn-view-explorer" href="" target="_blank" class="auth-submit" style="flex: 1; padding: 10px 16px; font-size: 13px; font-weight: 600; border-radius: 8px; text-align: center; text-decoration: none;">🔍 View on Explorer</a>
+            <button class="btn btn-outline" onclick="document.getElementById('vdx-send-success').style.display='none'" style="padding: 10px 20px; font-size: 13px; font-weight: 600; border-radius: 8px; border: 1px solid var(--color-border); background:transparent; color:#fff;">Dismiss</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="dash-card full" style="margin-bottom: 20px;">
+      <div class="card-label">Download Verdex Miner</div>
+      <div class="card-title">Start Mining Verdex Points</div>
+      <p style="color: var(--color-text-muted); font-size: 14px; margin-bottom: 24px; max-width: 560px; line-height: 1.6;">
+        Download the Verdex miner app for your platform. Install and launch to start earning VP automatically.
+      </p>
+      <div class="download-grid">
+        <a class="download-btn" id="download-windows" href="/assets/downloads/Verdex%20Miner%20Setup%203.0.0.exe" target="_blank" style="text-decoration:none;">
+          <span class="download-icon">🪟</span>
+          <span class="download-os">Windows</span>
+          <span class="download-desc">Desktop app with auto-detection & GPU mining</span>
+        </a>
+        <div class="download-btn disabled" id="download-android" style="text-decoration:none; cursor:not-allowed; opacity:0.4;">
+          <span class="download-icon">📱</span>
+          <span class="download-os">Android</span>
+          <span class="download-desc">Not yet available — coming soon</span>
+        </div>
+        <a class="download-btn" id="download-linux" href="/assets/downloads/verdex-linux-amd64.tar.gz" target="_blank" style="text-decoration:none;">
+          <span class="download-icon">🐧</span>
+          <span class="download-os">Linux</span>
+          <span class="download-desc">CLI Miner package (verdex-linux-amd64)</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- CONNECTED MINING DEVICES (REAL-TIME POOL ACTIVITY) -->
+    <div class="dash-card full" style="margin-bottom: 20px; border-color: rgba(34, 197, 94, 0.25);">
+      <div class="card-label" style="color: var(--color-primary-light);">Real-Time Mining Activity</div>
+      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span>Connected Hardware & Devices</span>
+        <button class="btn btn-outline btn-sm" onclick="loadMiningSessions()" style="padding:4px 12px; font-size:11px;">🔄 Refresh Device List</button>
+      </div>
+      <p style="color: var(--color-text-muted); font-size: 14px; margin-bottom: 20px; line-height: 1.6;">
+        Track all desktop, CLI, and Termux mining rigs currently or recently connected to your account.
+      </p>
+      
+      <div id="active-devices-list" style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="no-tx" style="padding: 24px;">No devices connected. Download the desktop miner below to get started!</div>
+      </div>
+    </div>
+
+    <div class="dash-card full" style="margin-bottom: 20px;">
+      <div class="card-label">API Tokens</div>
+      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>Authorized Mining Devices</span>
+        <button class="create-token-btn" onclick="showCreateTokenModal()">+ Create Token</button>
+      </div>
+      <div class="token-list" id="token-list">
+        <div class="no-tokens" id="no-tokens">No active tokens. Create one below to use with the CLI miner.</div>
+      </div>
+    </div>
+
+    <div class="dash-card full" style="margin-bottom: 20px;">
+      <div class="card-label">Referral Program</div>
+      <div class="card-title">Earn 10% Lifetime from Referrals</div>
+      <p style="color: var(--color-text-muted); font-size: 13px; margin-bottom: 16px;">
+        Share your referral link. When someone signs up through it, you earn 10% of all VP they ever mine — for life.
+      </p>
+      <div class="referral-box">
+        <span class="referral-link" id="referral-link">Loading...</span>
+        <button class="copy-btn" onclick="copyReferralLink()">Copy</button>
+      </div>
+      <div class="referral-stats">
+        <div class="referral-stat">
+          <span class="referral-stat-value" id="referral-count">0</span>
+          <span class="referral-stat-label">Referrals</span>
+        </div>
+        <div class="referral-stat">
+          <span class="referral-stat-value" id="referral-earnings">0 VP</span>
+          <span class="referral-stat-label">Referral Earnings</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-card full" style="margin-bottom: 20px;">
+      <div class="card-label">Point History</div>
+      <div class="card-title">Recent Transactions</div>
+      <div class="tx-list" id="tx-list">
+        <div class="no-tx">No transactions yet. Start mining to earn VP!</div>
+      </div>
+    </div>
+
+    <div class="dash-card full" style="margin-top: 20px;">
+      <div class="card-label">Leaderboard</div>
+      <div class="card-title">Top Verdex Miners</div>
+      <div id="leaderboard-list" style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="no-tx">Loading leaderboard...</div>
+      </div>
+    </div>
+
+    <div class="dash-card full" style="margin-top: 20px;">
+      <div class="card-label">How Mining Works</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px;">
+        <div style="padding: 20px; background: rgba(34,197,94,0.05); border-radius: 12px; border: 1px solid var(--color-border);">
+          <h4 style="color: var(--color-primary-light); font-size: 15px; margin-bottom: 8px;">Daily Rate</h4>
+          <p style="color: var(--color-text-muted); font-size: 13px; line-height: 1.6;">10 VP per 24h of valid uptime. +2 VP per consecutive day (streak bonus, max +20 VP/day).</p>
+        </div>
+        <div style="padding: 20px; background: rgba(34,197,94,0.05); border-radius: 12px; border: 1px solid var(--color-border);">
+          <h4 style="color: var(--color-primary-light); font-size: 15px; margin-bottom: 8px;">VP to VDX</h4>
+          <p style="color: var(--color-text-muted); font-size: 13px; line-height: 1.6;">100 VP = 1 VDX at mainnet launch (Dec 12, 2026). Your VP converts automatically.</p>
+        </div>
+        <div style="padding: 20px; background: rgba(34,197,94,0.05); border-radius: 12px; border: 1px solid var(--color-border);">
+          <h4 style="color: var(--color-primary-light); font-size: 15px; margin-bottom: 8px;">Referrals</h4>
+          <p style="color: var(--color-text-muted); font-size: 13px; line-height: 1.6;">Earn 10% of all VP mined by anyone you refer — for life. No cap.</p>
+        </div>
+        <div style="padding: 20px; background: rgba(34,197,94,0.05); border-radius: 12px; border: 1px solid var(--color-border);">
+          <h4 style="color: var(--color-primary-light); font-size: 15px; margin-bottom: 8px;">Anti-Cheat</h4>
+          <p style="color: var(--color-text-muted); font-size: 13px; line-height: 1.6;">Proof-of-work heartbeats, 1 miner per device, replay protection, rate limiting.</p>
+        </div>
+      </div>
+    </div>
+
+    </div> <!-- End overview-view -->
+
+    <!-- EXPLORER VIEW WRAPPER -->
+    <div id="explorer-view" style="display: none; height: 85vh; border-radius: 16px; overflow: hidden; border: 1px solid var(--color-border); background: #020604; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+      <iframe src="/explorer/" style="width: 100%; height: 100%; border: none;" id="webExplorerIframe"></iframe>
+    </div>
+
+  </div>
+
+  <!-- CREATE TOKEN MODAL -->
+  <div class="modal-overlay" id="token-modal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="card-title" style="margin:0;">Create API Token</span>
+        <button class="modal-close" onclick="hideCreateTokenModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--color-text-muted);font-size:14px;margin-bottom:20px;line-height:1.6;">
+          This token allows the Verdex CLI miner to authenticate on your behalf. 
+          Keep it secret — it grants mining access to your account.
+        </p>
+        <label style="font-size:13px;font-weight:600;color:var(--color-text-muted);display:block;margin-bottom:6px;">Device Name</label>
+        <input type="text" class="auth-input" id="token-device-name" placeholder="e.g. My Gaming PC" style="margin-bottom:16px;">
+        <button class="auth-submit" id="create-token-btn" onclick="handleCreateToken()">Generate Token</button>
+        <div class="token-result" id="token-result" style="display:none;">
+          <p style="color:var(--color-primary-light);font-size:14px;font-weight:600;margin-bottom:10px;">✅ Token created!</p>
+          <div class="token-display-box" id="token-display"></div>
+          <div class="token-warning" style="margin-top:12px;padding:12px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;font-size:12px;color:var(--color-warning);line-height:1.5;">
+            ⚠️ Copy this token now. You won't be able to see it again!
+          </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- Transaction Loading Overlay (Transaction in Progress) -->
+  <div id="tx-loading-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; gap: 15px; font-family: 'Outfit', sans-serif;">
+    <div style="width: 50px; height: 50px; border: 4px solid rgba(0,255,136,0.1); border-top-color: var(--color-primary-light); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+    <div style="font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 0.5px; text-transform: uppercase;">Transaction in progress</div>
+    <p style="font-size: 13px; color: var(--color-text-muted); margin: 0; text-align: center; max-width: 400px; line-height: 1.5;">Please wait while the transaction is serialized, signed, and broadcast to the network...</p>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script>
+    async function createApiToken(name, deviceName) {
+      const session = await supabase.auth.getSession().then(r => r.data.session);
+      if (!session) throw new Error('Not authenticated');
+      const r = await fetch('/api/mining/token-create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ name: name || 'CLI Miner', device_name: deviceName || null })
+      });
+      return r.json();
+    }
+
+    let currentUser = null;
+    let userProfile = null;
+    let userWallet = null;
+
+    function showToast(msg, type) {
+      const t = document.getElementById('toast');
+      t.innerHTML = msg;
+      t.className = 'toast ' + type + ' show';
+      setTimeout(() => t.classList.remove('show'), 4000);
+    }
+
+    document.getElementById('token-display')?.addEventListener('click', function() {
+      const text = this.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Token copied to clipboard!', 'success');
+      });
+    });
+
+    // ============================================================
+    // WEB BROWSER MINER CONTROLLER
+    // Multi-threaded JS Web Worker mining
+    // ============================================================
+    let webMiningActive = false;
+    let webMiningWorkers = [];
+    let webMiningSharesSolved = 0;
+    let webMiningMode = 'normal';
+    let webMiningThreads = 2;
+    let webMinerHashrates = {};
+    let detectedHardware = { cpu_cores: 4, ram_gb: 4, gpu_name: 'unknown', gpu_vram_gb: 0, is_mobile: false };
+
+    function detectBrowserHardware() {
+      const cores = navigator.hardwareConcurrency || 4;
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const ram = navigator.deviceMemory || 4;
+
+      let gpuName = 'Integrated Graphics';
+      let hasWebGPU = false;
+      if (navigator.gpu) {
+        hasWebGPU = true;
+        gpuName = 'WebGPU Accelerated';
+      } else {
+        // Fallback WebGL check
+        try {
+          const canvas = document.createElement('canvas');
+          const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+          if (gl) {
+            const dbgRenderInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            if (dbgRenderInfo) {
+              gpuName = gl.getParameter(dbgRenderInfo.UNMASKED_RENDERER_WEBGL);
+            }
+          }
+        } catch(e) {}
+      }
+
+      detectedHardware = {
+        cpu_cores: cores,
+        cpu_threads: cores,
+        ram_gb: ram,
+        gpu_name: gpuName,
+        gpu_vram_gb: hasWebGPU ? 2 : 0,
+        is_mobile: isMobile,
+        benchmark_score: 0
+      };
+
+      // Hardware Score calculation matching _lib.js
+      let cpuScore = cores <= 2 ? 5 : (cores <= 4 ? 15 : (cores <= 8 ? 25 : 35));
+      let ramScore = ram <= 2 ? 3 : (ram <= 4 ? 8 : (ram <= 8 ? 15 : 25));
+      let gpuScore = hasWebGPU ? 20 : (gpuName !== 'Integrated Graphics' ? 10 : 0);
+      let score = cpuScore + ramScore + gpuScore;
+      if (isMobile) score = Math.max(5, Math.floor(score * 0.5));
+      detectedHardware.benchmark_score = score * 1000;
+
+      // Populate Web Miner UI
+      const hwCpu = document.getElementById('web-hw-cpu');
+      const hwGpu = document.getElementById('web-hw-gpu');
+      const hwScore = document.getElementById('web-hw-score');
+      if (hwCpu) hwCpu.textContent = `CPU: ${cores} Cores Detected`;
+      if (hwGpu) hwGpu.textContent = `GPU: ${gpuName}`;
+      if (hwScore) hwScore.textContent = `Hardware Power Grade: ${score}/100`;
+
+      // Set thread selector options
+      const select = document.getElementById('web-miner-threads');
+      if (select) {
+        select.innerHTML = '';
+        for (let i = 1; i <= cores; i++) {
+          const opt = document.createElement('option');
+          opt.value = i;
+          opt.textContent = i;
+          if (i === Math.max(1, Math.floor(cores / 2))) {
+            opt.selected = true;
+            webMiningThreads = i;
+          }
+          select.appendChild(opt);
+        }
+      }
+
+      updateEstimatedRate();
+
+      // Highlight recommended miner download based on OS
+      try {
+        const ua = navigator.userAgent.toLowerCase();
+        if (ua.includes('windows')) {
+          const btn = document.getElementById('download-windows');
+          if (btn) {
+            btn.style.borderColor = 'var(--color-primary)';
+            btn.style.boxShadow = '0 0 16px rgba(34, 197, 94, 0.25)';
+            const badge = document.createElement('div');
+            badge.style.fontSize = '9px';
+            badge.style.fontWeight = 'bold';
+            badge.style.color = '#000';
+            badge.style.background = 'var(--color-primary-light)';
+            badge.style.padding = '2px 8px';
+            badge.style.borderRadius = '4px';
+            badge.style.marginTop = '4px';
+            badge.textContent = 'DOWNLOAD';
+            btn.appendChild(badge);
+          }
+        }
+      } catch (e) {
+        console.error('OS recommendation error:', e);
+      }
+    }
+
+    function updateEstimatedRate() {
+      const baseRate = 0.416; // 10 VP / 24h = ~0.416 VP/h
+      const score = detectedHardware.benchmark_score / 1000;
+      
+      let tierMultiplier = 1.0;
+      if (score >= 70) tierMultiplier = 1.8;
+      else if (score >= 50) tierMultiplier = 1.4;
+      else if (score >= 35) tierMultiplier = 1.0;
+      else if (score >= 20) tierMultiplier = 0.7;
+      else tierMultiplier = 0.4;
+
+      const modeMultiplier = webMiningMode === 'pro' ? 1.5 : 1.0;
+      const estRate = baseRate * tierMultiplier * modeMultiplier * 0.6 * (webMiningThreads / detectedHardware.cpu_cores);
+      const estRateEl = document.getElementById('web-miner-est-rate');
+      if (estRateEl) estRateEl.textContent = `~${estRate.toFixed(2)} VP/h`;
+    }
+
+    function toggleWebMinerMode() {
+      const btn = document.getElementById('web-miner-mode-btn');
+      if (webMiningMode === 'normal') {
+        webMiningMode = 'pro';
+        btn.textContent = 'Pro Mode';
+        btn.style.borderColor = 'var(--color-danger)';
+        btn.style.color = 'var(--color-danger)';
+        document.getElementById('web-miner-threads').value = detectedHardware.cpu_cores;
+        webMiningThreads = detectedHardware.cpu_cores;
+      } else {
+        webMiningMode = 'normal';
+        btn.textContent = 'Normal Mode';
+        btn.style.borderColor = 'var(--color-primary)';
+        btn.style.color = 'var(--color-primary-light)';
+        const defThreads = Math.max(1, Math.floor(detectedHardware.cpu_cores / 2));
+        document.getElementById('web-miner-threads').value = defThreads;
+        webMiningThreads = defThreads;
+      }
+      updateEstimatedRate();
+      if (webMiningActive) {
+        stopWorkers();
+        startWebMiningLoop();
+      }
+    }
+
+    function updateWebMinerThreads() {
+      webMiningThreads = parseInt(document.getElementById('web-miner-threads').value);
+      updateEstimatedRate();
+      if (webMiningActive) {
+        stopWorkers();
+        startWebMiningLoop();
+      }
+    }
+
+    function toggleWebMiner() {
+      const btn = document.getElementById('web-miner-btn');
+      if (webMiningActive) {
+        webMiningActive = false;
+        stopWorkers();
+        btn.textContent = 'Start Web Mining';
+        btn.style.background = 'var(--color-primary)';
+        document.getElementById('web-miner-status-dot').className = 'status-dot';
+        document.getElementById('web-miner-status-text').textContent = 'Idle';
+        document.getElementById('web-miner-status-text').style.color = 'var(--color-text-muted)';
+        document.getElementById('web-miner-hashrate').textContent = '0 H/s';
+      } else {
+        webMiningActive = true;
+        btn.textContent = 'Stop Web Mining';
+        btn.style.background = 'var(--color-danger)';
+        document.getElementById('web-miner-status-dot').className = 'status-dot active';
+        document.getElementById('web-miner-status-text').textContent = 'Initializing Web Workers...';
+        document.getElementById('web-miner-status-text').style.color = 'var(--color-primary-light)';
+        
+        startWebMiningLoop();
+      }
+    }
+
+    function stopWorkers() {
+      webMiningWorkers.forEach(w => w.terminate());
+      webMiningWorkers = [];
+      webMinerHashrates = {};
+    }
+
+    async function startWebMiningLoop() {
+      if (!webMiningActive) return;
+      
+      try {
+        const session = await getSession();
+        if (!session) {
+          showToast('Session expired. Sign in again.', 'error');
+          toggleWebMiner();
+          return;
+        }
+
+        document.getElementById('web-miner-status-text').textContent = 'Requesting challenge...';
+        
+        // Fetch Challenge
+        const res = await fetch('/api/mining/web-mine?action=challenge', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + session.access_token
+          },
+          body: JSON.stringify({
+            cpu_cores: detectedHardware.cpu_cores,
+            ram_gb: detectedHardware.ram_gb,
+            gpu_name: detectedHardware.gpu_name,
+            gpu_vram_gb: detectedHardware.gpu_vram_gb,
+            is_mobile: detectedHardware.is_mobile,
+            benchmark_score: detectedHardware.benchmark_score,
+            mining_mode: webMiningMode
+          })
+        });
+        
+        if (res.status === 401) {
+          showToast('Authentication check failed.', 'error');
+          toggleWebMiner();
+          return;
+        }
+        
+        if (!res.ok) {
+          document.getElementById('web-miner-status-text').textContent = 'Challenge delay. Retrying...';
+          setTimeout(startWebMiningLoop, 5000);
+          return;
+        }
+
+        const data = await res.json();
+        const challenge = data.challenge;
+        const difficulty = data.difficulty;
+        const challengeId = data.challenge_id;
+
+        document.getElementById('web-miner-status-text').textContent = `Mining (Diff: ${difficulty} zeros)...`;
+
+        // Start Web Workers
+        let solved = false;
+        stopWorkers();
+        
+        for (let i = 0; i < webMiningThreads; i++) {
+          const w = new Worker('/js/web-miner-worker.js');
+          webMiningWorkers.push(w);
+          
+          w.postMessage({
+            action: 'start',
+            challenge: challenge,
+            difficulty: difficulty,
+            workerId: i
+          });
+          
+          w.onmessage = async function(event) {
+            const msg = event.data;
+            if (msg.status === 'progress') {
+              webMinerHashrates[i] = msg.hashrate;
+              let totalHash = 0;
+              Object.values(webMinerHashrates).forEach(h => totalHash += h);
+              document.getElementById('web-miner-hashrate').textContent = `${Math.round(totalHash)} H/s`;
+            } else if (msg.status === 'success' && !solved) {
+              solved = true;
+              stopWorkers();
+              
+              document.getElementById('web-miner-status-text').textContent = 'Verifying solution...';
+              
+              // Submit Solution
+              try {
+                const subRes = await fetch('/api/mining/web-mine?action=submit', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + session.access_token
+                  },
+                  body: JSON.stringify({
+                    nonce: msg.nonce,
+                    pow_solution: msg.nonce,
+                    challenge_id: challengeId,
+                    mining_mode: webMiningMode
+                  })
+                });
+                
+                if (subRes.ok) {
+                  const subData = await subRes.json();
+                  webMiningSharesSolved++;
+                  document.getElementById('web-miner-shares').textContent = webMiningSharesSolved;
+                  document.getElementById('web-miner-status-text').textContent = `Mined block! +${subData.reward_vp} VP`;
+                  
+                  // Update wallet balance instantly in dashboard UI
+                  document.getElementById('vp-balance').textContent = formatNumber(subData.vp_balance);
+                  showToast(`Block mined! +${subData.reward_vp} VP credited to wallet.`, 'success');
+                  
+                  // Cooldown gap before next block
+                  setTimeout(startWebMiningLoop, 8000);
+                } else {
+                  const errData = await subRes.json();
+                  document.getElementById('web-miner-status-text').textContent = errData.error || 'Verification failed';
+                  setTimeout(startWebMiningLoop, 5000);
+                }
+              } catch(err) {
+                document.getElementById('web-miner-status-text').textContent = 'Submit exception. Retrying...';
+                setTimeout(startWebMiningLoop, 5000);
+              }
+            }
+          };
+        }
+        
+      } catch(e) {
+        document.getElementById('web-miner-status-text').textContent = 'Synchronization delay...';
+        setTimeout(startWebMiningLoop, 6000);
+      }
+    }
+
+    async function initDashboard() {
+      // Capture referral parameter if present on dashboard URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const refCode = urlParams.get('ref');
+      if (refCode) {
+        localStorage.setItem('referred_by_code', refCode.trim().toUpperCase());
+      }
+
+      detectBrowserHardware();
+      const session = await getSession();
+      
+      if (!session) {
+        document.getElementById('loading-overlay').style.display = 'none';
+        document.getElementById('signin-screen').classList.remove('hidden');
+        return;
+      }
+
+      currentUser = session.user;
+      
+      // Check verification state
+      const isVerified = currentUser.user_metadata?.is_verified;
+      const isGoogle = currentUser.app_metadata?.provider === 'google';
+      
+      if (!isVerified && !isGoogle) {
+        document.getElementById('loading-overlay').style.display = 'none';
+        document.getElementById('verification-screen').classList.remove('hidden');
+        document.getElementById('verification-email-display').textContent = currentUser.email;
+        // Trigger code email sending automatically on first signup/login
+        resendVerificationCode(true); // silent send
+        return;
+      }
+      
+      document.getElementById('loading-overlay').style.display = 'none';
+      document.getElementById('dashboard').classList.add('active');
+      
+      const navUser = document.getElementById('nav-user');
+      navUser.style.display = 'flex';
+      document.getElementById('user-email').textContent = currentUser.email;
+      
+      const avatarUrl = currentUser.user_metadata?.avatar_url;
+      if (avatarUrl) {
+        document.getElementById('user-avatar').src = avatarUrl;
+      }
+
+      const displayName = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
+      document.getElementById('display-name').textContent = displayName;
+
+      await loadUserData();
+      initVDXWallet();
+      initVDXContractPanel();
+    }
+
+    async function loadUserData() {
+      try {
+        const [profile, wallet, tokens, transactions] = await Promise.all([
+          fetchProfile(currentUser.id),
+          fetchWallet(currentUser.id),
+          fetchApiTokens(currentUser.id),
+          fetchTransactions(currentUser.id, 20)
+        ]);
+
+        userProfile = profile;
+        userWallet = wallet;
+
+        // Apply referral code if exists and user isn't referred yet
+        if (profile && !profile.referred_by) {
+          const storedRefCode = localStorage.getItem('referred_by_code');
+          if (storedRefCode && storedRefCode !== profile.referral_code) {
+            try {
+              const { data: referrer, error: refError } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('referral_code', storedRefCode)
+                .maybeSingle();
+              if (referrer && referrer.id) {
+                const { error: updateError } = await supabase
+                  .from('profiles')
+                  .update({ referred_by: referrer.id })
+                  .eq('id', currentUser.id);
+                if (!updateError) {
+                  profile.referred_by = referrer.id;
+                  localStorage.removeItem('referred_by_code');
+                  console.log('Referral code linked successfully:', storedRefCode);
+                }
+              }
+            } catch (err) {
+              console.error('Failed to link referral:', err);
+            }
+          }
+        }
+
+        if (wallet) {
+          document.getElementById('vp-balance').textContent = formatNumber(wallet.vp_balance_cached || 0);
+          document.getElementById('vdx-address').textContent = shortAddress(wallet.vdx_address);
+          document.getElementById('streak-badge').textContent = (wallet.current_streak || 0) + ' days';
+          document.getElementById('longest-streak').textContent = (wallet.longest_streak || 0) + ' days';
+        }
+
+        if (profile && profile.referral_code) {
+          const refLink = window.location.origin + '/?ref=' + profile.referral_code;
+          document.getElementById('referral-link').textContent = refLink;
+        }
+
+        if (tokens && tokens.length > 0) {
+          const tokenList = document.getElementById('token-list');
+          tokenList.innerHTML = '';
+          tokens.forEach(token => {
+            const item = document.createElement('div');
+            item.className = 'token-item';
+            const isActive = token.is_active && !token.revoked_at;
+            item.innerHTML = `
+              <div class="token-info">
+                <span class="token-name">${token.name || 'Mining Device'} <span class="token-prefix">(${token.token_prefix}...)</span></span>
+                <span class="token-meta">Created: ${formatDate(token.created_at)} | Last used: ${formatDate(token.last_used_at)}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="token-status-badge ${isActive ? 'active' : 'inactive'}">${isActive ? 'Active' : 'Revoked'}</span>
+                ${isActive ? `<button class="revoke-btn" onclick="handleRevokeToken('${token.id}')">Revoke</button>` : ''}
+              </div>
+            `;
+            tokenList.appendChild(item);
+          });
+        }
+
+        if (transactions && transactions.length > 0) {
+          const txList = document.getElementById('tx-list');
+          txList.innerHTML = '';
+          transactions.forEach(tx => {
+            const item = document.createElement('div');
+            item.className = 'tx-item';
+            item.innerHTML = `
+              <div class="tx-left">
+                <span class="tx-type">${tx.type}${tx.description ? ' — ' + tx.description : ''}</span>
+                <span class="tx-date">${formatDate(tx.created_at)}</span>
+              </div>
+              <span class="tx-amount ${tx.amount > 0 ? 'positive' : 'negative'}">${tx.amount > 0 ? '+' : ''}${formatNumber(tx.amount)} VP</span>
+            `;
+            txList.appendChild(item);
+          });
+        }
+
+        await loadMiningSessions();
+        
+        const referralCount = transactions?.filter(t => t.type === 'referral').length || 0;
+        const referralEarnings = transactions?.filter(t => t.type === 'referral').reduce((sum, t) => sum + t.amount, 0) || 0;
+        document.getElementById('referral-count').textContent = referralCount;
+        document.getElementById('referral-earnings').textContent = formatNumber(referralEarnings) + ' VP';
+
+      } catch (err) {
+        console.error('Error loading data:', err);
+      }
+    }
+
+    function dur(sec) {
+      if(!sec) return '0m';
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      return h ? h + 'h ' + m + 'm' : m + 'm';
+    }
+
+    async function loadMiningSessions() {
+      const sessions = await fetchMiningSessions(currentUser.id);
+      
+      // Update main status card
+      if (sessions && sessions.length > 0) {
+        const activeSession = sessions.find(s => s.status === 'active');
+        if (activeSession) {
+          document.getElementById('status-dot').className = 'status-dot active';
+          document.getElementById('status-text').textContent = 'Mining active on ' + (activeSession.device_name || 'device');
+          const totalH = Math.floor((activeSession.total_uptime_seconds || 0) / 3600);
+          const totalM = Math.floor(((activeSession.total_uptime_seconds || 0) % 3600) / 60);
+          document.getElementById('total-uptime').textContent = totalH + 'h ' + totalM + 'm';
+          
+          const todayUptime = activeSession.total_uptime_seconds || 0;
+          const todayH = Math.floor(todayUptime / 3600);
+          const todayM = Math.floor((todayUptime % 3600) / 60);
+          document.getElementById('uptime-today').textContent = todayH + 'h ' + todayM + 'm';
+        } else {
+          document.getElementById('status-dot').className = 'status-dot';
+          document.getElementById('status-text').textContent = 'Not mining';
+        }
+
+        // Render Active Devices list
+        const devList = document.getElementById('active-devices-list');
+        devList.innerHTML = '';
+        
+        sessions.forEach(s => {
+          const item = document.createElement('div');
+          item.className = 'token-item';
+          item.style.display = 'flex';
+          item.style.flexDirection = 'column';
+          item.style.gap = '8px';
+          item.style.padding = '16px';
+          item.style.background = 'rgba(34,197,94,0.02)';
+          item.style.border = '1px solid var(--color-border)';
+          item.style.borderRadius = '10px';
+          item.style.marginBottom = '8px';
+          
+          const isActive = s.status === 'active';
+          const lastSeen = s.last_heartbeat_at ? formatDate(s.last_heartbeat_at) : 'Never';
+          
+          let platformIcon = '💻';
+          if (s.device_os === 'windows') platformIcon = '🪟';
+          else if (s.device_os === 'android') platformIcon = '📱';
+          else if (s.device_os === 'linux') platformIcon = '🐧';
+
+          // Extract hardware details if available
+          let hwDetails = '';
+          if (s.hardware_score) {
+            hwDetails = ` | Score: ${s.hardware_score}/100 | Mode: ${s.mining_mode || 'normal'}`;
+          }
+
+          item.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:18px;">${platformIcon}</span>
+                <span style="font-weight:600;color:var(--color-text);">${s.device_name || 'CLI Miner Rig'}</span>
+                <span class="token-status-badge ${isActive ? 'active' : 'inactive'}" style="font-size:10px;">${s.status.toUpperCase()}</span>
+              </div>
+              <span style="font-size:12px;color:var(--color-primary-light);font-weight:600;">${dur(s.total_uptime_seconds || 0)} active</span>
+            </div>
+            <div style="font-size:12px;color:var(--color-text-muted);display:flex;justify-content:space-between;width:100%;">
+              <span>Last Heartbeat: ${lastSeen}${hwDetails}</span>
+              <span style="font-family:monospace;font-size:10px;">FP: ${s.device_fingerprint ? s.device_fingerprint.slice(0, 16) + '...' : 'Unknown'}</span>
+            </div>
+          `;
+          devList.appendChild(item);
+        });
+      } else {
+        document.getElementById('status-dot').className = 'status-dot';
+        document.getElementById('status-text').textContent = 'Not mining';
+        document.getElementById('active-devices-list').innerHTML = `
+          <div class="no-tx" style="padding: 24px;">No devices connected. Download the desktop miner below to get started!</div>
+        `;
+      }
+    }
+
+    async function handleRevokeToken(tokenId) {
+      if (!confirm('Revoke this token? The CLI miner using it will stop working.')) return;
+      const success = await revokeToken(tokenId);
+      if (success) {
+        showToast('Token revoked successfully', 'success');
+        await loadUserData();
+      } else {
+        showToast('Failed to revoke token', 'error');
+      }
+    }
+
+    function copyReferralLink() {
+      const link = document.getElementById('referral-link').textContent;
+      navigator.clipboard.writeText(link).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        const original = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.style.background = '#16a34a';
+        setTimeout(() => { btn.textContent = original; btn.style.background = ''; }, 2000);
+        showToast('Referral link copied!', 'success');
+      });
+    }
+
+    function onAuthSuccess(user) { if (window.location.hash) location.reload(); }
+    function onAuthSignOut() { window.location.href = '/'; }
+
+    let authMode = 'signin';
+
+    function switchAuthTab(mode) {
+      authMode = mode;
+      document.getElementById('tab-signin').classList.toggle('active', mode === 'signin');
+      document.getElementById('tab-signup').classList.toggle('active', mode === 'signup');
+      document.getElementById('auth-submit-btn').textContent = mode === 'signin' ? 'Sign In' : 'Create Account';
+      document.getElementById('auth-error').style.display = 'none';
+      document.getElementById('auth-success').style.display = 'none';
+      const pwField = document.getElementById('auth-password');
+      pwField.setAttribute('autocomplete', mode === 'signin' ? 'current-password' : 'new-password');
+    }
+
+    async function resendVerificationCode(silent = false) {
+      if (!currentUser) return;
+      if (!silent) {
+        showToast('Sending verification code...', 'info');
+      }
+      try {
+        const r = await fetch('/api/auth/send-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: currentUser.email })
+        });
+        const data = await r.json();
+        if (r.ok) {
+          if (!silent) {
+            showToast('Verification code sent to email!', 'success');
+            document.getElementById('verification-success').style.display = 'block';
+            document.getElementById('verification-success').textContent = 'Verification code resent successfully!';
+            document.getElementById('verification-error').style.display = 'none';
+          }
+        } else {
+          throw new Error(data.error || 'Failed to send code');
+        }
+      } catch (err) {
+        if (!silent) {
+          showToast(err.message, 'error');
+          document.getElementById('verification-error').style.display = 'block';
+          document.getElementById('verification-error').textContent = err.message;
+        }
+      }
+    }
+
+    async function handleVerificationSubmit(event) {
+      event.preventDefault();
+      const code = document.getElementById('verification-code').value.trim();
+      const btn = document.getElementById('verification-submit-btn');
+      const errEl = document.getElementById('verification-error');
+      const succEl = document.getElementById('verification-success');
+
+      errEl.style.display = 'none';
+      succEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Verifying...';
+
+      try {
+        const r = await fetch('/api/auth/verify-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: currentUser.email, code })
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'Verification failed');
+
+        succEl.style.display = 'block';
+        succEl.textContent = 'Verification successful! Redirecting...';
+        showToast('Verification successful!', 'success');
+        
+        // Refresh token metadata in session
+        await supabase.auth.refreshSession();
+        setTimeout(() => {
+          location.reload();
+        }, 1500);
+      } catch (err) {
+        errEl.style.display = 'block';
+        errEl.textContent = err.message;
+        btn.disabled = false;
+        btn.textContent = 'Verify Account';
+      }
+    }
+
+    async function handleAuthSubmit(event) {
+      event.preventDefault();
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      const btn = document.getElementById('auth-submit-btn');
+      const errEl = document.getElementById('auth-error');
+      const succEl = document.getElementById('auth-success');
+
+      errEl.style.display = 'none';
+      succEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = authMode === 'signin' ? 'Signing in...' : 'Creating account...';
+
+      try {
+        if (authMode === 'signup') {
+          const { data, error } = await signUpWithEmail(email, password);
+          if (error) throw error;
+          
+          // Trigger custom Welcome email dispatch in the background
+          fetch('/api/waitlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, type: 'signup' })
+          }).catch(err => console.error('Failed to trigger welcome email:', err));
+
+          succEl.style.display = 'block';
+          succEl.textContent = 'Account created successfully! Loading verification gate...';
+          showToast('Account created! Please verify your email.', 'success');
+          
+          setTimeout(() => {
+            location.reload();
+          }, 1500);
+        } else {
+          const { data, error } = await signInWithEmail(email, password);
+          if (error) throw error;
+          location.reload();
+        }
+      } catch (err) {
+        errEl.style.display = 'block';
+        errEl.textContent = err.message || 'Authentication failed. Please try again.';
+        btn.disabled = false;
+        btn.textContent = authMode === 'signin' ? 'Sign In' : 'Create Account';
+      }
+    }
+
+    async function loadLeaderboard() {
+      try {
+        const r = await fetch('/api/mining/leaderboard?limit=20');
+        const data = await r.json();
+        const el = document.getElementById('leaderboard-list');
+        if (!data.leaderboard || data.leaderboard.length === 0) {
+          el.innerHTML = '<div class="no-tx">No miners yet. Be the first to start mining!</div>';
+          return;
+        }
+        el.innerHTML = data.leaderboard.map((m, i) => {
+          const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i + 1);
+          const isMe = currentUser && m.id === currentUser.id;
+          return '<div class="tx-item" style="' + (isMe ? 'border-color:#22c55e;background:rgba(34,197,94,0.1);' : '') + '">' +
+            '<div class="tx-left">' +
+            '<span class="tx-type" style="display:flex;align-items:center;gap:8px;">' +
+            '<span style="font-size:18px;">' + medal + '</span>' +
+            escapeHtml(m.username || 'Anonymous') +
+            (isMe ? '<span style="font-size:11px;background:rgba(34,197,94,0.2);padding:2px 8px;border-radius:4px;color:#22c55e;">YOU</span>' : '') +
+            '</span>' +
+            '<span class="tx-date">Streak: ' + m.current_streak + ' days | Best: ' + m.longest_streak + ' days</span>' +
+            '</div>' +
+            '<span class="tx-amount positive">' + formatNumber(m.vp_balance) + ' VP</span>' +
+            '</div>';
+        }).join('');
+        
+        // Set rank
+        const myIndex = data.leaderboard.findIndex(m => currentUser && m.id === currentUser.id);
+        document.getElementById('rank').textContent = myIndex >= 0 ? '#' + (myIndex + 1) : '#—';
+      } catch (e) { console.error('Leaderboard error:', e); }
+    }
+
+    
+
+    function showCreateTokenModal() {
+      document.getElementById('token-modal').style.display = 'flex';
+      document.getElementById('token-result').style.display = 'none';
+      document.getElementById('create-token-btn').style.display = 'block';
+      document.getElementById('create-token-btn').disabled = false;
+      document.getElementById('create-token-btn').textContent = 'Generate Token';
+      document.getElementById('token-device-name').value = '';
+    }
+    function hideCreateTokenModal() {
+      document.getElementById('token-modal').style.display = 'none';
+    }
+    async function handleCreateToken() {
+      const btn = document.getElementById('create-token-btn');
+      const deviceName = document.getElementById('token-device-name').value.trim();
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+      try {
+        const result = await createApiToken('CLI Miner', deviceName || null);
+        if (!result.success) throw new Error(result.error || 'Failed to create token');
+        document.getElementById('token-result').style.display = 'block';
+        document.getElementById('token-display').textContent = result.token;
+        btn.style.display = 'none';
+        showToast('Token created! Copy it now — you won\'t see it again.', 'success');
+        await loadUserData();
+      } catch (err) {
+        showToast(err.message || 'Failed to create token', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Generate Token';
+      }
+    }
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('modal-overlay')) hideCreateTokenModal();
+    });
+    document.getElementById('token-display')?.addEventListener('click', function() {
+      const text = this.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Token copied to clipboard!', 'success');
+      });
+    });
+
+    // ============================================================
+    // VDX NATIVE CHAIN WALLET CONTROLLER (Chain ID 7201)
+    // ============================================================
+    // Empty base → same-origin REST rewrites (/api/account, /api/tx, …)
+    const VDX_RPC_URL = '';
+    const VDX_CHAIN_ID = (window.VERDEX_NETWORK && window.VERDEX_NETWORK.chainId) || 7201;
+    let vdxPrivateKey = localStorage.getItem('vdx_private_key');
+    let vdxAddress = '';
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
+
+    function hexToBytes(hex) {
+      let bytes = [];
+      for (let c = 0; c < hex.length; c += 2)
+        bytes.push(parseInt(hex.substr(c, 2), 16));
+      return bytes;
+    }
+
+    function initVDXWallet() {
+      try {
+        if (currentUser && currentUser.user_metadata && currentUser.user_metadata.enc_pkey) {
+          const key = CryptoJS.SHA256(currentUser.id).toString();
+          try {
+            const decPkey = CryptoJS.AES.decrypt(currentUser.user_metadata.enc_pkey, key).toString(CryptoJS.enc.Utf8);
+            if (decPkey && decPkey.length === 64) {
+              localStorage.setItem('vdx_private_key', decPkey);
+              if (currentUser.user_metadata.enc_mnemonic) {
+                const decMnemonic = CryptoJS.AES.decrypt(currentUser.user_metadata.enc_mnemonic, key).toString(CryptoJS.enc.Utf8);
+                localStorage.setItem('vdx_mnemonic', decMnemonic);
+              }
+            }
+          } catch (e) {
+            console.error('Failed to decrypt cloud wallet backup:', e);
+          }
+        }
+
+        const walletType = localStorage.getItem('vdx_wallet_type');
+        vdxPrivateKey = localStorage.getItem('vdx_private_key');
+
+        if (walletType === 'metamask') {
+          initMetaMaskWallet();
+        } else if (vdxPrivateKey) {
+          loadExistingWallet();
+          if (currentUser && (!currentUser.user_metadata || !currentUser.user_metadata.enc_pkey)) {
+            syncWalletCredentialsToMetadata(vdxPrivateKey, localStorage.getItem('vdx_mnemonic'));
+          }
+        } else {
+          // No active wallet: show setup card, hide active wallet card, and reset displays
+          document.getElementById('vdx-wallet-setup').style.display = 'flex';
+          document.getElementById('vdx-wallet-active').style.display = 'none';
+          document.getElementById('vdx-address').textContent = 'Not set up';
+        }
+      } catch (err) {
+        showToast('Wallet initialization failed: ' + err.message, 'error');
+        console.error('Wallet init error:', err);
+      }
+    }
+
+    async function connectMetaMaskWallet() {
+      if (typeof window === 'undefined' || !window.ethereum) {
+        showToast('No MetaMask found. Please install MetaMask.', 'error');
+        return;
+      }
+      try {
+        showToast('Connecting MetaMask...', 'info');
+        
+        await window.addVerdexToWallet();
+        
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (!accounts || accounts.length === 0) {
+          throw new Error('No accounts returned from MetaMask.');
+        }
+        
+        const address = accounts[0];
+        localStorage.setItem('vdx_wallet_type', 'metamask');
+        localStorage.setItem('vdx_metamask_address', address);
+        
+        showToast('MetaMask connected successfully!', 'success');
+        initVDXWallet();
+      } catch (err) {
+        showToast('MetaMask connection failed: ' + err.message, 'error');
+      }
+    }
+
+    async function initMetaMaskWallet() {
+      if (typeof window === 'undefined' || !window.ethereum) {
+        localStorage.removeItem('vdx_wallet_type');
+        initVDXWallet();
+        return;
+      }
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (!accounts || accounts.length === 0) {
+          localStorage.removeItem('vdx_wallet_type');
+          initVDXWallet();
+          return;
+        }
+        
+        vdxAddress = accounts[0];
+        
+        document.getElementById('vdx-wallet-setup').style.display = 'none';
+        document.getElementById('vdx-wallet-active').style.display = 'flex';
+        
+        document.getElementById('vdx-address-full').textContent = vdxAddress;
+        document.getElementById('vdx-deposit-address-display').textContent = vdxAddress;
+        document.getElementById('vdx-address').textContent = shortAddress(vdxAddress);
+        
+        try {
+          document.getElementById('vdx-qr-code').src = new QRious({ value: vdxAddress, size: 150 }).toDataURL();
+        } catch (err) {
+          document.getElementById('vdx-qr-code').src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + vdxAddress;
+        }
+        
+        syncAddressToSupabase(vdxAddress);
+        pollVDXBalance();
+        
+        if (!window.vdxMetaMaskListenersSet) {
+          window.ethereum.on('accountsChanged', (accounts) => {
+            if (accounts.length === 0) {
+              disconnectVDXWalletSilent();
+            } else {
+              initMetaMaskWallet();
+            }
+          });
+          window.ethereum.on('chainChanged', () => {
+            window.location.reload();
+          });
+          window.vdxMetaMaskListenersSet = true;
+        }
+        
+        updateWalletUIForMetaMask(true);
+      } catch (err) {
+        showToast('MetaMask init failed: ' + err.message, 'error');
+      }
+    }
+
+    function updateWalletUIForMetaMask(isMetaMask) {
+      const badge = document.getElementById('vdx-wallet-type-badge');
+      if (badge) {
+        if (isMetaMask) {
+          badge.innerHTML = `
+            <span class="streak-badge" style="background: rgba(226, 118, 27, 0.1); border-color: rgba(226, 118, 27, 0.3); color: #e2761b; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" style="width:12px; height:12px;"> MetaMask
+            </span>
+          `;
+        } else {
+          badge.innerHTML = `
+            <span class="streak-badge" style="background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.3); color: var(--color-primary-light); font-size: 11px; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;">
+              🔑 Native
+            </span>
+          `;
+        }
+      }
+      
+      const showKeyBtn = document.getElementById('vdx-btn-show-key');
+      const showSeedBtn = document.getElementById('vdx-btn-show-seed');
+      const disconnectBtn = document.getElementById('vdx-btn-disconnect');
+      
+      if (showKeyBtn) showKeyBtn.style.display = isMetaMask ? 'none' : 'inline-block';
+      if (showSeedBtn) showSeedBtn.style.display = isMetaMask ? 'none' : 'inline-block';
+      
+      if (disconnectBtn) {
+        disconnectBtn.textContent = isMetaMask ? '❌ Disconnect MetaMask' : '❌ Log Out Wallet';
+      }
+    }
+
+    function disconnectVDXWalletSilent() {
+      localStorage.removeItem('vdx_wallet_type');
+      localStorage.removeItem('vdx_metamask_address');
+      localStorage.removeItem('vdx_private_key');
+      localStorage.removeItem('vdx_mnemonic');
+      vdxPrivateKey = null;
+      vdxAddress = '';
+      initVDXWallet();
+    }
+
+    function loadExistingWallet() {
+      const EC = new elliptic.ec('secp256k1');
+      const key = EC.keyFromPrivate(vdxPrivateKey, 'hex');
+      const pubKey = key.getPublic('hex');
+      
+      const pubBytes = hexToBytes(pubKey);
+      let hashHex = '';
+      
+      if (typeof sha3_256 !== 'undefined') {
+        hashHex = sha3_256(pubBytes);
+      } else if (typeof js_sha3 !== 'undefined' && js_sha3.sha3_256) {
+        hashHex = js_sha3.sha3_256(pubBytes);
+      } else if (typeof CryptoJS !== 'undefined' && CryptoJS.SHA3) {
+        hashHex = CryptoJS.SHA3(CryptoJS.enc.Hex.parse(pubKey), { outputLength: 256 }).toString(CryptoJS.enc.Hex);
+      } else {
+        const fallbackWallet = new ethers.Wallet(vdxPrivateKey);
+        hashHex = fallbackWallet.address.replace('0x', '');
+      }
+      
+      vdxAddress = '0x' + hashHex.slice(-40);
+
+      document.getElementById('vdx-wallet-setup').style.display = 'none';
+      document.getElementById('vdx-wallet-active').style.display = 'flex';
+      document.getElementById('vdx-address-full').textContent = vdxAddress;
+      document.getElementById('vdx-deposit-address-display').textContent = vdxAddress;
+      
+      try {
+        document.getElementById('vdx-qr-code').src = new QRious({ value: vdxAddress, size: 150 }).toDataURL();
+      } catch (err) {
+        document.getElementById('vdx-qr-code').src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + vdxAddress;
+      }
+
+      syncAddressToSupabase(vdxAddress);
+      pollVDXBalance();
+      updateWalletUIForMetaMask(false);
+    }
+
+    function autoGenerateVDXWallet() {
+      const wallet = ethers.Wallet.createRandom();
+      const priv = wallet.privateKey.replace('0x', '');
+      const phrase = wallet.mnemonic.phrase;
+
+      saveAndActivateWallet(priv, phrase);
+    }
+
+    function saveAndActivateWallet(priv, phrase) {
+      localStorage.setItem('vdx_private_key', priv);
+      localStorage.setItem('vdx_mnemonic', phrase);
+      localStorage.removeItem('vdx_temp_private_key');
+      localStorage.removeItem('vdx_temp_mnemonic');
+
+      const EC = new elliptic.ec('secp256k1');
+      const key = EC.keyFromPrivate(priv, 'hex');
+      const pubKey = key.getPublic('hex');
+      const pubBytes = [];
+      for (let c = 0; c < pubKey.length; c += 2) pubBytes.push(parseInt(pubKey.substr(c, 2), 16));
+      let hashHex = '';
+      if (typeof sha3_256 !== 'undefined') {
+        hashHex = sha3_256(pubBytes);
+      } else {
+        const fw = new ethers.Wallet(priv);
+        hashHex = fw.address.replace('0x', '');
+      }
+      vdxAddress = '0x' + hashHex.slice(-40);
+
+      document.getElementById('vdx-mnemonic-creation-display').style.display = 'none';
+      document.getElementById('vdx-wallet-setup').style.display = 'none';
+      document.getElementById('vdx-wallet-active').style.display = 'flex';
+      document.getElementById('vdx-address-full').textContent = vdxAddress;
+      document.getElementById('vdx-deposit-address-display').textContent = vdxAddress;
+
+      try {
+        document.getElementById('vdx-qr-code').src = new QRious({ value: vdxAddress, size: 150 }).toDataURL();
+      } catch (err) {
+        document.getElementById('vdx-qr-code').src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + vdxAddress;
+      }
+
+      syncAddressToSupabase(vdxAddress);
+      syncWalletCredentialsToMetadata(priv, phrase);
+      pollVDXBalance();
+    }
+
+    async function syncAddressToSupabase(addr) {
+      try {
+        const session = await getSession();
+        if (session) {
+          const res = await fetch('/api/wallet', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + session.access_token
+            },
+            body: JSON.stringify({ vdx_address: addr })
+          });
+          const json = await res.json();
+          if (!json.success) console.error('Wallet sync error:', json.error);
+        }
+      } catch (err) {
+        console.error('Supabase sync error:', err);
+      }
+    }
+
+    async function syncWalletCredentialsToMetadata(priv, phrase) {
+      try {
+        const session = await getSession();
+        if (session && session.user) {
+          const key = CryptoJS.SHA256(session.user.id).toString();
+          const encMnemonic = CryptoJS.AES.encrypt(phrase || '', key).toString();
+          const encPkey = CryptoJS.AES.encrypt(priv, key).toString();
+          
+          const { error } = await supabase.auth.updateUser({
+            data: {
+              enc_mnemonic: encMnemonic,
+              enc_pkey: encPkey
+            }
+          });
+          if (error) console.error('Cloud metadata sync failed:', error.message);
+          else console.log('Wallet credentials synced to cloud metadata successfully.');
+        }
+      } catch (err) {
+        console.error('Wallet cloud backup error:', err);
+      }
+    }
+
+    let importType = 'mnemonic';
+
+    function createVDXWallet() {
+      try {
+        const wallet = ethers.Wallet.createRandom();
+        const priv = wallet.privateKey.replace('0x', '');
+        const phrase = wallet.mnemonic.phrase;
+
+        const words = phrase.split(' ');
+        const grid = document.getElementById('vdx-mnemonic-words-grid');
+        grid.innerHTML = words.map((w, i) => `
+          <div style="padding: 6px 10px; background: rgba(255,255,255,0.05); border-radius: 6px; font-size:13px; font-family: monospace; display: flex; justify-content: space-between;">
+            <span style="color:var(--color-text-muted); font-size:10px; margin-right:4px;">${i+1}</span>
+            <span style="color:#fff; font-weight:600;">${w}</span>
+          </div>
+        `).join('');
+
+        localStorage.setItem('vdx_temp_private_key', priv);
+        localStorage.setItem('vdx_temp_mnemonic', phrase);
+
+        document.getElementById('vdx-mnemonic-creation-display').style.display = 'flex';
+        document.getElementById('vdx-import-form').style.display = 'none';
+      } catch (err) {
+        showToast('Wallet generation failed: ' + err.message, 'error');
+      }
+    }
+
+    function confirmSavedMnemonic() {
+      const priv = localStorage.getItem('vdx_temp_private_key');
+      const phrase = localStorage.getItem('vdx_temp_mnemonic');
+      if (priv && phrase) {
+        saveAndActivateWallet(priv, phrase);
+        showToast('Wallet configured successfully!', 'success');
+      }
+    }
+
+    function showImportWallet() {
+      document.getElementById('vdx-import-form').style.display = 'flex';
+      document.getElementById('vdx-mnemonic-creation-display').style.display = 'none';
+      setImportType('mnemonic');
+    }
+
+    function hideImportWallet() {
+      document.getElementById('vdx-import-form').style.display = 'none';
+    }
+
+    function setImportType(type) {
+      importType = type;
+      const btnMnemonic = document.getElementById('btn-import-type-mnemonic');
+      const btnKey = document.getElementById('btn-import-type-key');
+      const secMnemonic = document.getElementById('vdx-import-mnemonic-section');
+      const secKey = document.getElementById('vdx-import-key-section');
+
+      if (type === 'mnemonic') {
+        btnMnemonic.className = 'auth-submit';
+        btnMnemonic.style.background = 'var(--color-primary)';
+        btnMnemonic.style.color = '#000';
+        btnKey.className = 'btn btn-outline';
+        btnKey.style.background = 'transparent';
+        btnKey.style.color = '#fff';
+        secMnemonic.style.display = 'flex';
+        secKey.style.display = 'none';
+      } else {
+        btnKey.className = 'auth-submit';
+        btnKey.style.background = 'var(--color-primary)';
+        btnKey.style.color = '#000';
+        btnMnemonic.className = 'btn btn-outline';
+        btnMnemonic.style.background = 'transparent';
+        btnMnemonic.style.color = '#fff';
+        secKey.style.display = 'flex';
+        secMnemonic.style.display = 'none';
+      }
+    }
+
+    function submitImportWallet() {
+      try {
+        if (importType === 'mnemonic') {
+          const phrase = document.getElementById('vdx-import-mnemonic-input').value.trim();
+          if (phrase.split(/\s+/).length !== 12) {
+            showToast('Seed phrase must contain exactly 12 words.', 'error');
+            return;
+          }
+          const wallet = ethers.Wallet.fromMnemonic(phrase);
+          const priv = wallet.privateKey.replace('0x', '');
+          
+          localStorage.setItem('vdx_private_key', priv);
+          localStorage.setItem('vdx_mnemonic', phrase);
+          showToast('VDX Wallet imported from seed phrase!', 'success');
+        } else {
+          const key = document.getElementById('vdx-import-key-input').value.trim();
+          if (!/^[a-fA-F0-9]{64}$/.test(key)) {
+            showToast('Invalid private key. Must be a 64-character hex string.', 'error');
+            return;
+          }
+          localStorage.setItem('vdx_private_key', key);
+          localStorage.removeItem('vdx_mnemonic');
+          showToast('VDX Wallet imported from private key!', 'success');
+        }
+
+        document.getElementById('vdx-import-mnemonic-input').value = '';
+        document.getElementById('vdx-import-key-input').value = '';
+        hideImportWallet();
+        initVDXWallet();
+      } catch (err) {
+        showToast('Import failed: ' + err.message, 'error');
+      }
+    }
+
+    function disconnectVDXWallet() {
+      const isMetaMask = localStorage.getItem('vdx_wallet_type') === 'metamask';
+      const confirmMsg = isMetaMask 
+        ? 'Disconnect MetaMask wallet?' 
+        : 'Log out of VDX wallet? Make sure you have your 12-word seed phrase or private key backed up!';
+      
+      if (confirm(confirmMsg)) {
+        localStorage.removeItem('vdx_wallet_type');
+        localStorage.removeItem('vdx_metamask_address');
+        localStorage.removeItem('vdx_private_key');
+        localStorage.removeItem('vdx_mnemonic');
+        vdxPrivateKey = null;
+        vdxAddress = '';
+        initVDXWallet();
+        showToast(isMetaMask ? 'MetaMask disconnected.' : 'Wallet logged out.', 'info');
+      }
+    }
+
+    function copyVDXAddress() {
+      navigator.clipboard.writeText(vdxAddress).then(() => {
+        showToast('VDX Address copied to clipboard!', 'success');
+      });
+    }
+
+    function revealPrivateKey() {
+      const display = document.getElementById('vdx-pkey-display');
+      const mDisplay = document.getElementById('vdx-mnemonic-display');
+      mDisplay.style.display = 'none';
+      if (display.style.display === 'none') {
+        document.getElementById('vdx-pkey-raw').textContent = vdxPrivateKey;
+        display.style.display = 'block';
+      } else {
+        display.style.display = 'none';
+      }
+    }
+
+    function revealMnemonic() {
+      const mDisplay = document.getElementById('vdx-mnemonic-display');
+      const display = document.getElementById('vdx-pkey-display');
+      display.style.display = 'none';
+      
+      const phrase = localStorage.getItem('vdx_mnemonic') || 'Mnemonic not available (imported via raw private key)';
+      
+      if (mDisplay.style.display === 'none') {
+        document.getElementById('vdx-mnemonic-raw').textContent = phrase;
+        mDisplay.style.display = 'block';
+      } else {
+        mDisplay.style.display = 'none';
+      }
+    }
+
+    function showSendPanel() {
+      document.getElementById('vdx-send-panel').style.display = 'block';
+      document.getElementById('vdx-receive-panel').style.display = 'none';
+      calculateEstimatedFees();
+    }
+    function hideSendPanel() {
+      document.getElementById('vdx-send-panel').style.display = 'none';
+    }
+    function showReceivePanel() {
+      document.getElementById('vdx-receive-panel').style.display = 'block';
+      document.getElementById('vdx-send-panel').style.display = 'none';
+    }
+    function hideReceivePanel() {
+      document.getElementById('vdx-receive-panel').style.display = 'none';
+    }
+
+    async function pollVDXBalance() {
+      if (!vdxAddress) return;
+      try {
+        const r = await fetch(`${VDX_RPC_URL}/api/account/${vdxAddress}/balance`);
+        const data = await r.json();
+        
+        // Node is online
+        const rpcStatus = document.getElementById('rpc-status');
+        rpcStatus.textContent = 'RPC Online';
+        rpcStatus.style.background = 'rgba(34, 197, 94, 0.1)';
+        rpcStatus.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+        rpcStatus.style.color = 'var(--color-primary-light)';
+
+        if (data.success) {
+          const bal = (BigInt(data.data.balance) / BigInt(10 ** 18)).toString();
+          document.getElementById('vdx-onchain-balance').textContent = parseFloat(bal).toFixed(4);
+        }
+
+        try {
+          const tokenRes = await fetch(`${VDX_RPC_URL}/api/contract/call`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contractAddress: '0x81e4e1300db885165f1dec77c41f9ddc12f69b50',
+              method: 'balanceOf',
+              args: [vdxAddress]
+            })
+          });
+          const tokenData = await tokenRes.json();
+          if (tokenRes.ok && tokenData.success) {
+            const tokenBal = (BigInt(tokenData.data.result || '0') / BigInt(10 ** 18)).toString();
+            document.getElementById('vdxl-onchain-balance').textContent = parseFloat(tokenBal).toFixed(4);
+            document.getElementById('vdxu-onchain-balance').textContent = parseFloat(tokenBal).toFixed(4);
+          }
+        } catch (e) {
+          document.getElementById('vdxl-onchain-balance').textContent = '0.0000';
+          document.getElementById('vdxu-onchain-balance').textContent = '0.0000';
+        }
+      } catch (err) {
+        // Node is offline
+        const rpcStatus = document.getElementById('rpc-status');
+        rpcStatus.textContent = 'RPC Offline';
+        rpcStatus.style.background = 'rgba(239, 68, 68, 0.1)';
+        rpcStatus.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+        rpcStatus.style.color = 'var(--color-danger)';
+        document.getElementById('vdx-onchain-balance').textContent = '0.0000';
+        document.getElementById('vdxl-onchain-balance').textContent = '0.0000';
+        document.getElementById('vdxu-onchain-balance').textContent = '0.0000';
+      }
+    }
+
+    // ── Address Book & EIP-1559 Helpers ──
+    let selectedGasSpeed = 'standard';
+    let addressBook = JSON.parse(localStorage.getItem('vdx_address_book') || '{}');
+
+    // Save checkbox event
+    document.getElementById('vdx-save-address-check').addEventListener('change', function(e) {
+      document.getElementById('vdx-save-address-name').style.display = e.target.checked ? 'inline-block' : 'none';
+    });
+
+    function toggleAddressBookDropdown() {
+      const dropdown = document.getElementById('vdx-address-book-dropdown');
+      if (dropdown.style.display === 'none') {
+        renderAddressBook();
+        dropdown.style.display = 'block';
+      } else {
+        dropdown.style.display = 'none';
+      }
+    }
+
+    function renderAddressBook() {
+      const container = document.getElementById('address-book-items');
+      container.innerHTML = '';
+      const keys = Object.keys(addressBook);
+      if (keys.length === 0) {
+        container.innerHTML = '<div style="padding:10px; font-size:12px; color:var(--color-text-muted); text-align:center;">No saved contacts.</div>';
+        return;
+      }
+      keys.forEach(name => {
+        const addr = addressBook[name];
+        const row = document.createElement('div');
+        row.style.padding = '8px 12px';
+        row.style.cursor = 'pointer';
+        row.style.display = 'flex';
+        row.style.justifyContent = 'space-between';
+        row.style.fontSize = '12px';
+        row.style.borderBottom = '1px solid rgba(0,255,0,0.05)';
+        row.innerHTML = `<span style="color:#fff; font-weight:600;">${name}</span><span style="font-family:monospace; color:var(--color-text-muted);">${addr.slice(0,6)}...${addr.slice(-4)}</span>`;
+        row.onclick = () => {
+          document.getElementById('vdx-send-to').value = addr;
+          document.getElementById('vdx-address-book-dropdown').style.display = 'none';
+          calculateEstimatedFees();
+        };
+        container.appendChild(row);
+      });
+    }
+
+    // Hide dropdown on click outside
+    document.addEventListener('click', function(e) {
+      const dropdown = document.getElementById('vdx-address-book-dropdown');
+      const toggle = document.getElementById('address-book-toggle');
+      if (dropdown && toggle && !dropdown.contains(e.target) && e.target !== toggle) {
+        dropdown.style.display = 'none';
+      }
+    });
+
+    function selectGasSpeed(speed) {
+      selectedGasSpeed = speed;
+      document.getElementById('gas-speed-standard').style.borderColor = speed === 'standard' ? 'var(--color-primary)' : 'var(--color-border)';
+      document.getElementById('gas-speed-fast').style.borderColor = speed === 'fast' ? 'var(--color-primary)' : 'var(--color-border)';
+      document.getElementById('gas-speed-custom').style.borderColor = speed === 'custom' ? 'var(--color-primary)' : 'var(--color-border)';
+      document.getElementById('custom-gas-inputs').style.display = speed === 'custom' ? 'grid' : 'none';
+      calculateEstimatedFees();
+    }
+
+    async function calculateEstimatedFees() {
+      const amount = parseFloat(document.getElementById('vdx-send-amount').value) || 0;
+      const assetType = document.getElementById('vdx-send-asset-type').value;
+      const to = document.getElementById('vdx-send-to').value.trim();
+
+      document.getElementById('summary-subtotal').textContent = `${amount.toFixed(4)} ${assetType}`;
+
+      try {
+        // Fetch current gas price stats from node
+        const res = await fetch(`${VDX_RPC_URL}/api/gas/price`);
+        const data = await res.json();
+        
+        let gasLimit = 21000;
+        let baseFee = 1000000000n; // 1 Gwei
+        let priorityFee = 1000000000n; // 1 Gwei
+
+        if (assetType !== 'VDX') {
+          gasLimit = 150000; // standard token call gas limit
+        }
+
+        if (data.success) {
+          baseFee = BigInt(data.data.baseFeePerGas);
+          if (selectedGasSpeed === 'standard') {
+            priorityFee = BigInt(data.data.suggestedPriorityFee) / 2n;
+          } else if (selectedGasSpeed === 'fast') {
+            priorityFee = BigInt(data.data.suggestedPriorityFee);
+          }
+        }
+
+        if (selectedGasSpeed === 'custom') {
+          gasLimit = parseInt(document.getElementById('vdx-custom-gas-limit').value) || 21000;
+          const maxFeeGwei = parseFloat(document.getElementById('vdx-custom-max-fee').value) || 2.0;
+          const prioFeeGwei = parseFloat(document.getElementById('vdx-custom-priority-fee').value) || 1.0;
+          
+          priorityFee = BigInt(Math.floor(prioFeeGrio(prioFeeGwei)));
+          const maxFee = BigInt(Math.floor(prioFeeGrio(maxFeeGwei)));
+          
+          // Effective price = min(maxFee, baseFee + priorityFee)
+          const effectivePrice = baseFee + priorityFee < maxFee ? baseFee + priorityFee : maxFee;
+          const networkFee = effectivePrice * BigInt(gasLimit);
+          const feeVDX = Number(networkFee) / 1e18;
+          
+          document.getElementById('summary-fee').textContent = `${feeVDX.toFixed(6)} VDX`;
+          
+          const totalVal = assetType === 'VDX' ? amount + feeVDX : amount;
+          document.getElementById('summary-total').textContent = `${totalVal.toFixed(6)} ${assetType}`;
+          return;
+        }
+
+        // Helper to parse Gwei to Wei
+        function prioFeeGrio(gwei) {
+          return gwei * 1e9;
+        }
+
+        const effectivePrice = baseFee + priorityFee;
+        const networkFee = effectivePrice * BigInt(gasLimit);
+        const feeVDX = Number(networkFee) / 1e18;
+
+        document.getElementById('summary-fee').textContent = `${feeVDX.toFixed(6)} VDX`;
+        
+        const totalVal = assetType === 'VDX' ? amount + feeVDX : amount;
+        document.getElementById('summary-total').textContent = `${totalVal.toFixed(6)} ${assetType}`;
+        
+        // Update labels on presets
+        document.getElementById('gas-cost-standard').textContent = `~${(Number(baseFee + BigInt(data.data.suggestedPriorityFee) / 2n) * gasLimit / 1e18).toFixed(6)} VDX`;
+        document.getElementById('gas-cost-fast').textContent = `~${(Number(baseFee + BigInt(data.data.suggestedPriorityFee)) * gasLimit / 1e18).toFixed(6)} VDX`;
+      } catch (e) {
+        document.getElementById('summary-fee').textContent = '0.000000 VDX';
+        document.getElementById('summary-total').textContent = `${amount.toFixed(4)} ${assetType}`;
+      }
+    }
+
+    function updateSendPanelLabels() {
+      const type = document.getElementById('vdx-send-asset-type').value;
+      document.getElementById('vdx-send-amount-label').textContent = `Amount (${type})`;
+      const customContainer = document.getElementById('vdx-custom-token-address-container');
+      if (customContainer) {
+        customContainer.style.display = type === 'CUSTOM' ? 'block' : 'none';
+      }
+    }
+
+    // Deterministic transaction serializer to match L1 node signature
+    function serializeTransaction(tx) {
+      const base = {
+        type: tx.type,
+        from: tx.from,
+        to: tx.to,
+        value: tx.value.toString(),
+        nonce: tx.nonce,
+        gasLimit: tx.gasLimit,
+        data: tx.data || '',
+        chainId: tx.chainId
+      };
+
+      if (tx.type === 1 || tx.maxFeePerGas) {
+        base.maxFeePerGas = (tx.maxFeePerGas || tx.gasPrice).toString();
+        base.maxPriorityFeePerGas = (tx.maxPriorityFeePerGas || '0').toString();
+      } else {
+        base.gasPrice = tx.gasPrice.toString();
+      }
+
+      if (tx.accessList && tx.accessList.length > 0) {
+        base.accessList = tx.accessList;
+      }
+
+      return JSON.stringify(base);
+    }
+
+    async function signAndBroadcastTransaction(txObj) {
+      const isMetaMask = localStorage.getItem('vdx_wallet_type') === 'metamask';
+      let txSigned;
+      
+      if (isMetaMask) {
+        if (!window.ethereum) throw new Error('MetaMask not detected');
+        
+        await window.addVerdexToWallet();
+        
+        const serialized = serializeTransaction(txObj);
+        const txHash = '0x' + CryptoJS.SHA256(serialized).toString(CryptoJS.enc.Hex);
+        
+        const signature = await window.ethereum.request({
+          method: 'personal_sign',
+          params: [txHash, vdxAddress]
+        });
+        
+        const r = '0x' + signature.slice(2, 66);
+        const s = '0x' + signature.slice(66, 130);
+        let v = parseInt(signature.slice(130, 132), 16);
+        if (v < 27) v += 27; // Standardise v
+        
+        txSigned = {
+          ...txObj,
+          signature: { r, s, v }
+        };
+      } else {
+        if (!vdxPrivateKey) throw new Error('Private key not loaded. Set up your wallet first.');
+        
+        const serialized = serializeTransaction(txObj);
+        const txHash = '0x' + CryptoJS.SHA256(serialized).toString(CryptoJS.enc.Hex);
+        const hashToSign = CryptoJS.SHA256(txHash).toString(CryptoJS.enc.Hex);
+        
+        const EC = new elliptic.ec('secp256k1');
+        const key = EC.keyFromPrivate(vdxPrivateKey, 'hex');
+        const sig = key.sign(hashToSign);
+        
+        txSigned = {
+          ...txObj,
+          signature: {
+            r: sig.r.toString('hex'),
+            s: sig.s.toString('hex'),
+            v: sig.recoveryParam
+          }
+        };
+      }
+      
+      const sendRes = await fetch(`${VDX_RPC_URL}/api/tx/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(txSigned)
+      });
+      const sendData = await sendRes.json();
+      if (!sendRes.ok || !sendData.success) {
+        throw new Error(sendData.error || 'Transaction broadcast rejected.');
+      }
+      return sendData.data;
+    }
+
+    async function submitVDXTransfer() {
+      const to = document.getElementById('vdx-send-to').value.trim();
+      const amount = document.getElementById('vdx-send-amount').value.trim();
+      const assetType = document.getElementById('vdx-send-asset-type').value;
+      
+      if (!/^0x[a-fA-F0-9]{40}$/.test(to)) {
+        showToast('Invalid recipient address format.', 'error');
+        return;
+      }
+      if (!amount || parseFloat(amount) <= 0) {
+        showToast('Amount must be greater than zero.', 'error');
+        return;
+      }
+
+      showToast(`Preparing ${assetType} transfer...`, 'info');
+
+      try {
+        document.getElementById('tx-loading-overlay').style.display = 'flex';
+        // Fetch current nonce & gas prices
+        const [nonceRes, gasPriceRes] = await Promise.all([
+          fetch(`${VDX_RPC_URL}/api/account/${vdxAddress}/nonce`),
+          fetch(`${VDX_RPC_URL}/api/gas/price`)
+        ]);
+        
+        const nonceData = await nonceRes.json();
+        const gasPriceData = await gasPriceRes.json();
+
+        if (!nonceRes.ok || !nonceData.success) throw new Error('Failed to fetch nonce.');
+        if (!gasPriceRes.ok || !gasPriceData.success) throw new Error('Failed to fetch gas prices.');
+
+        const nonce = nonceData.data.nonce;
+        const baseFee = BigInt(gasPriceData.data.baseFeePerGas);
+        const suggestedPriority = BigInt(gasPriceData.data.suggestedPriorityFee);
+
+        // Format value in decimals (18 decimals)
+        const valueInWei = (BigInt(Math.floor(parseFloat(amount) * 1000000)) * BigInt(10 ** 12)).toString();
+
+        // Calculate gas settings based on selected speed
+        let gasLimit = 21000;
+        let maxPriorityFee = suggestedPriority;
+        let maxFee = baseFee * 2n + suggestedPriority;
+
+        if (assetType !== 'VDX') {
+          gasLimit = 150000;
+        }
+        
+        let tokenContract = '0x81e4e1300db885165f1dec77c41f9ddc12f69b50'; // Default VDXL/VDXU address
+        if (assetType === 'CUSTOM') {
+          tokenContract = document.getElementById('vdx-send-token-contract').value.trim();
+          if (!/^0x[a-fA-F0-9]{40}$/.test(tokenContract)) {
+            showToast('Invalid custom token contract address.', 'error');
+            return;
+          }
+        }
+
+        if (selectedGasSpeed === 'standard') {
+          maxPriorityFee = suggestedPriority / 2n;
+          maxFee = baseFee + maxPriorityFee;
+        } else if (selectedGasSpeed === 'fast') {
+          maxPriorityFee = suggestedPriority;
+          maxFee = baseFee + maxPriorityFee;
+        } else if (selectedGasSpeed === 'custom') {
+          gasLimit = parseInt(document.getElementById('vdx-custom-gas-limit').value) || 21000;
+          const customMaxFeeGwei = parseFloat(document.getElementById('vdx-custom-max-fee').value) || 2.0;
+          const customPriorityGwei = parseFloat(document.getElementById('vdx-custom-priority-fee').value) || 1.0;
+          maxPriorityFee = BigInt(Math.floor(customPriorityGwei * 1e9));
+          maxFee = BigInt(Math.floor(customMaxFeeGwei * 1e9));
+        }
+
+        let txObj;
+        if (assetType === 'VDX') {
+          // Native transfer (EIP-1559 Style)
+          txObj = {
+            type: 1, // EIP-1559 type
+            from: vdxAddress,
+            to: to,
+            value: valueInWei,
+            nonce: nonce,
+            gasLimit: gasLimit,
+            maxFeePerGas: maxFee.toString(),
+            maxPriorityFeePerGas: maxPriorityFee.toString(),
+            data: '',
+            chainId: (window.VERDEX_NETWORK && window.VERDEX_NETWORK.chainId) || 7201
+          };
+        } else {
+          // PRC-20 token call transfer(to, amount) (EIP-1559 Style)
+          txObj = {
+            type: 1,
+            from: vdxAddress,
+            to: tokenContract, // PRC20 Contract address
+            value: '0',
+            nonce: nonce,
+            gasLimit: gasLimit,
+            maxFeePerGas: maxFee.toString(),
+            maxPriorityFeePerGas: maxPriorityFee.toString(),
+            data: JSON.stringify({
+              method: 'transfer',
+              args: [to, valueInWei]
+            }),
+            chainId: (window.VERDEX_NETWORK && window.VERDEX_NETWORK.chainId) || 7201
+          };
+        }
+
+        // Sign and broadcast unified
+        const result = await signAndBroadcastTransaction(txObj);
+
+        // Populate receipt details
+        document.getElementById('web-receipt-asset').textContent = assetType;
+        document.getElementById('web-receipt-amount').textContent = `${amount} ${assetType}`;
+        document.getElementById('web-receipt-to').textContent = to;
+        document.getElementById('web-receipt-nonce').textContent = nonce;
+        document.getElementById('web-send-success-hash').textContent = result.txHash;
+        document.getElementById('web-btn-view-explorer').href = `/explorer/#/tx/${result.txHash}`;
+        
+        document.getElementById('vdx-send-success').style.display = 'block';
+        
+        showToast(`Transaction broadcasted successfully!`, 'success');
+        
+        // Save to address book if checked
+        const saveCheck = document.getElementById('vdx-save-address-check');
+        const saveName = document.getElementById('vdx-save-address-name').value.trim();
+        if (saveCheck.checked && saveName) {
+          addressBook[saveName] = to;
+          localStorage.setItem('vdx_address_book', JSON.stringify(addressBook));
+          saveCheck.checked = false;
+          document.getElementById('vdx-save-address-name').value = '';
+          document.getElementById('vdx-save-address-name').style.display = 'none';
+        }
+
+        document.getElementById('vdx-send-to').value = '';
+        document.getElementById('vdx-send-amount').value = '';
+        hideSendPanel();
+        setTimeout(pollVDXBalance, 5000);
+      } catch (err) {
+        showToast(`Transaction failed: ${err.message}`, 'error');
+      } finally {
+        document.getElementById('tx-loading-overlay').style.display = 'none';
+      }
+    }
+
+    // ============================================================
+    // VDX NATIVE CONTRACT INTERACTOR CONTROLLER
+    // ============================================================
+    let vdxContractAddress = localStorage.getItem('vdx_contract_address') || '0x01d23206724793af4d26104946094333282db48e';
+
+    const inlineContractCode = `
+class Contract {
+  init() {
+    this.storage.owner = msg.sender;
+    this.storage.count = 0;
+    this.storage.messages = [];
+  }
+  increment() {
+    this.storage.count = (this.storage.count || 0) + 1;
+    this.console.log("Counter incremented to: " + this.storage.count);
+    return this.storage.count;
+  }
+  postMessage(text) {
+    if (!text) throw new Error("Message cannot be empty");
+    const msgObj = {
+      sender: msg.sender,
+      text: text,
+      timestamp: Date.now()
+    };
+    this.storage.messages.push(msgObj);
+    this.console.log("Message posted by: " + msg.sender);
+    return this.storage.messages.length;
+  }
+  getMessages() {
+    return this.storage.messages || [];
+  }
+  getCount() {
+    return this.storage.count || 0;
+  }
+}
+`;
+
+    function initVDXContractPanel() {
+      vdxContractAddress = localStorage.getItem('vdx_contract_address');
+      if (vdxContractAddress) {
+        document.getElementById('vdx-contract-deploy-panel').style.display = 'none';
+        document.getElementById('vdx-contract-active-panel').style.display = 'flex';
+        document.getElementById('vdx-contract-addr').textContent = vdxContractAddress;
+        readContractState();
+      } else {
+        document.getElementById('vdx-contract-deploy-panel').style.display = 'flex';
+        document.getElementById('vdx-contract-active-panel').style.display = 'none';
+      }
+    }
+
+    function resetContractAddress() {
+      localStorage.removeItem('vdx_contract_address');
+      vdxContractAddress = null;
+      initVDXContractPanel();
+      showToast('Smart contract reference reset.', 'info');
+    }
+
+    async function deployTestContractFromBrowser() {
+      if (!vdxAddress || vdxAddress === '0x' || vdxAddress.length !== 42) {
+        showToast('Please set up or connect your VDX wallet first.', 'error');
+        return;
+      }
+
+      showToast('Deploying smart contract to Verdex Chain...', 'info');
+
+      try {
+        const nonceRes = await fetch(`${VDX_RPC_URL}/api/account/${vdxAddress}/nonce`);
+        const nonceData = await nonceRes.json();
+        if (!nonceRes.ok || !nonceData.success) throw new Error('Failed to fetch nonce.');
+        const nonce = nonceData.data.nonce;
+
+        const txObj = {
+          from: vdxAddress,
+          to: '',
+          value: '0',
+          nonce: nonce,
+          gasPrice: '1000000000',
+          gasLimit: 1000000,
+          data: inlineContractCode
+        };
+
+        const result = await signAndBroadcastTransaction(txObj);
+
+        showToast('Contract tx broadcast! Waiting 6s for block...', 'info');
+        
+        await new Promise(r => setTimeout(r, 6000));
+        
+        const txRes = await fetch(`${VDX_RPC_URL}/api/tx/${result.txHash}`);
+        const txData = await txRes.json();
+        if (txData.success && txData.data.contractAddress) {
+          localStorage.setItem('vdx_contract_address', txData.data.contractAddress);
+          showToast('Smart contract deployed successfully!', 'success');
+          initVDXContractPanel();
+        } else {
+          throw new Error('Could not find contractAddress in transaction receipt.');
+        }
+      } catch (err) {
+        showToast(`Deploy failed: ${err.message}`, 'error');
+      }
+    }
+
+    async function readContractState() {
+      if (!vdxContractAddress) return;
+      try {
+        // 1. Read Counter value
+        const countRes = await fetch(`${VDX_RPC_URL}/api/contract/call`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contractAddress: vdxContractAddress,
+            method: 'getCount',
+            args: []
+          })
+        });
+        const countData = await countRes.json();
+        if (countData.success) {
+          document.getElementById('contract-counter-val').textContent = countData.data.result || '0';
+        }
+
+        // 2. Read messages
+        const msgsRes = await fetch(`${VDX_RPC_URL}/api/contract/call`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contractAddress: vdxContractAddress,
+            method: 'getMessages',
+            args: []
+          })
+        });
+        const msgsData = await msgsRes.json();
+        if (msgsData.success) {
+          const log = document.getElementById('contract-messages-log');
+          const msgs = msgsData.data.result || [];
+          if (msgs.length === 0) {
+            log.innerHTML = '<div style="color: var(--color-text-muted); font-size: 13px; text-align: center; padding: 12px;">No messages posted yet.</div>';
+          } else {
+            log.innerHTML = msgs.reverse().map(m => `
+              <div style="background: rgba(34,197,94,0.03); border: 1px solid var(--color-border); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
+                <div style="display:flex; justify-content:space-between; font-size:11px; color: var(--color-text-muted); margin-bottom: 4px;">
+                  <span>Sender: \${m.sender.slice(0, 10)}...\${m.sender.slice(-4)}</span>
+                  <span>\${new Date(m.timestamp).toLocaleTimeString()}</span>
+                </div>
+                <div style="font-size: 13px; color: #fff;">${escapeHtml(m.text)}</div>
+              </div>
+            `).join('');
+          }
+        }
+      } catch (err) {
+        console.error('Failed to read contract state:', err);
+      }
+    }
+
+    async function incrementContractCounter() {
+      if (!vdxAddress || vdxAddress === '0x' || vdxAddress.length !== 42) {
+        showToast('Please connect your VDX wallet first.', 'error');
+        return;
+      }
+      showToast('Sending increment count transaction...', 'info');
+
+      try {
+        const nonceRes = await fetch(`${VDX_RPC_URL}/api/account/${vdxAddress}/nonce`);
+        const nonceData = await nonceRes.json();
+        if (!nonceRes.ok || !nonceData.success) throw new Error('Failed to fetch nonce.');
+        const nonce = nonceData.data.nonce;
+
+        const txObj = {
+          from: vdxAddress,
+          to: vdxContractAddress,
+          value: '0',
+          nonce: nonce,
+          gasPrice: '1000000000',
+          gasLimit: 300000,
+          data: JSON.stringify({ method: 'increment', args: [] })
+        };
+
+        await signAndBroadcastTransaction(txObj);
+
+        showToast('Increment transaction sent! Updating in 6s...', 'success');
+        setTimeout(readContractState, 6000);
+      } catch (err) {
+        showToast(`Increment failed: ${err.message}`, 'error');
+      }
+    }
+
+    async function postContractMessage() {
+      const input = document.getElementById('contract-msg-input');
+      const text = input.value.trim();
+      if (!text) {
+        showToast('Message text cannot be empty.', 'error');
+        return;
+      }
+      if (!vdxAddress || vdxAddress === '0x' || vdxAddress.length !== 42) {
+        showToast('Please connect your VDX wallet first.', 'error');
+        return;
+      }
+      showToast('Sending post message transaction...', 'info');
+
+      try {
+        const nonceRes = await fetch(`${VDX_RPC_URL}/api/account/${vdxAddress}/nonce`);
+        const nonceData = await nonceRes.json();
+        if (!nonceRes.ok || !nonceData.success) throw new Error('Failed to fetch nonce.');
+        const nonce = nonceData.data.nonce;
+
+        const txObj = {
+          from: vdxAddress,
+          to: vdxContractAddress,
+          value: '0',
+          nonce: nonce,
+          gasPrice: '1000000000',
+          gasLimit: 400000,
+          data: JSON.stringify({ method: 'postMessage', args: [text] })
+        };
+
+        await signAndBroadcastTransaction(txObj);
+
+        showToast('Message transaction sent! Log updating in 6s...', 'success');
+        input.value = '';
+        setTimeout(readContractState, 6000);
+      } catch (err) {
+        showToast(`Post failed: ${err.message}`, 'error');
+      }
+    }
+
+    async function requestFaucetVDX() {
+      if (!vdxAddress || vdxAddress === '0x' || vdxAddress.length !== 42) {
+        showToast('Set up your L1 wallet first.', 'error');
+        return;
+      }
+      try {
+        showToast('Requesting testnet VDX...', 'info');
+        const res = await fetch('/api/chain?action=faucet', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address: vdxAddress, amount: '100' })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`Received 100 VDX! Tx: ${data.data.txHash.slice(0, 16)}...`, 'success');
+          setTimeout(pollVDXBalance, 3000);
+        } else {
+          throw new Error(data.error || 'Faucet failed');
+        }
+      } catch (err) {
+        showToast('Faucet error: ' + err.message, 'error');
+      }
+    }
+
+    async function requestMiningPayout() {
+      if (!currentUser) return;
+      if (!vdxAddress || vdxAddress === '0x' || vdxAddress.length !== 42) {
+        showToast('Please set up and activate your L1 Wallet address first.', 'error');
+        return;
+      }
+      
+      const balanceText = document.getElementById('vp-balance').textContent.replace(/,/g, '');
+      const balance = parseInt(balanceText) || 0;
+      if (balance <= 0) {
+        showToast('No pending VP balance available for payout.', 'error');
+        return;
+      }
+
+      showToast('Requesting blockchain payout...', 'info');
+      const btn = document.getElementById('btn-convert-payout');
+      if (btn) btn.disabled = true;
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error('No active session. Please log in.');
+
+        const response = await fetch('/api/mining?action=payout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+        
+        const json = await response.json();
+        if (response.ok && json.success) {
+          showToast(`Payout processed! Tx Hash: ${json.data.txHash.slice(0, 16)}...`, 'success');
+          
+          // Re-fetch wallet balance
+          const wallet = await fetchWallet(currentUser.id);
+          userWallet = wallet;
+          if (wallet) {
+            document.getElementById('vp-balance').textContent = formatNumber(wallet.vp_balance_cached || 0);
+          }
+          
+          setTimeout(pollVDXBalance, 6000);
+        } else {
+          throw new Error(json.error || 'Conversion failed.');
+        }
+      } catch (err) {
+        showToast(`Payout failed: ${err.message}`, 'error');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    initDashboard();
+    loadLeaderboard();
+
+    // Live polling — refresh mining status every 10 seconds
+    setInterval(async () => {
+      if (currentUser) {
+        await loadMiningSessions();
+        await loadLeaderboard();
+        await pollVDXBalance();
+      }
+    }, 10000);
+
+    // Refresh full wallet data every 30 seconds
+    setInterval(async () => {
+      if (currentUser) {
+        try {
+          const [profile, wallet, tokens, transactions] = await Promise.all([
+            fetchProfile(currentUser.id),
+            fetchWallet(currentUser.id),
+            fetchApiTokens(currentUser.id),
+            fetchTransactions(currentUser.id, 20)
+          ]);
+          userProfile = profile;
+          userWallet = wallet;
+          if (wallet) {
+            document.getElementById('vp-balance').textContent = formatNumber(wallet.vp_balance_cached || 0);
+            document.getElementById('streak-badge').textContent = (wallet.current_streak || 0) + ' days';
+            document.getElementById('longest-streak').textContent = (wallet.longest_streak || 0) + ' days';
+          }
+        } catch(e) { /* silent */ }
+      }
+    }, 30000);
+    function switchDashboardView(view) {
+      const overviewTab = document.getElementById('tab-overview');
+      const explorerTab = document.getElementById('tab-explorer');
+      const overviewView = document.getElementById('overview-view');
+      const explorerView = document.getElementById('explorer-view');
+
+      if (view === 'overview') {
+        overviewTab.style.background = 'rgba(34, 197, 94, 0.1)';
+        overviewTab.style.borderColor = 'var(--color-primary)';
+        overviewTab.style.color = 'var(--color-primary)';
+        explorerTab.style.background = 'transparent';
+        explorerTab.style.borderColor = 'transparent';
+        explorerTab.style.color = 'var(--color-text-muted)';
+        
+        overviewView.style.display = 'flex';
+        explorerView.style.display = 'none';
+      } else {
+        explorerTab.style.background = 'rgba(34, 197, 94, 0.1)';
+        explorerTab.style.borderColor = 'var(--color-primary)';
+        explorerTab.style.color = 'var(--color-primary)';
+        overviewTab.style.background = 'transparent';
+        overviewTab.style.borderColor = 'transparent';
+        overviewTab.style.color = 'var(--color-text-muted)';
+        
+        overviewView.style.display = 'none';
+        explorerView.style.display = 'block';
+      }
+    }
+  </script>
+</body>
+</html>
