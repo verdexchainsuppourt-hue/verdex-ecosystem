@@ -422,5 +422,13 @@ document.addEventListener('DOMContentLoaded', function() {
   updateLiveStats();
   setInterval(updateLiveStats, 3000);
 
+  // --- 26. REFERRAL CAPTURE ---
+  const urlParams = new URLSearchParams(window.location.search);
+  const refCode = urlParams.get('ref');
+  if (refCode) {
+    localStorage.setItem('referred_by_code', refCode.trim().toUpperCase());
+    console.log('Captured referral code from URL:', refCode.trim().toUpperCase());
+  }
+
 });
 
