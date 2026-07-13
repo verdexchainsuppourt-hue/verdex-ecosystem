@@ -613,11 +613,11 @@
           await window.ethereum.request({
             method: 'wallet_addEthereumChain',
             params: [{
-              chainId: '0x1c21',
-              chainName: 'Verdex Testnet',
+              chainId: '0x1C21',
+              chainName: 'Verdex PRC20 Testnet',
               nativeCurrency: { name: 'Verdex', symbol: 'VDX', decimals: 18 },
-              rpcUrls: [origin + '/api/rpc'],
-              blockExplorerUrls: [origin + '/explorer']
+              rpcUrls: ['https://rpc.verdexswap.site'],
+              blockExplorerUrls: ['https://verdexswap.site/explorer']
             }]
           });
         }
