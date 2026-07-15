@@ -19,7 +19,7 @@ module.exports = {
   INITIAL_SUPPLY: '1000000000000000000000000000', // 1B VDX in wei-equivalent
 
   // Public network pack (overridable via env when hosting)
-  RPC_URL: process.env.VERDEX_RPC_URL || 'https://verdex-ecosystem-production.up.railway.app',
+  RPC_URL: process.env.VERDEX_RPC_URL || 'https://verdexswap.site/api/rpc',
   REST_RPC_URL: process.env.VERDEX_REST_RPC_URL || 'https://verdexswap.site/api/chain',
   EXPLORER_URL: process.env.VERDEX_EXPLORER_URL || 'https://verdexswap.site/explorer',
   FAUCET_URL: process.env.VERDEX_FAUCET_URL || 'https://verdexswap.site/faucet',
