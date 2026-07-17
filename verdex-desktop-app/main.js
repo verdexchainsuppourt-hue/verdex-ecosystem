@@ -23,6 +23,9 @@ let updateSkippedThisSession = false;
 const ICON_PATH = path.join(__dirname, 'assets', 'icon.ico');
 const UPDATE_VERSION_URL = 'https://verdexswap.site/updates/version.json';
 const UPDATE_FEED = 'https://verdexswap.site/updates';
+// GitHub Releases CDN — large binaries are hosted here (bypasses Vercel 4.5MB limit)
+// These URLs are populated by running: python upload_releases.py
+const GH_RELEASES_BASE = 'https://github.com/verdexchainsuppourt-hue/verdex-ecosystem/releases/download';
 
 function getAppIcon() {
   try {
@@ -439,14 +442,24 @@ async function fetchRemoteVersion() {
   const latest = info.version || info.latest || '0.0.0';
   const needsUpdate = isNewerVersion(latest, current);
   const winDl = (info.downloads && info.downloads.windows) || {};
+
+  // Prefer the URL from version.json (should point to GitHub Releases CDN)
+  // Fallback: construct GitHub Releases URL, then finally the Vercel static path
+  const cdnUrl =
+    winDl.url ||
+    `${GH_RELEASES_BASE}/v${latest}/${winDl.fileName || `Verdex-Miner-Setup-${latest}.exe`}` ||
+    `${UPDATE_FEED}/Verdex-Miner-Setup-${latest}.exe`;
+
+  const fileName = winDl.fileName || `Verdex-Miner-Setup-${latest}.exe`;
+
   return {
     current,
     latest,
     needsUpdate,
     mandatory: info.mandatory !== false,
-    notes: info.notes || 'Crystal logo, enhanced auth (Google + email/password), live network stats on login, UI polish, mining stability improvements, bug fixes.',
-    downloadUrl: winDl.url || `${UPDATE_FEED}/Verdex-Miner-Setup-${latest}.exe`,
-    fileName: winDl.fileName || `Verdex-Miner-Setup-${latest}.exe`,
+    notes: info.notes || 'Crystal logo, enhanced auth (Google + email/password), live network stats on login, P2P network visualization, mining stability improvements, bug fixes.',
+    downloadUrl: cdnUrl,
+    fileName,
     fileSize: winDl.size || 0,
     feedUrl: info.feedUrl || UPDATE_FEED
   };
