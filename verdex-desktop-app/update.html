@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verdex Miner — Update Available</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #00ff88;
+      --primary-glow: rgba(0, 255, 136, 0.4);
+      --primary-dim: rgba(0, 255, 136, 0.08);
+      --primary-dark: #00cc6a;
+      --bg: #06090e;
+      --panel: rgba(12, 18, 28, 0.98);
+      --text: #f4f7fb;
+      --muted: #8b97ab;
+      --border: rgba(0, 255, 136, 0.15);
+      --danger: #ff453a;
+      --warning: #ff9f0a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Outfit', system-ui, sans-serif;
+      background:
+        radial-gradient(ellipse 80% 60% at 10% 0%, rgba(0,255,136,0.09), transparent 55%),
+        radial-gradient(ellipse 60% 50% at 90% 100%, rgba(100,210,255,0.05), transparent 50%),
+        var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      -webkit-app-region: drag;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Ambient grid */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+      pointer-events: none;
+    }
+
+    .titlebar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      -webkit-app-region: drag;
+      z-index: 100;
+    }
+
+    .titlebar-brand {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 11px; font-weight: 700; letter-spacing: 1.2px;
+      color: rgba(255,255,255,0.35); text-transform: uppercase;
+    }
+
+    .titlebar-brand img {
+      width: 14px; height: 14px;
+      filter: drop-shadow(0 0 5px rgba(0,255,136,0.6));
+    }
+
+    .titlebar-close {
+      -webkit-app-region: no-drag;
+      background: none; border: none;
+      color: rgba(255,255,255,0.2); font-size: 12px;
+      width: 22px; height: 22px; border-radius: 4px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .titlebar-close:hover { background: rgba(255,59,48,0.2); color: #ff3b30; }
+
+    /* Card */
+    .card {
+      width: min(460px, 94vw);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 28px 28px;
+      box-shadow:
+        0 24px 80px rgba(0,0,0,0.6),
+        0 0 0 1px rgba(0,255,136,0.04),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+      -webkit-app-region: no-drag;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Top accent line */
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--primary), var(--primary-dark), transparent);
+    }
+
+    /* Logo */
+    .logo-wrap {
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px; position: relative;
+    }
+
+    .logo-glow {
+      position: absolute;
+      width: 100px; height: 100px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,255,136,0.2) 0%, transparent 70%);
+      animation: glowPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    .logo-img {
+      width: 60px; height: 60px;
+      object-fit: contain;
+      position: relative; z-index: 2;
+      filter: drop-shadow(0 0 16px rgba(0,255,136,0.7)) drop-shadow(0 0 32px rgba(0,255,136,0.3));
+      animation: logoFloat 4s ease-in-out infinite;
+    }
+
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .logo-fallback {
+      width: 60px; height: 60px; border-radius: 50%;
+      background: rgba(0,255,136,0.1); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; position: relative; z-index: 2;
+      box-shadow: 0 0 24px rgba(0,255,136,0.15);
+    }
+
+    /* Heading */
+    .badge-row {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .update-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px;
+      background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.25);
+      border-radius: 100px; font-size: 10.5px; font-weight: 700;
+      color: var(--primary); letter-spacing: 0.5px; text-transform: uppercase;
+    }
+
+    .update-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--primary); box-shadow: 0 0 6px var(--primary);
+      animation: dotPulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes dotPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    h1 { font-size: 21px; font-weight: 800; text-align: center; margin-bottom: 6px; }
+
+    .sub {
+      color: var(--muted); font-size: 13px; line-height: 1.6;
+      text-align: center; margin-bottom: 20px; max-width: 360px; margin-left: auto; margin-right: auto;
+    }
+
+    /* Version boxes */
+    .versions {
+      display: flex; justify-content: center; gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .ver-box {
+      flex: 1; max-width: 150px;
+      background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px; padding: 12px 14px; text-align: center;
+    }
+
+    .ver-box .lbl {
+      color: var(--muted); font-size: 10px; text-transform: uppercase;
+      letter-spacing: 0.8px; margin-bottom: 5px;
+    }
+
+    .ver-box .val {
+      font-size: 17px; font-weight: 800;
+      font-family: 'Fira Code', monospace;
+    }
+
+    .ver-box.old { border-color: rgba(255,159,10,0.2); }
+    .ver-box.old .val { color: var(--warning); }
+
+    .ver-box.new { border-color: rgba(0,255,136,0.25); background: rgba(0,255,136,0.05); }
+    .ver-box.new .val { color: var(--primary); text-shadow: 0 0 12px var(--primary-glow); }
+
+    .ver-arrow {
+      display: flex; align-items: center;
+      color: var(--muted); font-size: 18px; padding-top: 6px;
+    }
+
+    /* Changelog */
+    .changelog {
+      background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;
+    }
+
+    .changelog-title {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--primary); margin-bottom: 8px;
+      opacity: 0.8;
+    }
+
+    .changelog-list { list-style: none; }
+
+    .changelog-list li {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 12px; color: var(--muted); padding: 4px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.03); line-height: 1.5;
+    }
+
+    .changelog-list li:last-child { border-bottom: none; }
+    .changelog-list li::before { content: '→'; color: var(--primary); flex-shrink: 0; }
+
+    /* Progress */
+    .progress-wrap { display: none; margin-bottom: 14px; }
+    .progress-wrap.show { display: block; }
+
+    .progress-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 6px; font-size: 11.5px;
+    }
+
+    .progress-status { color: var(--muted); }
+    .progress-pct { color: var(--primary); font-weight: 700; font-family: 'Fira Code', monospace; }
+
+    .bar {
+      height: 6px; border-radius: 999px;
+      background: rgba(255,255,255,0.06); overflow: hidden;
+    }
+
+    .bar > i {
+      display: block; height: 100%; width: 0%;
+      background: linear-gradient(90deg, #00ff88, #00c96a, #00ff88);
+      background-size: 200% 100%;
+      border-radius: 999px;
+      transition: width 0.3s ease;
+      animation: shimmer 1.5s linear infinite;
+    }
+
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    .progress-detail {
+      display: flex; justify-content: space-between;
+      margin-top: 5px; font-size: 10.5px; color: var(--muted);
+      font-family: 'Fira Code', monospace;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      width: 100%; border: none; border-radius: 10px;
+      padding: 13px 16px; font-family: 'Outfit', inherit; font-weight: 800;
+      font-size: 14px; letter-spacing: 0.3px; cursor: pointer;
+      background: linear-gradient(135deg, #00ff88, #00b35f); color: #04140c;
+      box-shadow: 0 4px 24px rgba(0,255,136,0.25);
+      transition: all 0.2s;
+    }
+
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,255,136,0.4); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .btn-ghost {
+      width: 100%; margin-top: 8px; border-radius: 10px;
+      padding: 11px 16px; font-family: 'Outfit', inherit; font-weight: 600;
+      font-size: 13px; cursor: pointer;
+      background: transparent; color: var(--muted);
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: all 0.2s;
+    }
+
+    .btn-ghost:hover { color: #fff; border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); }
+
+    /* Error */
+    .err {
+      margin-top: 12px; padding: 10px 14px;
+      background: rgba(255,69,58,0.1); border: 1px solid rgba(255,69,58,0.2);
+      border-radius: 8px; color: var(--danger); font-size: 12px;
+      text-align: center; display: none;
+    }
+    .err.show { display: block; }
+
+    /* File info */
+    .file-info {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-bottom: 14px; font-size: 11px; color: var(--muted);
+    }
+
+    .file-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07); border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Titlebar -->
+  <div class="titlebar">
+    <div class="titlebar-brand">
+      <img src="assets/verdex-crystal-logo.png" alt="Verdex"
+        onerror="this.style.display='none'">
+      Verdex Auto-Update
+    </div>
+    <button class="titlebar-close" id="btnTitleClose" title="Close">✕</button>
+  </div>
+
+  <div class="card">
+    <!-- Logo -->
+    <div class="logo-wrap">
+      <div class="logo-glow"></div>
+      <img class="logo-img" src="assets/verdex-crystal-logo.png" alt="Verdex"
+        onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex'">
+      <div class="logo-fallback" id="logoFallback" style="display:none;">⬆</div>
+    </div>
+
+    <!-- Badge + Heading -->
+    <div class="badge-row">
+      <span class="update-badge"><span class="update-dot"></span>Update Available</span>
+    </div>
+    <h1>New Version Ready</h1>
+    <p class="sub">A newer Verdex Miner is available. Update now to keep mining, wallet sync, and explorer working.</p>
+
+    <!-- Versions -->
+    <div class="versions">
+      <div class="ver-box old">
+        <div class="lbl">Your Version</div>
+        <div class="val" id="curVer">—</div>
+      </div>
+      <div class="ver-arrow">→</div>
+      <div class="ver-box new">
+        <div class="lbl">Latest</div>
+        <div class="val" id="newVer">—</div>
+      </div>
+    </div>
+
+    <!-- File info -->
+    <div class="file-info">
+      <span class="file-chip">🪟 Windows</span>
+      <span class="file-chip" id="fileSize">~83 MB</span>
+      <span class="file-chip">NSIS Installer</span>
+    </div>
+
+    <!-- Changelog -->
+    <div class="changelog">
+      <div class="changelog-title">📋 What's new</div>
+      <ul class="changelog-list" id="changelogList">
+        <li>Loading release notes…</li>
+      </ul>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-header">
+        <span class="progress-status" id="progressStatus">Downloading…</span>
+        <span class="progress-pct" id="pctLabel">0%</span>
+      </div>
+      <div class="bar"><i id="barFill"></i></div>
+      <div class="progress-detail">
+        <span id="progressTransferred">0 MB</span>
+        <span id="progressSpeed">—</span>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <button class="btn-primary" id="btnUpdate">⬆ Update to Latest Version</button>
+    <button class="btn-ghost" id="btnLater" style="display:none;">Remind me later</button>
+
+    <!-- Error -->
+    <div class="err" id="err"></div>
+  </div>
+
+  <script>
+    const api = window.electronAPI || {};
+    const btn = document.getElementById('btnUpdate');
+    const btnLater = document.getElementById('btnLater');
+    const errEl = document.getElementById('err');
+    const progressWrap = document.getElementById('progressWrap');
+    const barFill = document.getElementById('barFill');
+    const pctLabel = document.getElementById('pctLabel');
+    const progressStatus = document.getElementById('progressStatus');
+    const progressTransferred = document.getElementById('progressTransferred');
+    const progressSpeed = document.getElementById('progressSpeed');
+
+    let lastTransferred = 0;
+    let lastTimestamp = 0;
+
+    // Close button — only available if non-mandatory
+    document.getElementById('btnTitleClose').addEventListener('click', () => {
+      if (btnLater.style.display !== 'none') {
+        api.skipUpdate?.();
+      }
+    });
+
+    function showErr(msg) {
+      errEl.textContent = '⚠ ' + (msg || 'Update failed. Please try again.');
+      errEl.classList.add('show');
+    }
+
+    function fmtMb(bytes) {
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    function renderChangelog(notes) {
+      const list = document.getElementById('changelogList');
+      if (!notes) { list.innerHTML = '<li>Bug fixes and performance improvements.</li>'; return; }
+
+      // Parse bullet-style or sentence notes into list items
+      const lines = notes.split(/[·•\n]/).map(s => s.trim()).filter(Boolean);
+      if (lines.length <= 1) {
+        // Single blob — split on commas
+        const parts = notes.split(',').map(s => s.trim()).filter(Boolean);
+        list.innerHTML = parts.map(p => `<li>${p}</li>`).join('');
+      } else {
+        list.innerHTML = lines.map(l => `<li>${l}</li>`).join('');
+      }
+    }
+
+    async function init() {
+      try {
+        const info = await api.getUpdateInfo?.();
+        if (!info) return;
+
+        document.getElementById('curVer').textContent = 'v' + (info.current || '?');
+        document.getElementById('newVer').textContent = 'v' + (info.latest || '?');
+
+        // Render changelog
+        renderChangelog(info.notes);
+
+        // File size from download info
+        if (info.fileSize) {
+          document.getElementById('fileSize').textContent = fmtMb(info.fileSize);
+        }
+
+        // Show skip button only if non-mandatory
+        if (!info.mandatory) {
+          btnLater.style.display = 'block';
+        }
+      } catch (e) {
+        showErr(e.message || String(e));
+      }
+    }
+
+    btn.addEventListener('click', async () => {
+      errEl.classList.remove('show');
+      btn.disabled = true;
+      btn.textContent = '⬇ Downloading…';
+      progressWrap.classList.add('show');
+      lastTimestamp = Date.now();
+      lastTransferred = 0;
+
+      try {
+        await api.startUpdateDownload?.();
+      } catch (e) {
+        showErr(e.message || String(e));
+        btn.disabled = false;
+        btn.textContent = '⬆ Update to Latest Version';
+      }
+    });
+
+    btnLater.addEventListener('click', () => api.skipUpdate?.());
+
+    if (api.onUpdateProgress) {
+      api.onUpdateProgress((p) => {
+        const pct = Math.max(0, Math.min(100, Math.round(p.percent || 0)));
+        barFill.style.width = pct + '%';
+        pctLabel.textContent = pct + '%';
+
+        if (p.transferred) {
+          progressTransferred.textContent = fmtMb(p.transferred) + (p.total ? ` / ${fmtMb(p.total)}` : '');
+
+          // Calculate speed
+          const now = Date.now();
+          const dt = (now - lastTimestamp) / 1000;
+          if (dt > 0.5) {
+            const bytesPerSec = (p.transferred - lastTransferred) / dt;
+            if (bytesPerSec > 0) {
+              progressSpeed.textContent = fmtMb(bytesPerSec) + '/s';
+            }
+            lastTransferred = p.transferred;
+            lastTimestamp = now;
+          }
+        }
+
+        if (p.status === 'installing') {
+          btn.textContent = '⚙ Installing… App will restart';
+          progressStatus.textContent = 'Launching installer…';
+          pctLabel.textContent = '100%';
+          barFill.style.width = '100%';
+          progressSpeed.textContent = '—';
+        }
+
+        if (p.status === 'error') {
+          showErr(p.message || 'Download failed. Check your connection and retry.');
+          btn.disabled = false;
+          btn.textContent = '↺ Retry Update';
+          progressWrap.classList.remove('show');
+        }
+
+        if (p.status === 'downloading') {
+          progressStatus.textContent = 'Downloading update…';
+        }
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>
