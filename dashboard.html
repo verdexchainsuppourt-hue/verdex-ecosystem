@@ -563,7 +563,7 @@
       <a href="/dashboard">Dashboard</a>
       <a href="/faucet">Faucet</a>
       <a href="/developer-docs" target="_blank">Docs</a>
-      <a href="/explorer/" target="_blank">Explorer</a>
+      <a href="/explorer/index.html" target="_blank">Explorer</a>
     </div>
     <div class="nav-user" id="nav-user" style="display:none;">
       <img class="user-avatar" id="user-avatar" src="" alt="">
@@ -765,8 +765,10 @@
             <div style="display: flex; gap: 24px; align-items: baseline; flex-wrap: wrap;">
               <div class="wallet-balance" style="font-size: 32px; margin: 0;">
               <span id="vdx-onchain-balance">0.0000</span><span class="vp-label" style="color: var(--color-primary-light); font-size:14px; margin-left:4px;">VDX</span>
-              <button onclick="requestFaucetVDX()" style="margin-left:12px;padding:4px 12px;font-size:11px;border-radius:6px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#000;border:none;cursor:pointer;font-weight:700;" title="Get free testnet VDX">Request VDX</button>
+              <button type="button" id="btn-request-vdx" onclick="requestFaucetVDX()" style="margin-left:12px;padding:6px 14px;font-size:11px;border-radius:6px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#000;border:none;cursor:pointer;font-weight:700;" title="Get free testnet VDX on live L1">Request VDX</button>
+              <button type="button" id="btn-refresh-vdx" onclick="pollVDXBalance().then(()=>showToast('Balance refreshed from live L1','success')).catch(()=>{})" style="margin-left:6px;padding:6px 12px;font-size:11px;border-radius:6px;background:transparent;color:var(--color-primary);border:1px solid var(--color-border);cursor:pointer;font-weight:700;" title="Refresh on-chain balance">Refresh</button>
             </div>
+            <div id="vdx-faucet-status" style="margin-top:8px;font-size:12px;color:var(--color-text-muted);"></div>
               <div class="wallet-balance" style="font-size: 32px; margin: 0; border-left: 1px solid var(--color-border); padding-left: 24px;">
                 <span id="vdxl-onchain-balance">0.0000</span><span class="vp-label" style="color: #af52de; font-size:14px; margin-left:4px; text-shadow: 0 0 10px rgba(175,82,222,0.4);">VDXL</span>
               </div>
@@ -981,24 +983,31 @@
     <div class="dash-card full" style="margin-bottom: 20px;">
       <div class="card-label">Download Verdex Miner</div>
       <div class="card-title">Start Mining Verdex Points</div>
-      <p style="color: var(--color-text-muted); font-size: 14px; margin-bottom: 24px; max-width: 560px; line-height: 1.6;">
-        Download the Verdex miner app for your platform. Install and launch to start earning VP automatically.
+      <p style="color: var(--color-text-muted); font-size: 14px; margin-bottom: 24px; max-width: 620px; line-height: 1.6;">
+        Verdex Miner is available on <strong>Windows</strong>, <strong>Android</strong>, and <strong>Linux</strong>.
+        Desktop &amp; Android apps auto-update after login when a new version drops.
       </p>
       <div class="download-grid">
-        <a class="download-btn" id="download-windows" href="/assets/downloads/Verdex%20Miner%20Setup%203.0.0.exe" target="_blank" style="text-decoration:none;">
+        <!-- Windows -->
+        <a class="download-btn" id="download-windows" href="/updates/Verdex-Miner-Setup-4.0.2.exe" target="_blank" style="text-decoration:none;">
           <span class="download-icon">🪟</span>
           <span class="download-os">Windows</span>
-          <span class="download-desc">Desktop app with auto-detection & GPU mining</span>
+          <span class="download-desc">Desktop app · GPU &amp; CPU mining · auto-update</span>
+          <span class="download-version" style="font-size:11px;color:var(--color-primary-light);font-weight:700;letter-spacing:0.5px;margin-top:4px;">v4.0.2 · .exe · 83 MB</span>
         </a>
-        <div class="download-btn disabled" id="download-android" style="text-decoration:none; cursor:not-allowed; opacity:0.4;">
-          <span class="download-icon">📱</span>
+        <!-- Android -->
+        <a class="download-btn" id="download-android" href="/assets/downloads/Verdex-Android-1.8.9.apk" target="_blank" style="text-decoration:none;">
+          <span class="download-icon">🤖</span>
           <span class="download-os">Android</span>
-          <span class="download-desc">Not yet available — coming soon</span>
-        </div>
+          <span class="download-desc">Mobile miner · wallet · referrals · full UI</span>
+          <span class="download-version" style="font-size:11px;color:var(--color-primary-light);font-weight:700;letter-spacing:0.5px;margin-top:4px;">v1.8.9 · .apk · 76 MB</span>
+        </a>
+        <!-- Linux -->
         <a class="download-btn" id="download-linux" href="/assets/downloads/verdex-linux-amd64.tar.gz" target="_blank" style="text-decoration:none;">
           <span class="download-icon">🐧</span>
           <span class="download-os">Linux</span>
-          <span class="download-desc">CLI Miner package (verdex-linux-amd64)</span>
+          <span class="download-desc">CLI Miner · headless server mining</span>
+          <span class="download-version" style="font-size:11px;color:var(--color-primary-light);font-weight:700;letter-spacing:0.5px;margin-top:4px;">CLI · verdex-linux-amd64</span>
         </a>
       </div>
     </div>
@@ -1938,8 +1947,11 @@
     // ============================================================
     // VDX NATIVE CHAIN WALLET CONTROLLER (Chain ID 7201)
     // ============================================================
-    // Empty base → same-origin REST rewrites (/api/account, /api/tx, …)
-    const VDX_RPC_URL = '';
+    // Live L1 — prefer same-origin proxy (vercel → Railway), fallback direct Railway
+    const VDX_RPC_URL = (window.VERDEX_NETWORK && window.VERDEX_NETWORK.liveRpcBase)
+      || 'https://verdex-ecosystem-production.up.railway.app';
+    // Always hit live chain for wallet ops (never Supabase mirror)
+    const VDX_L1 = VDX_RPC_URL;
     const VDX_CHAIN_ID = (window.VERDEX_NETWORK && window.VERDEX_NETWORK.chainId) || 7201;
     let vdxPrivateKey = localStorage.getItem('vdx_private_key');
     let vdxAddress = '';
@@ -2414,54 +2426,64 @@
       document.getElementById('vdx-receive-panel').style.display = 'none';
     }
 
+    function formatWeiBalance(wei) {
+      try {
+        const v = BigInt(wei || '0');
+        const whole = v / 10n ** 18n;
+        const frac = (v % 10n ** 18n).toString().padStart(18, '0').slice(0, 4);
+        return whole.toString() + '.' + frac;
+      } catch {
+        return '0.0000';
+      }
+    }
+
     async function pollVDXBalance() {
       if (!vdxAddress) return;
+      const addr = String(vdxAddress).toLowerCase();
+      const rpcStatus = document.getElementById('rpc-status');
       try {
-        const r = await fetch(`${VDX_RPC_URL}/api/account/${vdxAddress}/balance`);
+        const r = await fetch(`${VDX_L1}/api/account/${addr}/balance`, { cache: 'no-store' });
         const data = await r.json();
-        
-        // Node is online
-        const rpcStatus = document.getElementById('rpc-status');
-        rpcStatus.textContent = 'RPC Online';
-        rpcStatus.style.background = 'rgba(34, 197, 94, 0.1)';
-        rpcStatus.style.borderColor = 'rgba(34, 197, 94, 0.3)';
-        rpcStatus.style.color = 'var(--color-primary-light)';
 
-        if (data.success) {
-          const bal = (BigInt(data.data.balance) / BigInt(10 ** 18)).toString();
-          document.getElementById('vdx-onchain-balance').textContent = parseFloat(bal).toFixed(4);
+        if (rpcStatus) {
+          rpcStatus.textContent = 'L1 Online';
+          rpcStatus.style.background = 'rgba(34, 197, 94, 0.1)';
+          rpcStatus.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+          rpcStatus.style.color = 'var(--color-primary-light)';
+        }
+
+        if (data.success && data.data) {
+          document.getElementById('vdx-onchain-balance').textContent = formatWeiBalance(data.data.balance);
         }
 
         try {
-          const tokenRes = await fetch(`${VDX_RPC_URL}/api/contract/call`, {
+          const tokenRes = await fetch(`${VDX_L1}/api/contract/call`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               contractAddress: '0x81e4e1300db885165f1dec77c41f9ddc12f69b50',
               method: 'balanceOf',
-              args: [vdxAddress]
+              args: [addr]
             })
           });
           const tokenData = await tokenRes.json();
           if (tokenRes.ok && tokenData.success) {
-            const tokenBal = (BigInt(tokenData.data.result || '0') / BigInt(10 ** 18)).toString();
-            document.getElementById('vdxl-onchain-balance').textContent = parseFloat(tokenBal).toFixed(4);
-            document.getElementById('vdxu-onchain-balance').textContent = parseFloat(tokenBal).toFixed(4);
+            const raw = (tokenData.data && (tokenData.data.result ?? tokenData.data)) || '0';
+            const formatted = formatWeiBalance(String(raw));
+            document.getElementById('vdxl-onchain-balance').textContent = formatted;
+            document.getElementById('vdxu-onchain-balance').textContent = formatted;
           }
         } catch (e) {
-          document.getElementById('vdxl-onchain-balance').textContent = '0.0000';
-          document.getElementById('vdxu-onchain-balance').textContent = '0.0000';
+          /* leave previous token balances */
         }
       } catch (err) {
-        // Node is offline
-        const rpcStatus = document.getElementById('rpc-status');
-        rpcStatus.textContent = 'RPC Offline';
-        rpcStatus.style.background = 'rgba(239, 68, 68, 0.1)';
-        rpcStatus.style.borderColor = 'rgba(239, 68, 68, 0.3)';
-        rpcStatus.style.color = 'var(--color-danger)';
-        document.getElementById('vdx-onchain-balance').textContent = '0.0000';
-        document.getElementById('vdxl-onchain-balance').textContent = '0.0000';
-        document.getElementById('vdxu-onchain-balance').textContent = '0.0000';
+        if (rpcStatus) {
+          rpcStatus.textContent = 'L1 Offline';
+          rpcStatus.style.background = 'rgba(239, 68, 68, 0.1)';
+          rpcStatus.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+          rpcStatus.style.color = 'var(--color-danger)';
+        }
+        // NEVER wipe balance to 0 on a network blip
       }
     }
 
@@ -2538,7 +2560,7 @@
 
       try {
         // Fetch current gas price stats from node
-        const res = await fetch(`${VDX_RPC_URL}/api/gas/price`);
+        const res = await fetch(`${VDX_L1}/api/gas/price`);
         const data = await res.json();
         
         let gasLimit = 21000;
@@ -2684,7 +2706,7 @@
         };
       }
       
-      const sendRes = await fetch(`${VDX_RPC_URL}/api/tx/send`, {
+      const sendRes = await fetch(`${VDX_L1}/api/tx/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(txSigned)
@@ -2701,7 +2723,8 @@
       const amount = document.getElementById('vdx-send-amount').value.trim();
       const assetType = document.getElementById('vdx-send-asset-type').value;
       
-      if (!/^0x[a-fA-F0-9]{40}$/.test(to)) {
+      const toNorm = (to || '').toLowerCase();
+      if (!/^0x[a-f0-9]{40}$/.test(toNorm)) {
         showToast('Invalid recipient address format.', 'error');
         return;
       }
@@ -2709,15 +2732,20 @@
         showToast('Amount must be greater than zero.', 'error');
         return;
       }
+      if (!vdxAddress) {
+        showToast('No wallet loaded. Generate or import a wallet first.', 'error');
+        return;
+      }
 
-      showToast(`Preparing ${assetType} transfer...`, 'info');
+      showToast(`Preparing ${assetType} transfer on live L1…`, 'info');
 
       try {
         document.getElementById('tx-loading-overlay').style.display = 'flex';
-        // Fetch current nonce & gas prices
+        const fromAddr = vdxAddress.toLowerCase();
+        // Fetch current nonce & gas prices from LIVE Railway L1
         const [nonceRes, gasPriceRes] = await Promise.all([
-          fetch(`${VDX_RPC_URL}/api/account/${vdxAddress}/nonce`),
-          fetch(`${VDX_RPC_URL}/api/gas/price`)
+          fetch(`${VDX_L1}/api/account/${fromAddr}/nonce`),
+          fetch(`${VDX_L1}/api/gas/price`)
         ]);
         
         const nonceData = await nonceRes.json();
@@ -2770,22 +2798,22 @@
           // Native transfer (EIP-1559 Style)
           txObj = {
             type: 1, // EIP-1559 type
-            from: vdxAddress,
-            to: to,
+            from: fromAddr,
+            to: toNorm,
             value: valueInWei,
             nonce: nonce,
             gasLimit: gasLimit,
             maxFeePerGas: maxFee.toString(),
             maxPriorityFeePerGas: maxPriorityFee.toString(),
             data: '',
-            chainId: (window.VERDEX_NETWORK && window.VERDEX_NETWORK.chainId) || 7201
+            chainId: VDX_CHAIN_ID
           };
         } else {
           // PRC-20 token call transfer(to, amount) (EIP-1559 Style)
           txObj = {
             type: 1,
-            from: vdxAddress,
-            to: tokenContract, // PRC20 Contract address
+            from: fromAddr,
+            to: tokenContract.toLowerCase(),
             value: '0',
             nonce: nonce,
             gasLimit: gasLimit,
@@ -2793,32 +2821,49 @@
             maxPriorityFeePerGas: maxPriorityFee.toString(),
             data: JSON.stringify({
               method: 'transfer',
-              args: [to, valueInWei]
+              args: [toNorm, valueInWei]
             }),
-            chainId: (window.VERDEX_NETWORK && window.VERDEX_NETWORK.chainId) || 7201
+            chainId: VDX_CHAIN_ID
           };
         }
 
-        // Sign and broadcast unified
+        // Sign and broadcast unified → live L1
         const result = await signAndBroadcastTransaction(txObj);
+        const txHash = result.txHash || result.hash;
+        if (!txHash) throw new Error('No tx hash returned from L1');
+
+        // Confirm the hash exists on live L1 (retry a few times while block is mined)
+        let confirmed = false;
+        for (let i = 0; i < 8; i++) {
+          await new Promise(r => setTimeout(r, 1500));
+          try {
+            const check = await fetch(`${VDX_L1}/api/tx/${txHash}`);
+            const cj = await check.json();
+            if (cj.success && cj.data) { confirmed = true; break; }
+          } catch (_) {}
+        }
 
         // Populate receipt details
         document.getElementById('web-receipt-asset').textContent = assetType;
         document.getElementById('web-receipt-amount').textContent = `${amount} ${assetType}`;
-        document.getElementById('web-receipt-to').textContent = to;
+        document.getElementById('web-receipt-to').textContent = toNorm;
         document.getElementById('web-receipt-nonce').textContent = nonce;
-        document.getElementById('web-send-success-hash').textContent = result.txHash;
-        document.getElementById('web-btn-view-explorer').href = `/explorer/#/tx/${result.txHash}`;
+        document.getElementById('web-send-success-hash').textContent = txHash;
+        document.getElementById('web-btn-view-explorer').href = `/explorer/#/tx/${txHash}`;
         
         document.getElementById('vdx-send-success').style.display = 'block';
         
-        showToast(`Transaction broadcasted successfully!`, 'success');
+        if (confirmed) {
+          showToast(`Confirmed on live L1 · ${String(txHash).slice(0, 14)}…`, 'success');
+        } else {
+          showToast(`Broadcast accepted · waiting for block. Hash ${String(txHash).slice(0, 14)}…`, 'info');
+        }
         
         // Save to address book if checked
         const saveCheck = document.getElementById('vdx-save-address-check');
         const saveName = document.getElementById('vdx-save-address-name').value.trim();
-        if (saveCheck.checked && saveName) {
-          addressBook[saveName] = to;
+        if (saveCheck && saveCheck.checked && saveName) {
+          addressBook[saveName] = toNorm;
           localStorage.setItem('vdx_address_book', JSON.stringify(addressBook));
           saveCheck.checked = false;
           document.getElementById('vdx-save-address-name').value = '';
@@ -2828,7 +2873,10 @@
         document.getElementById('vdx-send-to').value = '';
         document.getElementById('vdx-send-amount').value = '';
         hideSendPanel();
-        setTimeout(pollVDXBalance, 5000);
+        // Poll balance repeatedly so UI updates after block (~5s)
+        setTimeout(pollVDXBalance, 3000);
+        setTimeout(pollVDXBalance, 7000);
+        setTimeout(pollVDXBalance, 12000);
       } catch (err) {
         showToast(`Transaction failed: ${err.message}`, 'error');
       } finally {
@@ -2902,7 +2950,7 @@ class Contract {
       showToast('Deploying smart contract to Verdex Chain...', 'info');
 
       try {
-        const nonceRes = await fetch(`${VDX_RPC_URL}/api/account/${vdxAddress}/nonce`);
+        const nonceRes = await fetch(`${VDX_L1}/api/account/${vdxAddress}/nonce`);
         const nonceData = await nonceRes.json();
         if (!nonceRes.ok || !nonceData.success) throw new Error('Failed to fetch nonce.');
         const nonce = nonceData.data.nonce;
@@ -2923,7 +2971,7 @@ class Contract {
         
         await new Promise(r => setTimeout(r, 6000));
         
-        const txRes = await fetch(`${VDX_RPC_URL}/api/tx/${result.txHash}`);
+        const txRes = await fetch(`${VDX_L1}/api/tx/${result.txHash}`);
         const txData = await txRes.json();
         if (txData.success && txData.data.contractAddress) {
           localStorage.setItem('vdx_contract_address', txData.data.contractAddress);
@@ -2941,7 +2989,7 @@ class Contract {
       if (!vdxContractAddress) return;
       try {
         // 1. Read Counter value
-        const countRes = await fetch(`${VDX_RPC_URL}/api/contract/call`, {
+        const countRes = await fetch(`${VDX_L1}/api/contract/call`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -2956,7 +3004,7 @@ class Contract {
         }
 
         // 2. Read messages
-        const msgsRes = await fetch(`${VDX_RPC_URL}/api/contract/call`, {
+        const msgsRes = await fetch(`${VDX_L1}/api/contract/call`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -2996,7 +3044,7 @@ class Contract {
       showToast('Sending increment count transaction...', 'info');
 
       try {
-        const nonceRes = await fetch(`${VDX_RPC_URL}/api/account/${vdxAddress}/nonce`);
+        const nonceRes = await fetch(`${VDX_L1}/api/account/${vdxAddress}/nonce`);
         const nonceData = await nonceRes.json();
         if (!nonceRes.ok || !nonceData.success) throw new Error('Failed to fetch nonce.');
         const nonce = nonceData.data.nonce;
@@ -3034,7 +3082,7 @@ class Contract {
       showToast('Sending post message transaction...', 'info');
 
       try {
-        const nonceRes = await fetch(`${VDX_RPC_URL}/api/account/${vdxAddress}/nonce`);
+        const nonceRes = await fetch(`${VDX_L1}/api/account/${vdxAddress}/nonce`);
         const nonceData = await nonceRes.json();
         if (!nonceRes.ok || !nonceData.success) throw new Error('Failed to fetch nonce.');
         const nonce = nonceData.data.nonce;
@@ -3060,26 +3108,96 @@ class Contract {
     }
 
     async function requestFaucetVDX() {
-      if (!vdxAddress || vdxAddress === '0x' || vdxAddress.length !== 42) {
-        showToast('Set up your L1 wallet first.', 'error');
+      // Dashboard "Verdex L1 On-Chain VDX Wallet" → Request VDX
+      if (!vdxAddress || !/^0x[a-fA-F0-9]{40}$/.test(vdxAddress)) {
+        showToast('Set up your L1 wallet first (Generate / Import / MetaMask).', 'error');
         return;
       }
+      const addr = String(vdxAddress).toLowerCase();
+      const amount = 10;
+      const L1 = 'https://verdex-ecosystem-production.up.railway.app';
+      const btn = document.getElementById('btn-request-vdx');
+      const statusEl = document.getElementById('vdx-faucet-status');
+      const balEl = document.getElementById('vdx-onchain-balance');
+      if (btn) { btn.disabled = true; btn.textContent = 'Requesting…'; }
+
+      function setStatus(t) { if (statusEl) statusEl.textContent = t; }
+
       try {
-        showToast('Requesting testnet VDX...', 'info');
-        const res = await fetch('/api/chain?action=faucet', {
+        // 1) Snapshot balance BEFORE claim
+        let before = '0';
+        try {
+          const b0 = await fetch(L1 + '/api/account/' + addr + '/balance', { cache: 'no-store' }).then(r => r.json());
+          if (b0.success && b0.data) {
+            before = String(b0.data.balance || '0');
+            if (balEl) balEl.textContent = formatWeiBalance(before);
+          }
+        } catch (_) {}
+
+        setStatus('Sending faucet TX to live L1…');
+        showToast('Requesting 10 VDX on live L1…', 'info');
+
+        // 2) Claim on LIVE Railway L1 only
+        const res = await fetch(L1 + '/api/faucet/claim', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ address: vdxAddress, amount: '100' })
+          body: JSON.stringify({ address: addr, amount: amount })
         });
-        const data = await res.json();
-        if (data.success) {
-          showToast(`Received 100 VDX! Tx: ${data.data.txHash.slice(0, 16)}...`, 'success');
-          setTimeout(pollVDXBalance, 3000);
+        let data = null;
+        try { data = await res.json(); } catch (_) {
+          throw new Error('Faucet returned invalid response (HTTP ' + res.status + ')');
+        }
+        if (!res.ok || !data.success) {
+          throw new Error((data && data.error) || ('Faucet failed (HTTP ' + res.status + ')'));
+        }
+        const txHash = data.data && (data.data.txHash || data.data.hash);
+        setStatus(txHash
+          ? ('TX ' + txHash.slice(0, 18) + '… mining (~5s)')
+          : 'TX submitted · waiting for block');
+        showToast(txHash ? ('Faucet TX ' + txHash.slice(0, 14) + '…') : 'Faucet TX sent', 'info');
+
+        // 3) Poll until balance INCREASES or TX is mined
+        let finalBal = before;
+        let ok = false;
+        for (let i = 0; i < 16; i++) {
+          await new Promise(r => setTimeout(r, 1200));
+          try {
+            if (txHash) {
+              const txJ = await fetch(L1 + '/api/tx/' + txHash, { cache: 'no-store' }).then(r => r.json());
+              if (txJ.success && txJ.data && (txJ.data.blockHeight != null || txJ.data.block_height != null)) {
+                // mined
+              }
+            }
+            const b1 = await fetch(L1 + '/api/account/' + addr + '/balance', { cache: 'no-store' }).then(r => r.json());
+            if (b1.success && b1.data) {
+              finalBal = String(b1.data.balance || '0');
+              if (balEl) balEl.textContent = formatWeiBalance(finalBal);
+              if (BigInt(finalBal) > BigInt(before || '0')) {
+                ok = true;
+                break;
+              }
+            }
+          } catch (_) {}
+          setStatus('Waiting for block… (' + (i + 1) + '/16)');
+        }
+
+        // Force UI update
+        await pollVDXBalance();
+        if (balEl) balEl.textContent = formatWeiBalance(finalBal);
+
+        if (ok || BigInt(finalBal) > BigInt(before || '0')) {
+          const shown = balEl ? balEl.textContent : formatWeiBalance(finalBal);
+          setStatus('✅ Balance updated: ' + shown + ' VDX on live L1' + (txHash ? (' · ' + txHash.slice(0, 14) + '…') : ''));
+          showToast('Faucet confirmed · ' + shown + ' VDX', 'success');
         } else {
-          throw new Error(data.error || 'Faucet failed');
+          setStatus('TX may still be pending. Click Refresh. ' + (txHash || ''));
+          showToast('Submitted — click Refresh if balance still 0', 'info');
         }
       } catch (err) {
-        showToast('Faucet error: ' + err.message, 'error');
+        setStatus('Error: ' + (err.message || String(err)));
+        showToast('Faucet error: ' + (err.message || String(err)), 'error');
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Request VDX'; }
       }
     }
 
