@@ -1,0 +1,230 @@
+{
+  "version": 2,
+  "name": "verdex",
+  "public": true,
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/home",
+      "destination": "/",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/mining/:action",
+      "destination": "/api/mining?action=:action"
+    },
+    {
+      "source": "/api/auth/:action",
+      "destination": "/api/auth?action=:action"
+    },
+    {
+      "source": "/api/cron/:action",
+      "destination": "/api/cron?action=:action"
+    },
+    {
+      "source": "/api/admin/:action",
+      "destination": "/api/admin?action=:action"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/whitepaper",
+      "destination": "/whitepaper.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/explorer",
+      "destination": "/explorer/index.html"
+    },
+    {
+      "source": "/developer-docs",
+      "destination": "/verdex-developer-docs"
+    },
+    {
+      "source": "/docs",
+      "destination": "/verdex-developer-docs"
+    },
+    {
+      "source": "/faucet",
+      "destination": "/faucet.html"
+    },
+    {
+      "source": "/swap",
+      "destination": "/swap.html"
+    },
+    {
+      "source": "/llms.txt",
+      "destination": "/llms.txt"
+    },
+    {
+      "source": "/api/rpc",
+      "destination": "/api/rpc"
+    },
+    {
+      "source": "/api/network",
+      "destination": "/api/network"
+    },
+    {
+      "source": "/api/chain/info",
+      "destination": "https://verdex-ecosystem-production.up.railway.app/api/chain/info"
+    },
+    {
+      "source": "/api/chain/height",
+      "destination": "https://verdex-ecosystem-production.up.railway.app/api/chain/height"
+    },
+    {
+      "source": "/api/block/:height",
+      "destination": "https://verdex-ecosystem-production.up.railway.app/api/block/:height"
+    },
+    {
+      "source": "/api/account/:address/transactions",
+      "destination": "https://verdex-ecosystem-production.up.railway.app/api/account/:address/transactions"
+    },
+    {
+      "source": "/api/account/:address/:field",
+      "destination": "https://verdex-ecosystem-production.up.railway.app/api/account/:address/:field"
+    },
+    {
+      "source": "/api/account/:address",
+      "destination": "https://verdex-ecosystem-production.up.railway.app/api/account/:address"
+    },
+    {
+      "source": "/api/tx/send",
+      "destination": "https://verdex-ecosystem-production.up.railway.app/api/tx/send"
+    },
+    {
+      "source": "/api/tx/:hash/receipt",
+      "destination": "https://verdex-ecosystem-production.up.railway.app/api/tx/:hash/receipt"
+    },
+    {
+      "source": "/api/tx/:hash",
+      "destination": "https://verdex-ecosystem-production.up.railway.app/api/tx/:hash"
+    },
+    {
+      "source": "/api/validators",
+      "destination": "https://verdex-ecosystem-production.up.railway.app/api/validators/detailed"
+    },
+    {
+      "source": "/api/stats",
+      "destination": "https://verdex-ecosystem-production.up.railway.app/api/stats"
+    },
+    {
+      "source": "/api/gas/price",
+      "destination": "https://verdex-ecosystem-production.up.railway.app/api/gas/price"
+    },
+    {
+      "source": "/api/faucet",
+      "destination": "https://verdex-ecosystem-production.up.railway.app/api/faucet/claim"
+    },
+    {
+      "source": "/api/faucet/claim",
+      "destination": "https://verdex-ecosystem-production.up.railway.app/api/faucet/claim"
+    },
+    {
+      "source": "/api/contract/call",
+      "destination": "https://verdex-ecosystem-production.up.railway.app/api/contract/call"
+    },
+    {
+      "source": "/api/blocks/recent/:limit",
+      "destination": "https://verdex-ecosystem-production.up.railway.app/api/blocks/recent/:limit"
+    },
+    {
+      "source": "/api/validators/detailed",
+      "destination": "https://verdex-ecosystem-production.up.railway.app/api/validators/detailed"
+    },
+    {
+      "source": "/api/search",
+      "destination": "https://verdex-ecosystem-production.up.railway.app/api/search"
+    },
+    {
+      "source": "/((?!api/|js/|css/|assets/|updates/|explorer|dashboard|whitepaper|admin|developer-docs|docs).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/daily-credit",
+      "schedule": "0 0 * * *"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self' https://*.supabase.co https://unbzescopxtmtbrgqlhh.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://verdex-ecosystem-production.up.railway.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self' https://*.supabase.co https://unbzescopxtmtbrgqlhh.supabase.co https://api.resend.com https://verdexswap.site https://verdex-ecosystem-production.up.railway.app https://*.up.railway.app; img-src 'self' data: https://*.supabase.co;"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/updates/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=60, must-revalidate"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    },
+    {
+      "source": "/css/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/js/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=60, must-revalidate"
+        }
+      ]
+    }
+  ]
+}
+
