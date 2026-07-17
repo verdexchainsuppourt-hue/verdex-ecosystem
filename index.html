@@ -3,21 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verdex — Swap Smart. Grow Green. | Next-Gen DEX</title>
-  <meta name="description" content="Verdex is a next-generation decentralized exchange. Swap tokens, provide liquidity, and earn yields across multiple chains with full self-custody.">
-  <meta name="keywords" content="DEX, decentralized exchange, DeFi, swap, liquidity, yield farming, crypto, VDX token">
+  <title>Verdex — Swap Smart. Grow Green. | Green EVM L1 · DePIN Miner · AMM</title>
+  <meta name="description" content="Verdex is a green EVM Layer-1 (Chain ID 7201) with DePIN desktop mining and Verdex Swap AMM. Mine VP, trade with 0.25% fees (0.17% LPs · 0.05% treasury · 0.03% burn), full self-custody.">
+  <meta name="keywords" content="Verdex, VDX, VP, DePIN miner, green EVM, Chain 7201, DEX, AMM aggregator, PRC20, PoA blockchain, swap, liquidity, yield farming, Verdex Swap">
+  <meta name="author" content="Verdex">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta name="theme-color" content="#00ff88">
   <meta name="msvalidate.01" content="1633AE4FBBAF10022A33179BE8A25436" />
+  <link rel="canonical" href="https://verdexswap.site/">
   
   <!-- Open Graph -->
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Verdex">
+  <meta property="og:locale" content="en_US">
   <meta property="og:title" content="Verdex — Swap Smart. Grow Green.">
-  <meta property="og:description" content="Next-generation decentralized exchange built for speed, security, and sustainable yields.">
-  <meta property="og:url" content="https://verdex.vercel.app">
+  <meta property="og:description" content="Green EVM L1 (7201) + DePIN miner + AMM aggregator. 0.25% swap fees. Mine VP today. Self-custody DeFi.">
+  <meta property="og:url" content="https://verdexswap.site/">
+  <meta property="og:image" content="https://verdexswap.site/assets/verdex-token.png">
+  <meta property="og:image:alt" content="Verdex VDX token">
   
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Verdex — Swap Smart. Grow Green.">
-  <meta name="twitter:description" content="Next-generation decentralized exchange built for speed, security, and sustainable yields.">
+  <meta name="twitter:description" content="Green EVM L1 · DePIN desktop miner · AMM with 0.25% fees. Chain ID 7201.">
+  <meta name="twitter:image" content="https://verdexswap.site/assets/verdex-token.png">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,19 +45,50 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "Verdex",
-    "url": "https://verdexswap.site",
-    "description": "Verdex is a next-generation green EVM blockchain network and decentralized exchange featuring native DePIN desktop mining.",
-    "applicationCategory": "BusinessApplication",
-    "operatingSystem": "Windows, Linux",
-    "keywords": "Verdex, VDX, green EVM blockchain, DePIN desktop mining, Verdex PRC20 Testnet, crypto miner, green DeFi, Verdex Swap",
-    "offers": {
-      "@type": "Offer",
-      "price": "0.00",
-      "priceCurrency": "USD"
-    },
-    "featureList": "EVM Compatibility, High TPS, Eco-Friendly PoA Consensus, GPU & CPU DePIN Desktop Mining, Integrated Faucet, Block Explorer, Decentralized Token Swap"
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://verdexswap.site/#org",
+        "name": "Verdex",
+        "url": "https://verdexswap.site",
+        "logo": "https://verdexswap.site/assets/verdex-token.png",
+        "description": "Green EVM Layer-1 blockchain with DePIN mining and AMM swap.",
+        "sameAs": []
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://verdexswap.site/#website",
+        "url": "https://verdexswap.site",
+        "name": "Verdex",
+        "description": "Swap Smart. Grow Green. — Verdex L1, DePIN miner, and Verdex Swap AMM.",
+        "publisher": { "@id": "https://verdexswap.site/#org" },
+        "inLanguage": "en"
+      },
+      {
+        "@type": "WebApplication",
+        "name": "Verdex",
+        "url": "https://verdexswap.site",
+        "description": "Verdex is a green EVM-compatible Layer-1 (Chain ID 7201, PoA) with DePIN desktop mining (VP rewards) and a constant-product AMM aggregator (0.25% fee: 0.17% LPs, 0.05% treasury, 0.03% VDX burn).",
+        "applicationCategory": "FinanceApplication",
+        "operatingSystem": "Windows, Linux, Web",
+        "browserRequirements": "Requires JavaScript. MetaMask or EIP-1193 wallet recommended.",
+        "keywords": "Verdex, VDX, VP, green EVM blockchain, DePIN desktop mining, PRC20, Chain 7201, crypto miner, green DeFi, Verdex Swap, AMM aggregator",
+        "offers": {
+          "@type": "Offer",
+          "price": "0.00",
+          "priceCurrency": "USD"
+        },
+        "featureList": "EVM Compatibility, PoA Consensus, DePIN CPU/GPU Mining, PRC20 Tokens, AMM Aggregator Multi-hop Routing, 0.25% Swap Fees, Faucet, Block Explorer, Supabase Auth, Vercel Hosting"
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "Verdex Miner",
+        "applicationCategory": "DesktopApplication",
+        "operatingSystem": "Windows",
+        "description": "DePIN desktop miner for Verdex L1. Contributes CPU/GPU resources and earns Verdex Points (VP).",
+        "offers": { "@type": "Offer", "price": "0.00", "priceCurrency": "USD" }
+      }
+    ]
   }
   </script>
 </head>
@@ -80,14 +120,19 @@
       </a>
       <ul class="nav-links" id="navLinks">
         <li><a href="#ecosystem">Ecosystem</a></li>
-        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#how-it-works">How&nbsp;It&nbsp;Works</a></li>
         <li><a href="#tokenomics">Tokenomics</a></li>
-        <li><a href="dashboard.html">Dashboard</a></li>
-        <li><a href="faucet.html">Faucet</a></li>
+        <li><a href="#roadmap">Roadmap</a></li>
+        <li><a href="faq.html">FAQ</a></li>
         <li><a href="explorer/index.html">Explorer</a></li>
-        <li><a href="whitepaper.html">Whitepaper (Read)</a></li>
+        <li><a href="faucet.html">Faucet</a></li>
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><a href="dashboard.html#miner">Miner</a></li>
       </ul>
-      <a href="dashboard.html" class="btn btn-primary nav-cta" id="navCta">Mine VDX <span class="badge">New</span></a>
+      <div class="nav-cta-group">
+        <a href="dashboard.html" class="btn btn-primary nav-cta" id="navCta">Mine VDX <span class="badge">Live</span></a>
+        <a href="swap.html" class="nav-cta-secondary">Swap <span class="badge" style="background:rgba(34,197,94,0.2);color:#4ade80;">New</span></a>
+      </div>
       <button class="mobile-menu-toggle" id="menuToggle" aria-label="Toggle navigation menu">☰</button>
     </div>
   </nav>
@@ -98,18 +143,19 @@
       <div class="hero-content">
         <div class="hero-badge">
           <span class="pulse-dot"></span>
-          The future of decentralized trading
+          Live on Verdex Testnet · Chain ID 7201
         </div>
         <h1 class="hero-title">
           <span class="gradient-text">Swap Smart.</span><br>
           <span class="outline-text">Grow Green.</span>
         </h1>
         <p class="hero-subtitle">
-          Verdex is a next-generation DeFi stack: <strong>mine VP today</strong> on our DePIN network, build on <strong>Verdex Testnet (Chain ID 7201)</strong>, and trade on the upcoming DEX — all with self-custody.
+          Green PoA Layer-1 with <strong>DePIN mining</strong>, <strong>live AMM quotes</strong>, faucet, and explorer — all with self-custody. Mine VP today. Trade on Verdex Swap.
         </p>
         <div class="hero-cta">
-          <a href="dashboard.html" class="btn btn-primary btn-lg">Launch App <span class="badge">Live</span></a>
-          <a href="explorer/" class="btn btn-outline btn-lg">🔍 Block Explorer</a>
+          <a href="swap.html" class="btn btn-primary btn-lg">Open Swap <span class="badge">Live</span></a>
+          <a href="dashboard.html" class="btn btn-outline btn-lg">Mine VP</a>
+          <a href="explorer/" class="btn btn-outline btn-lg">Explorer</a>
           <button onclick="addVerdexToMetaMask()" class="btn btn-outline btn-lg" style="border-color:rgba(0,255,136,0.4); color:#00ff88; font-size:13px; padding: 12px 18px;" id="metamask-btn">
             <svg style="width:16px;height:16px;margin-right:6px;vertical-align:middle;" viewBox="0 0 24 24" fill="currentColor"><path d="M21.32 3L13.23 9.11l1.54-3.68L21.32 3zm-18.65 0l8.06 6.13-1.46-3.7L2.67 3zM18.19 15.97l-2.15 3.29 4.61 1.27 1.32-4.49-3.78-.07zm-14.5.07l1.32 4.49 4.59-1.27-2.13-3.29-3.78.07zm-.82-5.51l-1.09 5.07 3.59-.19-2.5-4.88zm16.26 0l-2.52 4.88 3.61.19-1.09-5.07zM8.39 13.95l-2.44-.98.87-3.74 1.57 4.72zm7.22 0l1.57-4.72.89 3.74-2.46.98z"/></svg>
             Add to MetaMask
@@ -144,26 +190,35 @@
     </div>
   </header>
 
-  <!-- Sleek Download Banner -->
-  <div style="background-color: #0b0f19; padding: 20px 0; border-top: 1px solid rgba(0, 255, 170, 0.1); border-bottom: 1px solid rgba(0, 255, 170, 0.1);">
-    <div class="container" style="max-width: 1200px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
-      <div style="display: flex; align-items: center; gap: 24px; flex: 1; min-width: 300px;">
-        <div style="width: 72px; height: 72px; border-radius: 16px; background: linear-gradient(135deg, rgba(34,197,94,0.2) 0%, rgba(22,163,74,0.1) 100%); display: flex; align-items: center; justify-content: center; border: 1px solid rgba(0, 255, 170, 0.2); box-shadow: 0 0 20px rgba(0,255,170,0.15);">
-          <img src="assets/verdex-logo-email.png" alt="Verdex App Icon" style="width: 48px; height: 48px; filter: drop-shadow(0 0 8px rgba(0,255,170,0.8));">
+  <!-- Premium Download Banner -->
+  <div class="download-banner">
+    <div class="container download-banner-inner">
+      <div class="dl-left">
+        <div class="dl-icon-wrap">
+          <img src="assets/verdex-logo-email.png" alt="Verdex App Icon" class="dl-icon">
         </div>
-        <div style="max-width: 600px;">
-          <h4 style="color: #ffffff; font-size: 16px; font-weight: 700; margin-bottom: 6px; font-family: 'Space Grotesk', sans-serif;">Download → Launch → Earn</h4>
-          <p style="color: #86a389; font-size: 14px; line-height: 1.5; margin: 0;">The Verdex App automatically detects your hardware, connects to the decentralized network, and mines the most profitable VDX algorithm in real-time to maximize your earnings.</p>
+        <div class="dl-text">
+          <h4 class="dl-title">Download &rarr; Install &rarr; Mine VDX</h4>
+          <p class="dl-desc">Verdex Miner v4.0.2 for Windows &amp; Android v1.8.9. Apps auto-update on launch. Mine points that convert to VDX at mainnet launch.</p>
+          <div class="dl-meta">
+            <span class="dl-badge">🪟 Windows v4.0.2</span>
+            <span class="dl-badge">🤖 Android v1.8.9</span>
+            <span class="dl-badge">🐧 Linux CLI</span>
+            <span class="dl-badge">🌐 Browser</span>
+          </div>
         </div>
       </div>
-      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-        <a href="assets/downloads/Verdex Miner Setup 3.0.0.exe" style="background: linear-gradient(90deg, #22c55e, #16a34a); color: #010301; padding: 14px 28px; border-radius: 8px; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 10px; text-decoration: none; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3); transition: all 0.3s; white-space: nowrap;">
-          <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.951-1.801"/></svg>
-          Download Verdex Miner
+      <div class="dl-right">
+        <a href="updates/Verdex-Miner-Setup-4.0.2.exe" class="btn btn-primary dl-btn" id="dl-btn-windows">
+          <svg style="width:18px;height:18px;flex-shrink:0;" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.951-1.801"/></svg>
+          Download for Windows
+          <span class="dl-version">v4.0.2</span>
         </a>
-        <a href="/dashboard" style="color: #86a389; font-size: 12px; text-decoration: none; display: flex; align-items: center; gap: 4px; transition: color 0.2s;">
-          Mine in Browser or get Linux CLI? <svg style="width:10px; height:10px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <a href="assets/downloads/Verdex-Android-1.8.9.apk" class="dl-btn" id="dl-btn-android" style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:#4ade80;text-decoration:none;display:inline-flex;align-items:center;gap:10px;padding:13px 22px;border-radius:10px;font-weight:700;font-size:14px;transition:all 0.25s;">
+          🤖 Android APK
+          <span class="dl-version" style="background:rgba(0,0,0,0.2);">v1.8.9</span>
         </a>
+        <a href="/dashboard" class="dl-alt">Linux CLI &amp; browser mining <svg style="width:10px;height:10px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></a>
       </div>
     </div>
   </div>
@@ -448,28 +503,28 @@
             <p>Brand creation, website launch, whitepaper release, community building, and smart contract architecture design.</p>
           </div>
         </div>
-        <div class="roadmap-item active">
+        <div class="roadmap-item completed">
           <div class="roadmap-dot"></div>
           <div class="roadmap-content">
             <span class="roadmap-phase">Phase 2</span>
             <h3>Testnet Launch</h3>
-            <p>Verdex Testnet (chain ID 7201) live with VP mining, faucet, explorer, and PRC20 contracts. EVM Geth node + AMM contracts in development.</p>
+            <p>Verdex Testnet (chain ID 7201) live with VP mining, faucet, explorer, PRC20, and VerdexAMM (0.25% fee pools seeded).</p>
           </div>
         </div>
-        <div class="roadmap-item">
+        <div class="roadmap-item active">
           <div class="roadmap-dot"></div>
           <div class="roadmap-content">
             <span class="roadmap-phase">Phase 3</span>
-            <h3>Token Generation Event</h3>
-            <p>VDX token launch, liquidity bootstrapping, exchange listings, and incentive program activation.</p>
+            <h3>Wallet Swaps & Liquidity UX</h3>
+            <p>Browser-signed swaps, add/remove liquidity UI, public LP onboarding, and deeper pool liquidity before TGE.</p>
           </div>
         </div>
         <div class="roadmap-item">
           <div class="roadmap-dot"></div>
           <div class="roadmap-content">
             <span class="roadmap-phase">Phase 4</span>
-            <h3>Mainnet & Expansion</h3>
-            <p>Full mainnet deployment, multi-chain expansion, governance activation, and advanced yield products.</p>
+            <h3>TGE · Mainnet & Expansion</h3>
+            <p>VDX token generation, full mainnet hardening, multi-chain expansion, governance, and advanced yield products.</p>
           </div>
         </div>
       </div>
@@ -500,7 +555,7 @@
     </div>
   </section>
 
-  <!-- Swap CTA / Waitlist Section -->
+  <!-- Swap CTA -->
   <section class="section swap-cta reveal" id="swap">
     <div class="container">
       <div class="swap-card">
@@ -510,19 +565,24 @@
             <path d="M50 105L95 80L50 160L5 80L50 105Z" fill="#4ade80"/>
           </svg>
         </div>
-        <h2>Verdex Swap is <span class="gradient-text">Coming Soon</span></h2>
-        <p>Phase 4 (DEX) is next. <strong>Live now:</strong> mining, Verdex Testnet (7201), faucet, and PRC20 tokens. Join the waitlist for early swap access.</p>
+        <h2>Verdex Swap is <span class="gradient-text">Live on Testnet</span></h2>
+        <p>
+          On-chain AMM with <strong>0.25% fees</strong> (0.17% LPs · 0.05% treasury · 0.03% burn).
+          Pools: <strong>WVDX / USDT / ALP</strong>. Multi-hop routing &amp; live quotes ready.
+        </p>
+        <div style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-top:8px; position:relative; z-index:1;">
+          <a href="swap.html" class="btn btn-primary btn-lg">Launch Swap</a>
+          <a href="explorer/" class="btn btn-outline btn-lg">View Explorer</a>
+          <a href="dashboard.html" class="btn btn-outline btn-lg">Start Mining</a>
+        </div>
+        <p style="margin-top:18px; font-size:13px; color:rgba(255,255,255,0.45); position:relative; z-index:1;">
+          Stay in the loop for TGE &amp; mainnet
+        </p>
         <form class="waitlist-form" id="waitlistForm">
-          <input type="email" id="waitlistEmail" placeholder="Enter your email address" required autocomplete="email">
-          <button type="submit" class="btn btn-primary" id="waitlistBtn">Join Waitlist</button>
+          <input type="email" id="waitlistEmail" placeholder="Email for launch updates" required autocomplete="email">
+          <button type="submit" class="btn btn-primary" id="waitlistBtn">Notify Me</button>
         </form>
         <div id="formMessage" style="display: none; margin-top: 16px; position: relative; z-index: 1;"></div>
-        <div class="countdown" id="countdown">
-          <div><span id="days">00</span><label>Days</label></div>
-          <div><span id="hours">00</span><label>Hours</label></div>
-          <div><span id="minutes">00</span><label>Minutes</label></div>
-          <div><span id="seconds">00</span><label>Seconds</label></div>
-        </div>
       </div>
     </div>
   </section>
@@ -554,13 +614,13 @@
     </div>
   </section>
 
-  <!-- AI Search Assistant & Discoverability Index (GEO) -->
+  <!-- Ecosystem FAQ / Directory -->
   <section class="section ai-index reveal" id="ai-discoverability" style="padding: 60px 0; border-top: 1px solid rgba(34, 197, 94, 0.1); background: rgba(34, 197, 94, 0.01);">
     <div class="container">
       <div style="text-align: center; margin-bottom: 40px;">
-        <span class="section-tag" style="color: var(--color-primary-light); letter-spacing: 2px;">SEARCH & AI OPTIMIZATION</span>
+        <span class="section-tag" style="color: var(--color-primary-light); letter-spacing: 2px;">ECOSYSTEM GUIDE</span>
         <h2 style="font-size: 28px; margin-top: 10px; font-family: 'Syne', sans-serif;">Verdex <span class="gradient-text">Ecosystem Directory</span></h2>
-        <p style="color: var(--color-text-muted); max-width: 600px; margin: 10px auto 0; font-size: 14px;">Structured definitions and answers for web indexers, search queries, and AI assistants (ChatGPT, Claude, Gemini).</p>
+        <p style="color: var(--color-text-muted); max-width: 600px; margin: 10px auto 0; font-size: 14px;">Quick answers about the network, miner, faucet, and how to connect your wallet.</p>
       </div>
       <div class="faq-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
         <div class="faq-card" style="background: rgba(255, 255, 255, 0.02); padding: 24px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); transition: border-color 0.3s;">
@@ -602,21 +662,20 @@
         <div class="footer-links">
           <h4>Platform</h4>
           <ul>
-            <li><a href="#swap">Swap</a></li>
-            <li><a href="#ecosystem">Pool</a></li>
-            <li><a href="#ecosystem">Farm</a></li>
-            <li><a href="#tokenomics">Stake</a></li>
+            <li><a href="swap.html">Swap</a></li>
+            <li><a href="dashboard.html">Mine VP</a></li>
+            <li><a href="explorer/">Explorer</a></li>
+            <li><a href="faucet.html">Faucet</a></li>
           </ul>
         </div>
         <div class="footer-links">
           <h4>Resources</h4>
           <ul>
-            <li><a href="whitepaper.html" target="_blank">Whitepaper</a></li>
+            <li><a href="whitepaper.html">Whitepaper</a></li>
             <li><a href="#roadmap">Roadmap</a></li>
             <li><a href="#tokenomics">Tokenomics</a></li>
             <li><a href="/developer-docs">Developer Docs</a></li>
-            <li><a href="/faucet">Testnet Faucet</a></li>
-            <li><a href="/explorer/index.html">Block Explorer</a></li>
+            <li><a href="faq.html">FAQ</a></li>
           </ul>
         </div>
         <div class="footer-links">
@@ -632,21 +691,21 @@
         <div class="footer-links">
           <h4>Contact</h4>
           <ul>
-            <li><a href="mailto:verdexchainsuppourt@gmail.com">📧 verdexchainsuppourt@gmail.com</a></li>
-            <li><a href="#swap">Join Waitlist</a></li>
+            <li><a href="mailto:verdexchainsuppourt@gmail.com">verdexchainsuppourt@gmail.com</a></li>
+            <li><a href="#swap">Launch Updates</a></li>
           </ul>
         </div>
       </div>
       <div class="footer-bottom">
         <p>&copy; 2026 Verdex. All rights reserved.</p>
-        <p class="disclaimer">Verdex is a decentralized protocol. Tokens and swaps are not yet live. This website is for informational purposes only and does not constitute financial advice.</p>
+        <p class="disclaimer">Verdex is a decentralized protocol on testnet. This website is for informational purposes only and does not constitute financial advice. Crypto involves risk.</p>
         <p class="disclaimer" style="margin-top: 20px; font-size: 0.85rem;">Developed by <strong style="color: var(--color-primary-light);">Suleman</strong> — Other developers will be revealed soon.</p>
       </div>
     </div>
   </footer>
 
-  <script src="js/network-config.js"></script>
-  <script src="js/main.js"></script>
+  <script src="js/network-config.js?v=4.0.1"></script>
+  <script src="js/main.js?v=4.0.1"></script>
   <script>
     async function addVerdexToMetaMask() {
       const btn = document.getElementById('metamask-btn');
