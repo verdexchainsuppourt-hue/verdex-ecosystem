@@ -1,0 +1,16 @@
+{
+  "version": "4.0.2",
+  "mandatory": true,
+  "minVersion": "3.3.0",
+  "productName": "Verdex Miner",
+  "releaseDate": "2026-07-17",
+  "notes": "Crystal logo, enhanced auth UI with email+Google sign-in, live network stats on login screen, UI polish, performance improvements, bug fixes.",
+  "downloads": {
+    "windows": {
+      "url": "https://verdexswap.site/updates/Verdex-Miner-Setup-4.0.2.exe",
+      "fileName": "Verdex-Miner-Setup-4.0.2.exe",
+      "size": 87066846
+    }
+  },
+  "feedUrl": "https://verdexswap.site/updates"
+}
