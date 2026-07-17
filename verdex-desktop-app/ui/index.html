@@ -1,0 +1,2772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verdex Miner v3.2 — DePIN Node</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <script src="lib/chart.js"></script>
+  <script src="lib/supabase.min.js"></script>
+  <script src="lib/ethers.umd.min.js"></script>
+  <script src="lib/crypto-js.min.js"></script>
+  <script src="lib/elliptic.min.js"></script>
+  <script src="lib/sha3.min.js"></script>
+  <script src="lib/qrious.min.js"></script>
+  <style>
+    :root {
+      --primary: #00ff88;
+      --primary-bright: #5dffb0;
+      --primary-glow: rgba(0, 255, 136, 0.45);
+      --primary-dim: rgba(0, 255, 136, 0.1);
+      --bg-deep: #07090f;
+      --bg-sidebar: linear-gradient(180deg, #0c0f1a 0%, #0a0d16 100%);
+      --bg-panel: rgba(16, 20, 36, 0.72);
+      --bg-panel-hover: rgba(22, 28, 50, 0.88);
+      --border-panel: rgba(255, 255, 255, 0.06);
+      --border-glow: rgba(0, 255, 136, 0.22);
+      --text: #f4f7fb;
+      --text-muted: #8b97ab;
+      --danger: #ff453a;
+      --success: #00ff88;
+      --purple: #bf5af2;
+      --cyan: #64d2ff;
+      --warning: #ffd60a;
+      --radius: 14px;
+      --shadow-panel: 0 12px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *::-webkit-scrollbar { width: 5px; }
+    *::-webkit-scrollbar-track { background: transparent; }
+    *::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(0,255,136,0.25), rgba(255,255,255,0.08));
+      border-radius: 8px;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-deep);
+      background-image: 
+        radial-gradient(ellipse 80% 50% at 15% 0%, rgba(0, 255, 136, 0.07), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 90% 100%, rgba(191, 90, 242, 0.06), transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(100, 210, 255, 0.02), transparent 70%);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Logo float animation for crystal logo */
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-7px); }
+    }
+
+    /* Ambient mesh overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+      opacity: 0.5;
+    }
+
+    /* ═══ TITLEBAR ═══ */
+    .titlebar {
+      height: 42px;
+      background: linear-gradient(180deg, rgba(12, 15, 26, 0.98), rgba(8, 10, 18, 0.96));
+      border-bottom: 1px solid var(--border-panel);
+      box-shadow: 0 1px 0 rgba(0,255,136,0.04);
+      -webkit-app-region: drag;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+    .tb-brand { display: flex; align-items: center; gap: 10px; }
+    .tb-logo { width: 18px; height: 18px; filter: drop-shadow(0 0 6px var(--primary-glow)); }
+    .tb-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 8px var(--primary-glow); animation: blink 2s infinite; }
+    .tb-title { font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 0.6px; }
+    .tb-version {
+      font-size: 9px; font-weight: 600; color: var(--primary);
+      background: var(--primary-dim); border: 1px solid rgba(0,255,136,0.18);
+      padding: 2px 7px; border-radius: 20px; letter-spacing: 0.3px;
+    }
+    .tb-ticker {
+      -webkit-app-region: no-drag;
+      font-size: 11px; color: var(--text-muted);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .tk-hl { color: var(--primary); font-weight: 600; }
+    .tb-controls { -webkit-app-region: no-drag; display: flex; align-items: center; gap: 4px; }
+    .tb-btn {
+      background: none; border: none; color: var(--text-muted); cursor: pointer;
+      font-size: 13px; width: 26px; height: 26px; border-radius: 5px;
+      display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+    }
+    .tb-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .tb-btn.close:hover { background: var(--danger); color: #fff; }
+
+    /* ═══ APP CORE ═══ */
+    .app-core { display: flex; flex: 1; overflow: hidden; }
+
+    /* ═══ SIDEBAR ═══ */
+    .sidebar {
+      width: 248px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-panel);
+      padding: 22px 14px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 10;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .sidebar::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0; bottom: 0; width: 1px;
+      background: linear-gradient(180deg, transparent, rgba(0,255,136,0.2), transparent);
+      pointer-events: none;
+    }
+    .sb-top { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+    .logo-badge {
+      width: 72px; height: 72px; border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 30%, rgba(0,255,136,0.12), transparent 50%),
+        radial-gradient(circle, rgba(15, 18, 30, 0.95) 0%, rgba(6, 8, 14, 0.98) 100%);
+      border: 2px solid rgba(0, 255, 136, 0.2);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 28px rgba(0, 255, 136, 0.12), inset 0 0 20px rgba(0,255,136,0.04);
+      position: relative;
+    }
+    .logo-badge::before {
+      content: ''; position: absolute; inset: -8px; border-radius: 50%;
+      border: 1px solid rgba(0, 255, 136, 0.08);
+      animation: pulseRing 3s ease-in-out infinite;
+    }
+    .logo-badge::after {
+      content: ''; position: absolute; inset: -5px; border-radius: 50%;
+      border: 1px dashed rgba(0, 255, 136, 0.28);
+      animation: rotCW 18s linear infinite;
+    }
+    .logo-text-glow {
+      font-size: 14px; font-weight: 800; letter-spacing: 4px;
+      color: var(--primary); text-shadow: 0 0 8px var(--primary-glow);
+      margin-top: 4px; text-transform: uppercase; text-align: center;
+    }
+
+    .sb-menu { width: 100%; display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+    .mi {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 13px; border-radius: 10px;
+      font-size: 13px; font-weight: 500; color: var(--text-muted);
+      cursor: pointer; transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      position: relative;
+    }
+    .mi:hover {
+      background: rgba(255,255,255,0.035); color: var(--text);
+      transform: translateX(2px);
+    }
+    .mi.active {
+      background: linear-gradient(90deg, rgba(0,255,136,0.14), rgba(0,255,136,0.04));
+      border-color: rgba(0,255,136,0.22);
+      color: var(--primary); font-weight: 600;
+      box-shadow: 0 0 18px rgba(0,255,136,0.06);
+    }
+    .mi.active::before {
+      content: '';
+      position: absolute; left: 0; top: 20%; bottom: 20%; width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: var(--primary);
+      box-shadow: 0 0 8px var(--primary-glow);
+    }
+    .mi-icon { font-size: 15px; width: 20px; text-align: center; }
+
+    /* User card */
+    .user-card {
+      width: 100%;
+      background: linear-gradient(145deg, rgba(12,16,28,0.85), rgba(8,10,18,0.6));
+      border: 1px solid rgba(0,255,136,0.1);
+      border-radius: 12px; padding: 12px;
+      display: flex; flex-direction: column; gap: 8px; align-items: center;
+      margin-top: 10px;
+      box-shadow: var(--shadow-panel);
+    }
+    .user-info { display: flex; align-items: center; gap: 8px; width: 100%; }
+    .user-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 1.5px solid rgba(0,255,136,0.3); object-fit: cover;
+      background: rgba(0,255,136,0.1);
+    }
+    .user-email {
+      font-size: 10px; color: var(--primary); font-weight: 600;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      max-width: 140px; flex: 1;
+    }
+    .btn-logout {
+      background: none; border: none; color: var(--danger);
+      cursor: pointer; font-size: 12px; padding: 2px;
+    }
+    .vp-balance {
+      font-size: 11px; color: var(--text-muted);
+      display: flex; align-items: center; gap: 4px; width: 100%;
+    }
+    .vp-balance strong { color: var(--primary); font-weight: 700; }
+
+    /* Sidebar footer */
+    .sb-footer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.03);
+    }
+    .sb-footer-text {
+      font-size: 9px;
+      color: rgba(255,255,255,0.33);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-align: center;
+      max-width: 220px;
+    }
+
+    .net-visual {
+      position: relative;
+      width: 100%;
+      min-height: 220px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(0,255,136,0.12);
+      background: radial-gradient(circle at top left, rgba(0,255,136,0.08), transparent 42%), radial-gradient(circle at bottom right, rgba(255,255,255,0.06), transparent 45%);
+    }
+    .net-visual img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: saturate(1.2) brightness(1.15);
+      opacity: 0.95;
+    }
+    .net-visual canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .net-slogan {
+      position: absolute;
+      left: 16px;
+      bottom: 16px;
+      z-index: 4;
+      font-size: 11px;
+      letter-spacing: 1.8px;
+      color: rgba(255,255,255,0.95);
+      text-transform: uppercase;
+      text-shadow: 0 0 16px rgba(0,255,136,0.25);
+    }
+
+    /* ═══ MAIN AREA ═══ */
+    .main-wrap {
+      flex: 1; display: flex; flex-direction: column;
+      overflow: hidden; padding: 18px 22px; position: relative;
+    }
+
+    .tab-panel { flex: 1; display: none; overflow: hidden; }
+    .tab-panel.active { display: flex; flex-direction: column; }
+
+    /* ═══ GLASS CARDS ═══ */
+    .gc {
+      background: var(--bg-panel);
+      backdrop-filter: blur(24px) saturate(1.2);
+      -webkit-backdrop-filter: blur(24px) saturate(1.2);
+      border: 1px solid var(--border-panel);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow-panel);
+      position: relative; overflow: hidden;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+    }
+    .gc::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,255,136,0.25), transparent);
+      opacity: 0.7;
+    }
+    .gc:hover {
+      border-color: rgba(0,255,136,0.14);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,255,136,0.05);
+    }
+
+    .gc-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 14px;
+    }
+    .gc-title {
+      font-size: 11px; font-weight: 700; color: #fff;
+      text-transform: uppercase; letter-spacing: 1.2px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .gc-icon {
+      color: var(--text-muted); cursor: pointer; font-size: 13px;
+      width: 28px; height: 28px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .gc-icon:hover { background: rgba(255,255,255,0.05); color: var(--primary); }
+
+    /* ═══ DASHBOARD LAYOUT ═══ */
+    .dash-grid {
+      display: grid; grid-template-columns: 1fr 1.3fr;
+      gap: 18px; flex: 1; overflow: hidden;
+    }
+    .dash-left { display: flex; flex-direction: column; height: 100%; }
+    .dash-right { display: flex; flex-direction: column; gap: 16px; height: 100%; overflow-y: auto; }
+
+    /* Mining Status Card */
+    .mining-card { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+    .vortex-panel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+    .vortex-wrap { width: 220px; height: 220px; position: relative; display: flex; align-items: center; justify-content: center; }
+    .vortex-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .vortex-labels { position: relative; text-align: center; z-index: 5; pointer-events: none; }
+    .vortex-main {
+      font-size: 13px; font-weight: 800; letter-spacing: 2px; color: var(--text-muted);
+      transition: all 0.3s;
+    }
+    .vortex-main.active { color: var(--primary); text-shadow: 0 0 15px var(--primary-glow); }
+    .vortex-sub { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; opacity: 0.6; }
+
+    /* Phase badge */
+    .phase-strip {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 7px 16px;
+      background: linear-gradient(90deg, rgba(0,255,136,0.08), rgba(0,255,136,0.03), rgba(0,255,136,0.08));
+      border: 1px solid rgba(0,255,136,0.18); border-radius: 999px;
+      margin-bottom: 14px; font-size: 10px; font-weight: 700;
+      color: var(--primary); letter-spacing: 1.1px; text-transform: uppercase;
+      box-shadow: 0 0 20px rgba(0,255,136,0.06);
+    }
+    .phase-strip .phase-dot {
+      width: 6px; height: 6px; background: var(--primary); border-radius: 50%;
+      box-shadow: 0 0 8px var(--primary); animation: blink 1.5s infinite;
+    }
+
+    /* Hardware indicators */
+    .hw-indicators { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+    .hw-row {
+      display: flex; justify-content: space-between; align-items: center;
+      background: rgba(8,10,18,0.4); border: 1px solid rgba(255,255,255,0.03);
+      border-radius: 7px; padding: 10px 14px; font-size: 12px;
+    }
+    .hw-row.active { border-color: rgba(0,255,136,0.12); }
+    .hw-label { color: var(--text-muted); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px; }
+    .hw-val { font-weight: 700; color: #fff; }
+    .hw-val.hl { color: var(--primary); text-shadow: 0 0 8px rgba(0,255,136,0.2); }
+    .hw-row.total {
+      background: linear-gradient(90deg, rgba(0,255,136,0.04) 0%, rgba(18,22,40,0.3) 100%);
+      border: 1px solid rgba(0,255,136,0.2); box-shadow: 0 0 12px rgba(0,255,136,0.03);
+    }
+    .hw-row.total .hw-label { color: #fff; }
+    .hw-row.total .hw-val { font-size: 14px; }
+
+    /* Insights Card */
+    .insights-card { height: 170px; display: flex; flex-direction: column; }
+    .insights-sub { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .chart-wrap { flex: 1; position: relative; }
+
+    /* Network Card */
+    .network-card { height: 170px; display: flex; flex-direction: column; }
+    .net-canvas-wrap {
+      flex: 1; position: relative; overflow: hidden; border-radius: 6px;
+      background: radial-gradient(circle at 50% 50%, rgba(0,255,136,0.06), rgba(8,10,18,0.95));
+    }
+    .net-canvas-wrap canvas {
+      width: 100%; height: 100%; display: block;
+    }
+    .net-stats-overlay {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; gap: 6px; pointer-events: none;
+    }
+    .net-stat-pill {
+      font-size: 10px; font-weight: 700; color: var(--primary);
+      background: rgba(0,0,0,0.55); border: 1px solid rgba(0,255,136,0.2);
+      padding: 4px 10px; border-radius: 20px; letter-spacing: 0.5px;
+    }
+    .net-slogan {
+      position: absolute; bottom: 6px; width: 100%; text-align: center;
+      font-size: 9px; color: var(--primary); font-weight: 700;
+      letter-spacing: 2px; text-shadow: 0 0 6px var(--primary-glow);
+      text-transform: uppercase; z-index: 5;
+    }
+
+    /* Earnings Card */
+    .earnings-card { height: 140px; display: flex; flex-direction: column; justify-content: center; }
+    .earn-layout { display: grid; grid-template-columns: 1.1fr 1fr 0.9fr; gap: 14px; align-items: center; height: 100%; }
+    .earn-left { display: flex; flex-direction: column; gap: 6px; }
+    .earn-dd-lbl { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+    .earn-row { display: flex; justify-content: space-between; font-size: 11px; padding: 1px 0; }
+    .earn-row .lbl { color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+    .earn-row .val { font-weight: 600; }
+    .earn-bullet { width: 4px; height: 4px; border-radius: 50%; }
+    .earn-bullet.green { background: var(--primary); box-shadow: 0 0 5px var(--primary); }
+    .earn-bullet.purple { background: var(--purple); box-shadow: 0 0 5px var(--purple); }
+
+    .earn-center {
+      text-align: center;
+      border-left: 1px solid rgba(255,255,255,0.04);
+      border-right: 1px solid rgba(255,255,255,0.04);
+      padding: 0 10px; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; height: 100%;
+    }
+    .unpaid-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+    .unpaid-amt { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+    .unpaid-amt span { color: var(--primary); }
+    .btn-web-dash {
+      background: var(--primary-dim); border: 1px solid rgba(0,255,136,0.18);
+      color: var(--primary); padding: 7px 12px; border-radius: 5px;
+      font-size: 9px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s; width: 100%; text-transform: uppercase;
+      letter-spacing: 0.5px; display: flex; align-items: center;
+      justify-content: center; gap: 5px;
+    }
+    .btn-web-dash:hover { background: var(--primary); color: #000; box-shadow: 0 0 12px var(--primary-glow); }
+
+    .earn-right { display: flex; align-items: center; justify-content: center; height: 100%; }
+    .gauge-box { display: flex; flex-direction: column; align-items: center; }
+    .gauge-svg { width: 85px; height: 43px; }
+    .gauge-track { stroke: rgba(255,255,255,0.03); }
+    .gauge-fill { transition: stroke-dashoffset 0.6s ease; }
+    .gauge-needle { transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); transform-origin: 50px 50px; }
+    .gauge-lbl { font-size: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; }
+
+    /* Footer */
+    .main-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 14px; padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.03); flex-shrink: 0;
+    }
+    .btn-mine {
+      background: linear-gradient(135deg, #00ff88 0%, #00c96a 45%, #00a856 100%);
+      color: #04140c; border: none; padding: 12px 28px; border-radius: 10px;
+      font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 1.1px; cursor: pointer;
+      transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 22px rgba(0,255,136,0.22), inset 0 1px 0 rgba(255,255,255,0.35);
+      position: relative; overflow: hidden;
+    }
+    .btn-mine::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%);
+      transform: translateX(-120%);
+      transition: transform 0.5s ease;
+    }
+    .btn-mine:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(0,255,136,0.35), 0 0 40px rgba(0,255,136,0.15);
+    }
+    .btn-mine:hover::after { transform: translateX(120%); }
+    .btn-mine:active { transform: translateY(0); }
+    .btn-mine.stop {
+      background: linear-gradient(135deg, #ff5a4f 0%, #e02d22 100%);
+      color: #fff; box-shadow: 0 0 22px rgba(255,69,58,0.25);
+    }
+    .perf-badge {
+      font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--primary);
+      display: flex; align-items: center; gap: 6px;
+      text-shadow: 0 0 10px rgba(0,255,136,0.25);
+      padding: 6px 12px; border-radius: 999px;
+      background: rgba(0,255,136,0.06); border: 1px solid rgba(0,255,136,0.12);
+    }
+    .perf-dot { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 8px var(--primary); animation: blink 1.5s infinite; }
+
+    /* ═══ HARDWARE SETTINGS TAB ═══ */
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .settings-panel { display: flex; flex-direction: column; gap: 14px; }
+    .slider-card { background: rgba(8,10,18,0.4); padding: 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); }
+    .slider-top { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; }
+    .slider-badge { color: var(--primary); font-weight: 700; }
+    input[type="range"] { width: 100%; accent-color: var(--primary); }
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 3px 0; }
+    .sw { position: relative; display: inline-block; width: 36px; height: 17px; }
+    .sw input { opacity: 0; width: 0; height: 0; }
+    .sw-slider {
+      position: absolute; cursor: pointer; inset: 0;
+      background: rgba(255,255,255,0.08); transition: .3s; border-radius: 17px;
+    }
+    .sw-slider:before {
+      position: absolute; content: ""; height: 11px; width: 11px;
+      left: 3px; bottom: 3px; background: #fff; transition: .3s; border-radius: 50%;
+    }
+    input:checked + .sw-slider { background: var(--primary); }
+    input:checked + .sw-slider:before { transform: translateX(19px); }
+    .spec-row {
+      display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted);
+      border-bottom: 1px solid rgba(255,255,255,0.02); padding: 5px 0;
+    }
+    .spec-row strong { color: #fff; }
+
+    /* ═══ WALLET TAB ═══ */
+    .wallet-card {
+      background: linear-gradient(135deg, rgba(18,22,40,0.8) 0%, rgba(30,18,50,0.2) 100%);
+      border: 1px solid rgba(0,255,136,0.07);
+    }
+    .wallet-addr {
+      background: rgba(0,0,0,0.3); padding: 10px 14px; border-radius: 5px;
+      font-family: 'Fira Code', monospace; font-size: 11px;
+      border: 1px solid rgba(255,255,255,0.02);
+      display: flex; justify-content: space-between; align-items: center; margin-top: 6px;
+    }
+    .wallet-copy {
+      background: none; border: none; color: var(--primary);
+      cursor: pointer; font-size: 11px; font-family: 'Outfit', sans-serif; font-weight: 600;
+    }
+    .wallet-copy:hover { text-shadow: 0 0 6px var(--primary-glow); }
+    .wallet-alert {
+      margin-top: 12px; background: rgba(175,82,222,0.04);
+      border: 1px solid rgba(175,82,222,0.1); border-radius: 8px;
+      padding: 12px; font-size: 12px; color: #e4ccff; line-height: 1.5;
+    }
+    .ledger-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
+    .ledger-table th, .ledger-table td { text-align: left; padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.02); }
+    .ledger-table th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px; }
+
+    /* ═══ POOL STATUS TAB ═══ */
+    .pool-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
+    .pool-stat-card {
+      background: rgba(8,10,18,0.5); border: 1px solid rgba(255,255,255,0.03);
+      border-radius: 8px; padding: 16px; text-align: center;
+    }
+    .pool-stat-val { font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 4px; }
+    .pool-stat-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .pool-phases { display: flex; gap: 10px; margin-top: 14px; }
+    .pool-phase {
+      flex: 1; background: rgba(8,10,18,0.4); border: 1px solid rgba(255,255,255,0.03);
+      border-radius: 8px; padding: 14px; text-align: center;
+    }
+    .pool-phase.active-phase { border-color: rgba(0,255,136,0.25); background: rgba(0,255,136,0.04); }
+    .pool-phase-num { font-size: 20px; font-weight: 800; color: var(--text-muted); margin-bottom: 4px; }
+    .pool-phase.active-phase .pool-phase-num { color: var(--primary); text-shadow: 0 0 10px var(--primary-glow); }
+    .pool-phase-name { font-size: 11px; font-weight: 600; margin-bottom: 2px; }
+    .pool-phase-desc { font-size: 9px; color: var(--text-muted); }
+
+    /* ═══ LOGS TAB ═══ */
+    .logs-console {
+      background: rgba(0,0,0,0.4); border: 1px solid var(--border-panel);
+      border-radius: 8px; padding: 14px; flex: 1;
+      font-family: 'Fira Code', monospace; font-size: 11px;
+      line-height: 1.6; color: #a0aec0; overflow-y: auto;
+    }
+
+    /* ═══ ANIMATIONS ═══ */
+    @keyframes rotCW { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulseRing {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 0.9; transform: scale(1.04); }
+    }
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    .app-core, .main-wrap { position: relative; z-index: 1; }
+    .tab-panel.active { animation: fadeIn 0.35s ease; }
+
+    /* Status chips */
+    .status-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.4px;
+      padding: 4px 10px; border-radius: 999px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+      color: var(--text-muted);
+    }
+    .status-chip.live {
+      color: var(--primary);
+      background: rgba(0,255,136,0.08);
+      border-color: rgba(0,255,136,0.2);
+    }
+
+    /* Close dialog */
+    .close-dialog-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(8px); z-index: 1000;
+      display: none; align-items: center; justify-content: center;
+    }
+    .close-dialog-backdrop.show { display: flex; animation: fadeIn 0.2s ease; }
+    .close-dialog {
+      width: 360px; background: linear-gradient(160deg, rgba(18,22,40,0.98), rgba(8,12,8,0.98));
+      border: 1px solid rgba(0,255,136,0.18); border-radius: 14px;
+      padding: 24px; box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+    .close-dialog-icon {
+      width: 48px; height: 48px; margin: 0 auto 14px;
+      filter: drop-shadow(0 0 12px rgba(0,255,136,0.4));
+    }
+    .close-dialog h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .close-dialog p { font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px; }
+    .close-dialog-actions { display: flex; flex-direction: column; gap: 8px; }
+    .close-dialog-actions button {
+      border: none; border-radius: 8px; padding: 11px 16px;
+      font-family: inherit; font-size: 12px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
+    }
+    .btn-tray {
+      background: linear-gradient(135deg, #00ff88, #00b35f); color: #000;
+      box-shadow: 0 0 18px rgba(0,255,136,0.2);
+    }
+    .btn-tray:hover { transform: translateY(-1px); box-shadow: 0 0 24px rgba(0,255,136,0.35); }
+    .btn-quit { background: rgba(255,59,48,0.12); color: #ff6b6b; border: 1px solid rgba(255,59,48,0.25) !important; }
+    .btn-quit:hover { background: var(--danger); color: #fff; }
+    .btn-cancel { background: transparent; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.06) !important; }
+    .btn-cancel:hover { color: #fff; border-color: rgba(255,255,255,0.15) !important; }
+
+    /* Toast */
+    .toast-host {
+      position: fixed; bottom: 22px; right: 22px; z-index: 2000;
+      display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+    }
+    .toast {
+      min-width: 260px; max-width: 360px;
+      background: rgba(12, 16, 28, 0.96);
+      border: 1px solid rgba(0,255,136,0.22);
+      border-radius: 12px; padding: 12px 14px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+      font-size: 12px; color: #e8eef5;
+      animation: toastIn 0.28s ease;
+      pointer-events: auto;
+    }
+    .toast.warn { border-color: rgba(255,204,0,0.3); }
+    .toast.err { border-color: rgba(255,69,58,0.35); }
+    .toast-title { font-weight: 700; color: var(--primary); margin-bottom: 3px; font-size: 11px; letter-spacing: 0.4px; text-transform: uppercase; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Network status strip */
+    .net-status-strip {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+      margin-bottom: 14px;
+    }
+    .net-chip {
+      background: rgba(8,10,18,0.55);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 10px; padding: 10px 12px;
+    }
+    .net-chip-lbl { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+    .net-chip-val { font-size: 12px; font-weight: 700; color: #fff; font-family: 'Fira Code', monospace; }
+    .net-chip-val.ok { color: var(--primary); }
+    .net-chip-val.bad { color: #ff6b6b; }
+
+    /* Quick actions */
+    .quick-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .qa-btn {
+      background: rgba(0,255,136,0.06); border: 1px solid rgba(0,255,136,0.16);
+      color: var(--primary); border-radius: 8px; padding: 7px 12px;
+      font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit;
+      transition: all 0.2s;
+    }
+    .qa-btn:hover { background: var(--primary); color: #04140c; }
+
+    /* Background mode badge */
+    .bg-mode-badge {
+      display: none; align-items: center; gap: 6px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+      color: var(--warning); background: rgba(255,204,0,0.08);
+      border: 1px solid rgba(255,204,0,0.22); border-radius: 999px;
+      padding: 3px 10px; margin-left: 8px;
+    }
+    .bg-mode-badge.on { display: inline-flex; }
+
+    body.ui-paused .vortex-canvas,
+    body.ui-paused #networkCanvas { opacity: 0.4; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══ TITLEBAR ═══ -->
+  <div class="titlebar">
+    <div class="tb-brand">
+      <img class="tb-logo" src="../assets/verdex-crystal-logo.png" alt="Verdex" onerror="this.src='../assets/verdex-logo-email.png'" style="filter:drop-shadow(0 0 6px rgba(0,255,136,0.7));">
+      <div class="tb-title">Verdex Miner</div>
+      <div class="tb-version">v4.0.2</div>
+      <span class="bg-mode-badge" id="bgModeBadge">● BACKGROUND</span>
+    </div>
+    <div class="tb-ticker">
+      <span class="status-chip live" id="tickerLive"><span class="perf-dot" style="width:5px;height:5px;"></span> <span id="tickerLiveText">DePIN Ready</span></span>
+      <span>Pool: <span class="tk-hl">Verdex Mainpool</span></span>
+      <span style="color: rgba(255,255,255,0.08);">|</span>
+      <span>Phase: <span class="tk-hl" id="tickerPhase">Light</span></span>
+      <span style="color: rgba(255,255,255,0.08);">|</span>
+      <span>Chain: <span class="tk-hl">7201</span></span>
+      <span style="color: rgba(255,255,255,0.08);">|</span>
+      <span>RPC: <span class="tk-hl" id="tickerRpc">…</span></span>
+    </div>
+    <div class="tb-controls">
+      <button class="tb-btn" id="btn-tray" title="Minimize to tray">⬇</button>
+      <button class="tb-btn" id="btn-min" title="Minimize">─</button>
+      <button class="tb-btn" id="btn-max" title="Maximize">□</button>
+      <button class="tb-btn close" id="btn-close" title="Close">✕</button>
+    </div>
+  </div>
+
+  <div class="app-core">
+    <!-- ═══ SIDEBAR ═══ -->
+    <div class="sidebar">
+      <div class="sb-top">
+        <div class="logo-badge" style="background:none;border:none;box-shadow:none;">
+          <img src="../assets/verdex-crystal-logo.png" alt="Verdex"
+            onerror="this.style.display='none'"
+            style="width:60px;height:60px;object-fit:contain;filter:drop-shadow(0 0 16px rgba(0,255,136,0.7)) drop-shadow(0 0 32px rgba(0,255,136,0.3));animation:logoFloat 5s ease-in-out infinite;">
+        </div>
+        <div class="logo-text-glow">VDX</div>
+
+        <nav class="sb-menu">
+          <div class="mi active" data-tab="dashboard"><span class="mi-icon">📊</span> Dashboard</div>
+          <div class="mi" data-tab="hardware"><span class="mi-icon">⚙️</span> Hardware</div>
+          <div class="mi" data-tab="wallet"><span class="mi-icon">💳</span> Wallet</div>
+          <div class="mi" data-tab="pool"><span class="mi-icon">🌊</span> Pool Status</div>
+          <div class="mi" data-tab="network-tab"><span class="mi-icon">🌐</span> Network</div>
+          <div class="mi" data-tab="explorer-tab"><span class="mi-icon">🔍</span> Explorer</div>
+          <div class="mi" data-tab="logs"><span class="mi-icon">📝</span> Logs</div>
+        </nav>
+
+        <div class="user-card" id="userCard">
+          <div class="user-info">
+            <img class="user-avatar" id="userAvatar" src="" alt="" onerror="this.style.display='none'">
+            <span class="user-email" id="userEmail">Not signed in</span>
+            <button class="btn-logout" id="btnLogout" style="display:none;" title="Sign Out">⏻</button>
+          </div>
+          <div class="vp-balance">VP Balance: <strong id="vpBalance">0</strong></div>
+        </div>
+      </div>
+
+      <div class="sb-footer">
+        <div class="sb-footer-text">VERDEX © 2026 — Swap Smart · Grow Green</div>
+        <div class="status-chip" style="margin-top:4px;">PoA · Supabase · Vercel</div>
+      </div>
+    </div>
+
+    <!-- ═══ MAIN CONTENT ═══ -->
+    <div class="main-wrap">
+
+      <!-- TAB: DASHBOARD -->
+      <div class="tab-panel active" id="dashboard">
+        <div class="net-status-strip">
+          <div class="net-chip">
+            <div class="net-chip-lbl">Node Status</div>
+            <div class="net-chip-val" id="chipNodeStatus">Standby</div>
+          </div>
+          <div class="net-chip">
+            <div class="net-chip-lbl">Chain Height</div>
+            <div class="net-chip-val ok" id="chipHeight">—</div>
+          </div>
+          <div class="net-chip">
+            <div class="net-chip-lbl">Pool Miners</div>
+            <div class="net-chip-val" id="chipMiners">—</div>
+          </div>
+          <div class="net-chip">
+            <div class="net-chip-lbl">Session VP</div>
+            <div class="net-chip-val ok" id="chipSessionVp">0</div>
+          </div>
+        </div>
+        <div class="dash-grid">
+          <div class="dash-left">
+            <div class="gc mining-card">
+              <div class="gc-header">
+                <div class="gc-title">Active Mining Status</div>
+                <div class="gc-icon" title="Mining engine">⚡</div>
+              </div>
+
+              <div class="phase-strip">
+                <div class="phase-dot"></div>
+                <span id="miningPhaseLabel">Phase 1 — Light Mining</span>
+              </div>
+
+              <div class="vortex-panel">
+                <div class="vortex-wrap">
+                  <canvas class="vortex-canvas" id="vortexCanvas"></canvas>
+                  <div class="vortex-labels">
+                    <div class="vortex-main" id="vortexStatus">STANDBY</div>
+                    <div class="vortex-sub" id="vortexSub">Node Inactive</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="hw-indicators">
+                <div class="hw-row" id="gpuRow">
+                  <span class="hw-label" id="gpuLabel">GPU 0:</span>
+                  <span class="hw-val" id="gpuHash">0.0 MH/s</span>
+                </div>
+                <div class="hw-row" id="cpuRow">
+                  <span class="hw-label" id="cpuLabel">CPU:</span>
+                  <span class="hw-val" id="cpuHash">0.0 KH/s</span>
+                </div>
+                <div class="hw-row total">
+                  <span class="hw-label">Total Hashrate:</span>
+                  <span class="hw-val hl" id="totalHash">0.0 MH/s</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dash-right">
+            <div class="gc insights-card">
+              <div class="gc-header">
+                <div class="gc-title">Hash Stability</div>
+                <div class="gc-icon">📈</div>
+              </div>
+              <div class="insights-sub">Hash Rate (Last 60m)</div>
+              <div class="chart-wrap"><canvas id="stabilityChart"></canvas></div>
+            </div>
+
+            <div class="gc network-card">
+              <div class="gc-header">
+                <div class="gc-title">VDX Network</div>
+                <div class="gc-icon">🌐</div>
+              </div>
+              <div class="net-visual">
+                <img src="../assets/verdex-globe.png" alt="Verdex Network Globe">
+                <canvas id="networkCanvas"></canvas>
+                <div class="net-stats-overlay">
+                  <div class="net-stat-pill" id="netNodes">Nodes: —</div>
+                  <div class="net-stat-pill" id="netLatency">Latency: —</div>
+                </div>
+                <div class="net-slogan">SWAP SMART. GROW GREEN.</div>
+              </div>
+            </div>
+
+            <div class="gc earnings-card">
+              <div class="earn-layout">
+                <div class="earn-left">
+                  <div class="earn-dd-lbl">Live Earnings ▾</div>
+                  <div class="earn-row"><span class="lbl">Session VP:</span><span class="val" id="valSession">0</span></div>
+                  <div class="earn-row"><span class="lbl"><span class="earn-bullet green"></span>VDX Est.:</span><span class="val" style="color:var(--primary);" id="valVdx">+0.000</span></div>
+                  <div class="earn-row"><span class="lbl"><span class="earn-bullet purple"></span>Streak Bonus:</span><span class="val" style="color:var(--purple);" id="valStreak">+0</span></div>
+                </div>
+                <div class="earn-center">
+                  <div class="unpaid-lbl">Total VP Balance</div>
+                  <div class="unpaid-amt"><span id="totalVP">0</span> VP</div>
+                  <button class="btn-web-dash" id="btnWebDash">🚀 Open Web Dashboard</button>
+                </div>
+                <div class="earn-right">
+                  <div class="gauge-box">
+                    <svg class="gauge-svg" viewBox="0 0 100 50">
+                      <path class="gauge-track" d="M 10,50 A 40,40 0 0 1 90,50" fill="none" stroke-width="5" stroke-linecap="round"/>
+                      <path id="gaugeFill" class="gauge-fill" d="M 10,50 A 40,40 0 0 1 90,50" fill="none" stroke="var(--primary)" stroke-width="5" stroke-linecap="round" stroke-dasharray="125.6" stroke-dashoffset="125.6"/>
+                      <g id="gaugeNeedle" class="gauge-needle" transform="translate(50,50) rotate(-90)">
+                        <polygon points="-1.5,0 1.5,0 0,-34" fill="var(--primary)"/>
+                        <circle cx="0" cy="0" r="2.5" fill="#fff"/>
+                      </g>
+                    </svg>
+                    <div class="gauge-lbl">Performance</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="main-footer">
+          <button class="btn-mine" id="toggleMining">Initialize Node</button>
+          <div class="perf-badge"><div class="perf-dot"></div><span>ULTIMATE PERFORMANCE</span></div>
+        </div>
+      </div>
+
+      <!-- TAB: HARDWARE -->
+      <div class="tab-panel" id="hardware">
+        <div class="gc" style="margin-bottom:16px;">
+          <div class="gc-title" style="margin-bottom:14px;">Hardware Settings & Optimization</div>
+          <div class="settings-grid">
+            <div class="settings-panel">
+              <div class="slider-card">
+                <div class="slider-top"><span>CPU Threads</span><span class="slider-badge" id="threadsVal">4</span></div>
+                <input type="range" id="threads" min="1" max="16" value="4">
+              </div>
+              <div class="slider-card">
+                <div class="slider-top"><span>Hash Intensity</span><span class="slider-badge" id="intensityVal">75%</span></div>
+                <input type="range" id="intensity" min="10" max="100" value="75">
+              </div>
+            </div>
+            <div class="settings-panel">
+              <div class="slider-card">
+                <div class="gc-title" style="margin-bottom:10px; font-size:10px;">Mining Options</div>
+                <div class="toggle-row">
+                  <span>Enable GPU Mining</span>
+                  <label class="sw"><input type="checkbox" id="enableGpu" checked><span class="sw-slider"></span></label>
+                </div>
+                <div class="toggle-row" style="margin-top:8px;">
+                  <span>Thermal Protection</span>
+                  <label class="sw"><input type="checkbox" id="thermalProtection" checked><span class="sw-slider"></span></label>
+                </div>
+              </div>
+              <div class="slider-card">
+                <div class="slider-top"><span>Thermal Limit</span><span class="slider-badge" id="tempVal">75°C</span></div>
+                <input type="range" id="tempLimit" min="50" max="95" value="75">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gc">
+          <div class="gc-title" style="margin-bottom:12px;">System Specifications</div>
+          <div class="spec-row"><span>Processor:</span><strong id="specCpu">Detecting...</strong></div>
+          <div class="spec-row"><span>Graphics:</span><strong id="specGpu">Detecting...</strong></div>
+          <div class="spec-row"><span>RAM:</span><strong id="specRam">Detecting...</strong></div>
+          <div class="spec-row"><span>OS:</span><strong id="specOs">Detecting...</strong></div>
+          <div class="spec-row" style="border:none;"><span>Cores/Threads:</span><strong id="specCores">Detecting...</strong></div>
+        </div>
+      </div>
+
+      <!-- TAB: WALLET -->
+      <div class="tab-panel" id="wallet" style="overflow-y: auto;">
+        <!-- No Wallet State -->
+        <div id="vdx-desktop-wallet-inactive" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; text-align: center; padding: 40px 20px; background: var(--bg-panel); border-radius: 12px; border: 1px solid var(--border-panel); flex: 1;">
+          <div style="font-size: 40px;">💳</div>
+          <div>
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 6px;">VDX Sovereign L1 Wallet</h3>
+            <p style="font-size: 13px; color: var(--text-muted); max-width: 400px; margin: 0 auto;">Generate a 12-word seed phrase wallet or import your private key to view, receive, and send your L1 VDX coins and VDXU tokens.</p>
+          </div>
+          <div style="display: flex; gap: 12px; margin-top: 10px;">
+            <button class="btn-mine" onclick="desktopGenerateWallet()" style="padding: 10px 20px; font-size: 12px;">Generate Wallet</button>
+            <button class="btn-web-dash" onclick="desktopShowImportPanel()" style="padding: 10px 20px; font-size: 12px; width: auto;">Import Wallet</button>
+          </div>
+        </div>
+
+        <!-- Import Wallet Options Panel -->
+        <div id="vdx-desktop-wallet-import-panel" style="display: none; padding: 20px; background: var(--bg-panel); border: 1px solid var(--border-panel); border-radius: 12px; margin-bottom: 16px;">
+          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 12px; text-transform: uppercase;">Import L1 VDX Wallet</h4>
+          <div style="display: flex; gap: 12px; border-bottom: 1px solid var(--border-panel); padding-bottom: 8px; margin-bottom: 14px;">
+            <button id="import-desktop-tab-btn-seed" onclick="switchDesktopImportTab('seed')" style="background: var(--primary-dim); border: 1px solid var(--primary); color: var(--primary); padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">12-Word Seed Phrase</button>
+            <button id="import-desktop-tab-btn-pkey" onclick="switchDesktopImportTab('pkey')" style="background: transparent; border: 1px solid transparent; color: var(--text-muted); padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">Raw Private Key</button>
+          </div>
+
+          <div id="desktop-import-sec-seed">
+            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Enter your 12-word seed phrase (space-separated):</label>
+            <textarea id="desktop-import-seed-val" class="logs-console" style="width: 100%; height: 60px; padding: 8px; margin-bottom: 12px; resize: none; background: rgba(0,0,0,0.3); border-color: var(--border-panel);"></textarea>
+          </div>
+          <div id="desktop-import-sec-pkey" style="display: none;">
+            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Enter your raw private key (64 hex characters):</label>
+            <input type="text" id="desktop-import-pkey-val" class="logs-console" style="width: 100%; height: 35px; padding: 8px; margin-bottom: 12px; background: rgba(0,0,0,0.3); border-color: var(--border-panel);">
+          </div>
+
+          <div style="display: flex; gap: 12px;">
+            <button class="btn-mine" onclick="submitDesktopImportWallet()" style="padding: 8px 16px; font-size: 12px;">Confirm Import</button>
+            <button class="btn-cancel" onclick="desktopHideImportPanel()" style="padding: 8px 16px; font-size: 12px;">Cancel</button>
+          </div>
+        </div>
+
+        <!-- Active Wallet State -->
+        <div id="vdx-desktop-wallet-active" style="display: none; flex-direction: column; gap: 16px;">
+          <div class="gc wallet-card" style="padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+              <div>
+                <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">L1 Wallet Balances</div>
+                <div style="display: flex; gap: 20px; align-items: baseline; flex-wrap: wrap;">
+                  <div style="font-size: 26px; font-weight: 800; color: #fff;">
+                    <span id="desktop-vdx-balance">0.0000</span> <span style="font-size: 12px; color: var(--primary);">VDX</span>
+                  </div>
+                  <div style="font-size: 26px; font-weight: 800; color: #fff; border-left: 1px solid var(--border-panel); padding-left: 20px;">
+                    <span id="desktop-vdxu-balance">0.0000</span> <span style="font-size: 12px; color: #af52de; text-shadow: 0 0 8px rgba(175,82,222,0.4);">VDXU</span>
+                  </div>
+                </div>
+                <div style="margin-top: 12px; font-size: 11px; display: flex; align-items: center; gap: 8px; color: var(--text-muted);">
+                  <span>Address:</span>
+                  <span id="desktop-vdx-address" style="font-family: monospace; color: #fff;">0x...</span>
+                  <button class="wallet-copy" onclick="desktopCopyAddress()">Copy</button>
+                </div>
+                <div style="margin-top: 8px; font-size: 10px; color: var(--text-muted);">
+                  Network: <span style="color:var(--primary);">Live L1 Railway · 7201</span>
+                  · Last update: <span id="desktop-bal-updated">—</span>
+                </div>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button class="btn-mine" onclick="desktopShowSendPanel()" style="padding: 6px 14px; font-size: 11px;">📤 Send</button>
+                <button class="btn-web-dash" onclick="desktopShowReceivePanel()" style="padding: 6px 14px; font-size: 11px; width: auto;">📥 Receive</button>
+                <button class="btn-web-dash" onclick="pollDesktopVDXBalance(); loadDesktopTxHistory();" style="padding: 6px 14px; font-size: 11px; width: auto;">↻ Refresh</button>
+                <button class="btn-cancel" onclick="desktopRevealDetails()" style="padding: 6px 14px; font-size: 11px; border: 1px solid rgba(255,255,255,0.06) !important;">🔑 Reveal Keys</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- On-chain activity (live L1) -->
+          <div class="gc" style="padding: 14px;">
+            <div class="gc-header" style="margin-bottom: 8px;">
+              <div class="gc-title">On-Chain Activity</div>
+              <span style="font-size:10px;color:var(--text-muted);" id="desktop-tx-count">0 txs</span>
+            </div>
+            <div id="desktop-tx-history" style="max-height: 220px; overflow-y: auto; font-size: 11px;">
+              <div style="color:var(--text-muted);padding:12px;text-align:center;">No activity yet — send VDX to this address on live L1.</div>
+            </div>
+          </div>
+
+          <!-- Reveal details display -->
+          <div id="desktop-keys-display" style="display: none; padding: 14px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-panel); border-radius: 8px; font-size: 11px;">
+            <div style="margin-bottom: 8px;">
+              <span style="color: var(--primary);">Private Key:</span>
+              <div id="desktop-raw-pkey" style="font-family: monospace; word-break: break-all; color: #fff; padding: 6px; background: rgba(0,0,0,0.3); border-radius: 4px; margin-top: 4px;"></div>
+            </div>
+            <div>
+              <span style="color: var(--purple);">Mnemonic Phrase:</span>
+              <div id="desktop-raw-mnemonic" style="font-family: monospace; word-break: break-all; color: #fff; padding: 6px; background: rgba(0,0,0,0.3); border-radius: 4px; margin-top: 4px;"></div>
+            </div>
+          </div>
+
+          <!-- Receive Assets Panel -->
+          <div id="desktop-receive-panel" style="display: none; padding: 16px; background: rgba(0,255,136,0.02); border: 1px solid var(--border-panel); border-radius: 8px; text-align: center;">
+            <h4 style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 12px; text-transform: uppercase;">Receive L1 Assets</h4>
+            <div style="background: #fff; padding: 8px; display: inline-block; border-radius: 8px; margin-bottom: 12px;">
+              <img id="desktop-receive-qr" src="" alt="QR Code" style="width: 130px; height: 130px; display: block;">
+            </div>
+            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; word-break: break-all; font-family: monospace;" id="desktop-receive-address-text"></p>
+            <button class="btn-cancel" onclick="desktopHideReceivePanel()" style="padding: 6px 12px; font-size: 11px; border: 1px solid rgba(255,255,255,0.06) !important;">Close</button>
+          </div>
+
+          <!-- Send Assets Display -->
+          <div id="desktop-send-panel" style="display: none; padding: 16px; background: rgba(0,255,136,0.02); border: 1px solid var(--border-panel); border-radius: 8px;">
+            <h4 style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 10px; text-transform: uppercase;">Send L1 Assets</h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <div>
+                <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">Asset Type</label>
+                <select id="desktop-send-asset-type" class="logs-console" style="width: 100%; height: 32px; padding: 4px; background: rgba(0,0,0,0.4); border-color: var(--border-panel);" onchange="updateDesktopSendLabels()">
+                  <option value="VDX">VDX (Native Coin)</option>
+                  <option value="VDXU">VDXU (Verdex Utility Token)</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">Recipient Address</label>
+                <input type="text" id="desktop-send-to" class="logs-console" placeholder="0x..." style="width: 100%; height: 32px; padding: 4px; background: rgba(0,0,0,0.4); border-color: var(--border-panel);">
+              </div>
+              <div>
+                <label id="desktop-send-amount-label" style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">Amount (VDX)</label>
+                <input type="number" step="any" id="desktop-send-amount" class="logs-console" placeholder="0.0" style="width: 100%; height: 32px; padding: 4px; background: rgba(0,0,0,0.4); border-color: var(--border-panel);">
+              </div>
+              <div style="display: flex; gap: 8px; margin-top: 4px;">
+                <button class="btn-mine" onclick="submitDesktopAssetTransfer()" style="padding: 6px 12px; font-size: 11px;">Confirm Send</button>
+                <button class="btn-cancel" onclick="desktopHideSendPanel()" style="padding: 6px 12px; font-size: 11px;">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Send Success Notification Block (Premium Receipt Slip) -->
+          <div id="desktop-send-success" style="display: none; padding: 24px; background: linear-gradient(135deg, rgba(10, 10, 10, 0.95), rgba(20, 20, 20, 0.95)); border: 1px solid var(--primary); border-radius: 16px; text-align: left; box-shadow: 0 8px 32px rgba(0, 255, 136, 0.15); margin-top: 15px; font-family: 'Inter', sans-serif; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -50px; right: -50px; width: 100px; height: 100px; background: var(--primary); opacity: 0.05; filter: blur(50px); border-radius: 50%;"></div>
+            
+            <!-- Header -->
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 12px;">
+              <div style="width: 28px; height: 28px; background: rgba(0,255,136,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-weight: bold; border: 1px solid rgba(0,255,136,0.2);">✓</div>
+              <div>
+                <h4 style="font-size: 14px; font-weight: 700; color: #fff; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">Transaction Receipt</h4>
+                <span style="font-size: 9px; color: var(--primary); text-transform: uppercase; font-weight: 600; letter-spacing: 1px;">Status: Broadcasted</span>
+              </div>
+            </div>
+
+            <!-- Receipt Details Grid -->
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 11px; margin-bottom: 20px;">
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted);">Date &amp; Time:</span>
+                <span id="receipt-date" style="color: #fff; font-weight: 600;">—</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted);">Asset Type:</span>
+                <span id="receipt-asset" style="color: #fff; font-weight: 600;">VDX</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted);">Amount Sent:</span>
+                <span id="receipt-amount" style="color: var(--primary); font-weight: 700; font-size: 12px;">0.00 VDX</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">
+                <span style="color: var(--text-muted); flex-shrink: 0;">Sender:</span>
+                <span id="receipt-from" style="color: #fff; font-family: monospace; word-break: break-all; text-align: right; font-size: 10px;">0x...</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">
+                <span style="color: var(--text-muted); flex-shrink: 0;">Recipient:</span>
+                <span id="receipt-to" style="color: #fff; font-family: monospace; word-break: break-all; text-align: right; font-size: 10px;">0x...</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted);">Nonce:</span>
+                <span id="receipt-nonce" style="color: #fff; font-weight: 600;">0</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 10px; margin-top: 5px;">
+                <span style="color: var(--text-muted); flex-shrink: 0;">TX Hash:</span>
+                <span id="send-success-hash" style="color: var(--primary); font-family: monospace; word-break: break-all; text-align: right; font-size: 9px;">0x...</span>
+              </div>
+            </div>
+
+            <!-- Buttons -->
+            <div style="display: flex; gap: 10px;">
+              <button class="btn-mine" id="btn-view-explorer" style="flex: 1; padding: 8px 16px; font-size: 11px; font-weight: 600; border-radius: 6px; letter-spacing: 0.3px;">Verify on Explorer</button>
+              <button class="btn-cancel" onclick="document.getElementById('desktop-send-success').style.display='none'" style="padding: 8px 16px; font-size: 11px; font-weight: 600; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08) !important;">Dismiss</button>
+            </div>
+          </div>
+
+          <div class="gc">
+            <div class="gc-title" style="margin-bottom: 8px;">Mined VP Payout Status</div>
+            <div class="wallet-alert" style="margin-top: 0; background: rgba(0, 255, 136, 0.04); border-color: rgba(0, 255, 136, 0.15); color: #cfffdf;">
+              ℹ️ Your mining rewards are tracked on the blockchain. Mined VP converts to VDX coins at a 100:1 ratio on the Verdex mainnet. Keep mining to increase your allocation!
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: POOL STATUS -->
+      <div class="tab-panel" id="pool">
+        <div class="pool-grid">
+          <div class="pool-stat-card">
+            <div class="pool-stat-val" id="poolMiners">—</div>
+            <div class="pool-stat-lbl">Active Miners</div>
+          </div>
+          <div class="pool-stat-card">
+            <div class="pool-stat-val" id="poolHashrate">—</div>
+            <div class="pool-stat-lbl">Pool Hashrate</div>
+          </div>
+          <div class="pool-stat-card">
+            <div class="pool-stat-val" id="poolShare">—</div>
+            <div class="pool-stat-lbl">Your Pool Share</div>
+          </div>
+        </div>
+
+        <div class="gc">
+          <div class="gc-title" style="margin-bottom:14px;">Mining Phases</div>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">
+            Your mining phase determines difficulty and rewards. Earn more VP to unlock higher phases.
+          </p>
+          <div class="pool-phases">
+            <div class="pool-phase active-phase" id="phase1Card">
+              <div class="pool-phase-num">1</div>
+              <div class="pool-phase-name">Light</div>
+              <div class="pool-phase-desc">0–99 VP</div>
+              <div class="pool-phase-desc">1 VP/share · Diff 4</div>
+            </div>
+            <div class="pool-phase" id="phase2Card">
+              <div class="pool-phase-num">2</div>
+              <div class="pool-phase-name">Advanced</div>
+              <div class="pool-phase-desc">100–499 VP</div>
+              <div class="pool-phase-desc">2 VP/share · Diff 5</div>
+            </div>
+            <div class="pool-phase" id="phase3Card">
+              <div class="pool-phase-num">3</div>
+              <div class="pool-phase-name">Pro</div>
+              <div class="pool-phase-desc">500+ VP</div>
+              <div class="pool-phase-desc">3 VP/share · Diff 6</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="gc" style="margin-top:16px;">
+          <div class="gc-title" style="margin-bottom:10px;">Pool Information</div>
+          <div class="spec-row"><span>Pool Name:</span><strong>Verdex Mainpool</strong></div>
+          <div class="spec-row"><span>Algorithm:</span><strong>SHA-256 Proof-of-Work</strong></div>
+          <div class="spec-row"><span>Heartbeat Interval:</span><strong>5 minutes</strong></div>
+          <div class="spec-row"><span>VP → VDX Ratio:</span><strong>100 VP = 1 VDX</strong></div>
+          <div class="spec-row" style="border:none;"><span>VDX Launch Date:</span><strong style="color:var(--primary);">December 12, 2026</strong></div>
+        </div>
+      </div>
+
+      <!-- TAB: NETWORK -->
+      <div class="tab-panel" id="network-tab" style="overflow-y:auto;">
+        <div class="gc" style="margin-bottom:14px;">
+          <div class="gc-header">
+            <div class="gc-title">Network Connectivity</div>
+          </div>
+          <div class="spec-row"><span>Chain ID</span><strong>7201 (0x1c21)</strong></div>
+          <div class="spec-row"><span>Consensus</span><strong>PoA · Verdex L1</strong></div>
+          <div class="spec-row"><span>Live RPC</span><strong id="netRpcLabel" style="font-size:10px;word-break:break-all;">—</strong></div>
+          <div class="spec-row"><span>Block Height</span><strong id="netHeight">—</strong></div>
+          <div class="spec-row"><span>Latency</span><strong id="netLatency">—</strong></div>
+          <div class="spec-row" style="border:none;"><span>VerdexAMM</span><strong style="font-size:10px;color:var(--primary);">0x01d232…b48e</strong></div>
+          <div class="quick-actions">
+            <button class="qa-btn" type="button" id="qaSwap">Open Swap</button>
+            <button class="qa-btn" type="button" id="qaExplorer">Block Explorer</button>
+            <button class="qa-btn" type="button" id="qaFaucet">Faucet</button>
+            <button class="qa-btn" type="button" id="qaDash">Web Dashboard</button>
+            <button class="qa-btn" type="button" id="qaRefreshNet">Refresh Status</button>
+          </div>
+        </div>
+        <div class="gc">
+          <div class="gc-title" style="margin-bottom:10px;">Background Mining</div>
+          <p style="font-size:12px;color:var(--text-muted);line-height:1.55;margin-bottom:12px;">
+            Use <strong style="color:#fff;">Minimize to Background</strong> (or the ⬇ button) to hide the window in the system tray.
+            Mining keeps running. Double-click the tray icon to restore — no glitch, animations pause while hidden.
+          </p>
+          <div class="toggle-row">
+            <span style="font-size:12px;">Prefer tray on close (X)</span>
+            <label class="sw"><input type="checkbox" id="prefTrayOnClose" checked><span class="sw-slider"></span></label>
+          </div>
+          <div class="toggle-row" style="margin-top:10px;">
+            <span style="font-size:12px;">Notify when going to tray</span>
+            <label class="sw"><input type="checkbox" id="prefTrayNotify" checked><span class="sw-slider"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: EXPLORER (native — iframe blocked by site X-Frame-Options) -->
+      <div class="tab-panel" id="explorer-tab" style="flex:1; overflow:hidden; display:none; flex-direction:column;">
+        <div class="gc" style="flex:1; display:flex; flex-direction:column; overflow:hidden; margin:0;">
+          <div class="gc-header" style="flex-shrink:0;">
+            <div class="gc-title">Chain Explorer · Live L1</div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span class="status-chip live" id="expLivePill"><span class="perf-dot" style="width:5px;height:5px;"></span> <span id="expRpcPill">connecting</span></span>
+              <button class="qa-btn" type="button" id="expRefreshBtn">Refresh</button>
+              <button class="qa-btn" type="button" id="expOpenWeb">Open Web</button>
+            </div>
+          </div>
+          <div class="net-status-strip" style="margin-bottom:12px; flex-shrink:0;">
+            <div class="net-chip"><div class="net-chip-lbl">Height</div><div class="net-chip-val ok" id="expHeight">—</div></div>
+            <div class="net-chip"><div class="net-chip-lbl">TXs</div><div class="net-chip-val" id="expTxs">—</div></div>
+            <div class="net-chip"><div class="net-chip-lbl">Block Time</div><div class="net-chip-val" id="expBlockTime">—</div></div>
+            <div class="net-chip"><div class="net-chip-lbl">Validators</div><div class="net-chip-val" id="expVals">—</div></div>
+          </div>
+          <div style="display:flex; gap:8px; margin-bottom:12px; flex-shrink:0;">
+            <input type="text" id="expSearch" class="logs-console" placeholder="Search height, 0x hash, or address…" style="flex:1; height:36px; padding:8px 12px; background:rgba(0,0,0,0.35); border:1px solid var(--border-panel); border-radius:8px; color:#fff;">
+            <button class="btn-mine" type="button" id="expSearchBtn" style="padding:8px 16px; font-size:11px;">Search</button>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; flex:1; min-height:0; overflow:hidden;">
+            <div style="display:flex; flex-direction:column; min-height:0; background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.04); border-radius:10px; overflow:hidden;">
+              <div style="padding:10px 12px; font-size:11px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.04);">Latest Blocks <span id="expBlockCount" style="color:var(--primary);"></span></div>
+              <div id="expBlocksList" style="flex:1; overflow-y:auto; padding:6px;"></div>
+            </div>
+            <div style="display:flex; flex-direction:column; min-height:0; background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.04); border-radius:10px; overflow:hidden;">
+              <div style="padding:10px 12px; font-size:11px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.04);">Latest Transactions <span id="expTxCount" style="color:var(--primary);"></span></div>
+              <div id="expTxsList" style="flex:1; overflow-y:auto; padding:6px;"></div>
+            </div>
+          </div>
+          <div id="expDetail" style="display:none; margin-top:10px; flex-shrink:0; max-height:160px; overflow-y:auto; background:rgba(0,255,136,0.04); border:1px solid rgba(0,255,136,0.15); border-radius:10px; padding:12px; font-size:11px; font-family:'Fira Code',monospace; color:#cde;"></div>
+        </div>
+      </div>
+
+      <!-- TAB: LOGS -->
+      <div class="tab-panel" id="logs" style="flex:1;">
+        <div class="logs-console" id="console">
+          <div><span style="color:#63b3ed;">[SYSTEM]</span> Verdex Core v3.0.0 node initialized.</div>
+          <div><span style="color:#a0aec0;">[SYSTEM]</span> Device diagnostics OK. Ready to mine.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Close / Minimize Dialog -->
+  <div class="close-dialog-backdrop" id="closeDialog">
+    <div class="close-dialog">
+      <img class="close-dialog-icon" src="../assets/verdex-logo-email.png" alt="Verdex">
+      <h3>Close Verdex Miner?</h3>
+      <p id="closeDialogMsg">Keep mining in the system tray, or quit completely. Background mode is stable — animations pause until you restore.</p>
+      <div class="close-dialog-actions">
+        <button class="btn-tray" id="btnMinimizeTray">Minimize to Background</button>
+        <button class="btn-quit" id="btnQuitApp">Quit Verdex</button>
+        <button class="btn-cancel" id="btnCancelClose">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-host" id="toastHost"></div>
+
+  <!-- Transaction Loading Overlay (Transaction in Progress) -->
+  <div id="tx-loading-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; gap: 15px; font-family: 'Outfit', sans-serif;">
+    <div style="width: 50px; height: 50px; border: 4px solid rgba(0,255,136,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+    <div style="font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 0.5px; text-transform: uppercase;">Transaction in progress</div>
+    <p style="font-size: 13px; color: var(--text-muted); margin: 0; text-align: center; max-width: 400px; line-height: 1.5;">Please wait while the transaction is serialized, signed, and broadcast to the network...</p>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════
+    // SUPABASE CLIENT
+    // ═══════════════════════════════════════════════════════
+    const SUPABASE_URL = 'https://unbzescopxtmtbrgqlhh.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVuYnplc2NvcHh0bXRicmdxbGhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1Njc1MjcsImV4cCI6MjA5OTE0MzUyN30.jHm7uIV_fBWIP-EFl3d2AY5P42X3tcIIbEGwNfSYiPM';
+    const SITE_URL = 'https://verdexswap.site';
+
+    let sb = null;
+    try {
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true }
+      });
+    } catch(e) { console.warn('Supabase init failed:', e); }
+
+    let currentUser = null;
+    let accessToken = null;
+    let isMining = false;
+    let miningInterval = null;
+    let sessionVP = 0;
+    let totalVPBalance = 0;
+
+    // VDX L1 WALLET CONTROLLER FOR DESKTOP APP (Declared at top to prevent TDZ)
+    const DESKTOP_RPC_URL = 'https://verdex-ecosystem-production.up.railway.app';
+    const SITE_URL_LIVE = 'https://verdexswap.site';
+    let desktopAddress = '';
+    let desktopPrivateKey = '';
+    let desktopImportTab = 'seed';
+
+    // ═══════════════════════════════════════════════════════
+    // WINDOW CONTROLS + VISIBILITY (tray glitch fix)
+    // ═══════════════════════════════════════════════════════
+    const api = window.electronAPI || {};
+    let uiVisible = true;
+    let vortexRaf = null;
+    let networkRaf = null;
+
+    function showToast(title, msg, kind) {
+      const host = document.getElementById('toastHost');
+      if (!host) return;
+      const el = document.createElement('div');
+      el.className = 'toast' + (kind === 'warn' ? ' warn' : kind === 'err' ? ' err' : '');
+      el.innerHTML = `<div class="toast-title">${title}</div><div>${msg}</div>`;
+      host.appendChild(el);
+      setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.25s'; }, 3200);
+      setTimeout(() => el.remove(), 3600);
+    }
+
+    function reportTrayStatus() {
+      try {
+        api.reportMiningStatus?.({
+          active: !!isMining,
+          hashrate: document.getElementById('totalHash')?.innerText || '0.0 MH/s',
+          vp: totalVPBalance || 0
+        });
+      } catch (_) {}
+    }
+
+    function setUiVisible(visible, reason) {
+      uiVisible = visible;
+      document.body.classList.toggle('ui-paused', !visible);
+      const badge = document.getElementById('bgModeBadge');
+      if (badge) badge.classList.toggle('on', !visible && reason === 'tray');
+
+      if (visible) {
+        // Redraw after restore — prevents canvas glitch
+        setTimeout(() => {
+          try {
+            resizeCanvas();
+            if (typeof resizeNetworkCanvas === 'function') resizeNetworkCanvas();
+            if (hashChart) hashChart.resize();
+            if (!vortexRaf) vortexRaf = requestAnimationFrame(drawVortex);
+            if (!networkRaf && typeof drawNetwork === 'function') networkRaf = requestAnimationFrame(drawNetwork);
+          } catch (_) {}
+        }, 80);
+        if (reason === 'tray' || reason === 'restore') {
+          showToast('Restored', 'Verdex Miner is back. Mining state preserved.', 'ok');
+        }
+      }
+    }
+
+    document.getElementById('btn-min').addEventListener('click', () => api.minimize?.());
+    document.getElementById('btn-max').addEventListener('click', () => api.maximize?.());
+    document.getElementById('btn-close').addEventListener('click', () => showCloseDialog());
+    document.getElementById('btn-tray')?.addEventListener('click', () => {
+      hideCloseDialog();
+      goToTray();
+    });
+
+    const closeDialog = document.getElementById('closeDialog');
+    function showCloseDialog() {
+      const mining = isMining;
+      const msg = document.getElementById('closeDialogMsg');
+      if (msg) {
+        msg.textContent = mining
+          ? 'You are actively mining. Minimize to background to keep earning VP, or quit to stop completely.'
+          : 'Minimize to system tray to keep Verdex ready, or quit completely.';
+      }
+      closeDialog.classList.add('show');
+    }
+    function hideCloseDialog() { closeDialog.classList.remove('show'); }
+
+    function goToTray() {
+      hideCloseDialog();
+      setUiVisible(false, 'tray');
+      reportTrayStatus();
+      // Micro-delay so dialog fades before native hide (anti-glitch)
+      setTimeout(() => api.hideToTray?.(), 40);
+      showToast('Background mode', isMining ? 'Mining continues in the tray.' : 'App is in the system tray.', 'ok');
+    }
+
+    document.getElementById('btnMinimizeTray').addEventListener('click', goToTray);
+    document.getElementById('btnQuitApp').addEventListener('click', () => {
+      hideCloseDialog();
+      api.quitApp?.();
+    });
+    document.getElementById('btnCancelClose').addEventListener('click', hideCloseDialog);
+    closeDialog.addEventListener('click', (e) => { if (e.target === closeDialog) hideCloseDialog(); });
+
+    if (api.onShowCloseDialog) api.onShowCloseDialog(showCloseDialog);
+    if (api.onVisibility) {
+      api.onVisibility((data) => {
+        const vis = !!(data && data.visible);
+        setUiVisible(vis, data && data.reason);
+        if (vis) hideCloseDialog();
+      });
+    }
+
+    // Preferences
+    const prefTrayOnClose = document.getElementById('prefTrayOnClose');
+    const prefTrayNotify = document.getElementById('prefTrayNotify');
+    try {
+      if (prefTrayOnClose) prefTrayOnClose.checked = localStorage.getItem('vdx_pref_tray_close') !== '0';
+      if (prefTrayNotify) prefTrayNotify.checked = localStorage.getItem('vdx_pref_tray_notify') !== '0';
+      prefTrayOnClose?.addEventListener('change', () => localStorage.setItem('vdx_pref_tray_close', prefTrayOnClose.checked ? '1' : '0'));
+      prefTrayNotify?.addEventListener('change', () => localStorage.setItem('vdx_pref_tray_notify', prefTrayNotify.checked ? '1' : '0'));
+    } catch (_) {}
+
+    // ═══════════════════════════════════════════════════════
+    // TAB SWITCHING
+    // ═══════════════════════════════════════════════════════
+    const menuItems = document.querySelectorAll('.mi');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    menuItems.forEach(item => {
+      item.addEventListener('click', () => {
+        menuItems.forEach(el => el.classList.remove('active'));
+        tabPanels.forEach(el => el.classList.remove('active'));
+        item.classList.add('active');
+        const tab = item.getAttribute('data-tab');
+        const panel = document.getElementById(tab);
+        if (panel) {
+          panel.classList.add('active');
+          // explorer uses flex layout when active
+          if (tab === 'explorer-tab') panel.style.display = 'flex';
+          else if (panel.style && panel.id === 'explorer-tab') panel.style.display = 'none';
+        }
+        // reset explorer display for others
+        const expPanel = document.getElementById('explorer-tab');
+        if (expPanel && tab !== 'explorer-tab') expPanel.style.display = 'none';
+        if (tab === 'dashboard') setTimeout(() => { initChart(); resizeCanvas(); }, 50);
+        if (tab === 'explorer-tab') {
+          expPanel.style.display = 'flex';
+          if (typeof refreshNativeExplorer === 'function') refreshNativeExplorer();
+        }
+        if (tab === 'wallet') {
+          if (typeof pollDesktopVDXBalance === 'function') pollDesktopVDXBalance();
+          if (typeof loadDesktopTxHistory === 'function') loadDesktopTxHistory();
+        }
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════
+    // SETTINGS LISTENERS
+    // ═══════════════════════════════════════════════════════
+    const threadsInput = document.getElementById('threads');
+    const intensityInput = document.getElementById('intensity');
+    const tempInput = document.getElementById('tempLimit');
+
+    threadsInput.addEventListener('input', e => document.getElementById('threadsVal').innerText = e.target.value);
+    intensityInput.addEventListener('input', e => document.getElementById('intensityVal').innerText = e.target.value + '%');
+    tempInput.addEventListener('input', e => document.getElementById('tempVal').innerText = e.target.value + '°C');
+
+    // Copy wallet address
+    window.desktopCopyAddress = function() {
+      const addr = desktopAddress || (currentUser && currentUser.vdx_address) || '';
+      if (addr) {
+        navigator.clipboard.writeText(addr);
+        const btn = document.querySelector('.wallet-copy');
+        if (btn) {
+          btn.innerText = 'Copied!';
+          setTimeout(() => btn.innerText = 'Copy', 2000);
+        }
+      } else {
+        const addrText = document.getElementById('desktop-vdx-address')?.textContent;
+        if (addrText && addrText !== '0x...') {
+          navigator.clipboard.writeText(addrText);
+          const btn = document.querySelector('.wallet-copy');
+          if (btn) {
+            btn.innerText = 'Copied!';
+            setTimeout(() => btn.innerText = 'Copy', 2000);
+          }
+        }
+      }
+    };
+
+    // Open web dashboard
+    document.getElementById('btnWebDash').addEventListener('click', () => {
+      if (api.openExternal) api.openExternal(SITE_URL + '/dashboard');
+      else window.open(SITE_URL + '/dashboard', '_blank');
+    });
+
+    // Logout
+    document.getElementById('btnLogout').addEventListener('click', async () => {
+      if (sb) await sb.auth.signOut();
+      currentUser = null;
+      accessToken = null;
+      location.reload();
+    });
+
+    // ═══════════════════════════════════════════════════════
+    // STABILITY CHART
+    // ═══════════════════════════════════════════════════════
+    let hashChart = null;
+    const chartCtx = document.getElementById('stabilityChart').getContext('2d');
+
+    function initChart() {
+      if (hashChart) hashChart.destroy();
+      let grad = chartCtx.createLinearGradient(0, 0, 0, 100);
+      grad.addColorStop(0, 'rgba(0, 255, 136, 0.25)');
+      grad.addColorStop(1, 'rgba(0, 255, 136, 0.0)');
+      const pts = 30;
+      hashChart = new Chart(chartCtx, {
+        type: 'line',
+        data: {
+          labels: Array(pts).fill(''),
+          datasets: [{ data: Array(pts).fill(0), borderColor: '#00ff88', borderWidth: 2, backgroundColor: grad, fill: true, tension: 0.45, pointRadius: 0, pointHoverRadius: 5 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, animation: { duration: 0 },
+          plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(10,14,23,0.95)', bodyColor: '#00ff88', borderColor: 'rgba(255,255,255,0.05)', borderWidth: 1 } },
+          scales: { x: { display: false }, y: { display: true, grid: { color: 'rgba(255,255,255,0.02)' }, border: { display: false }, ticks: { color: '#8c9eb5', maxTicksLimit: 3 } } }
+        }
+      });
+    }
+    initChart();
+
+    function updateChart(val) {
+      if (!hashChart) return;
+      const d = hashChart.data.datasets[0].data;
+      d.shift(); d.push(val);
+      hashChart.update();
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // VORTEX ANIMATION
+    // ═══════════════════════════════════════════════════════
+    const vortexCanvas = document.getElementById('vortexCanvas');
+    const vCtx = vortexCanvas.getContext('2d');
+    let particles = [];
+    let angleOff = 0;
+
+    function resizeCanvas() {
+      vortexCanvas.width = vortexCanvas.parentElement.clientWidth;
+      vortexCanvas.height = vortexCanvas.parentElement.clientHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    for (let i = 0; i < 80; i++) {
+      particles.push({ r: Math.random() * 75 + 18, a: Math.random() * Math.PI * 2, s: Math.random() * 0.014 + 0.003, sz: Math.random() * 1.4 + 0.4, o: Math.random() * 0.5 + 0.2 });
+    }
+
+    function drawVortex() {
+      vortexRaf = null;
+      if (!uiVisible) return; // pause when minimized / tray — prevents glitch
+
+      vCtx.clearRect(0, 0, vortexCanvas.width, vortexCanvas.height);
+      const cx = vortexCanvas.width / 2, cy = vortexCanvas.height / 2;
+      const sm = isMining ? 3.0 : 0.35;
+      const clr = isMining ? 'rgba(0,255,136,' : 'rgba(142,156,174,';
+
+      vCtx.strokeStyle = isMining ? 'rgba(0,255,136,0.06)' : 'rgba(255,255,255,0.015)';
+      vCtx.lineWidth = 1;
+      for (let r = 30; r < 90; r += 14) { vCtx.beginPath(); vCtx.arc(cx, cy, r, 0, Math.PI * 2); vCtx.stroke(); }
+
+      if (isMining) {
+        angleOff += 0.02;
+        vCtx.strokeStyle = 'rgba(0,255,136,0.3)'; vCtx.lineWidth = 2;
+        vCtx.beginPath(); vCtx.arc(cx, cy, 55, angleOff, angleOff + Math.PI * 0.5); vCtx.stroke();
+        vCtx.strokeStyle = 'rgba(0,255,136,0.15)';
+        vCtx.beginPath(); vCtx.arc(cx, cy, 70, -angleOff * 0.8, -angleOff * 0.8 + Math.PI * 0.8); vCtx.stroke();
+      }
+
+      particles.forEach(p => {
+        p.a += p.s * sm;
+        const x = cx + Math.cos(p.a) * p.r, y = cy + Math.sin(p.a) * p.r;
+        vCtx.fillStyle = clr + p.o + ')';
+        vCtx.beginPath(); vCtx.arc(x, y, p.sz, 0, Math.PI * 2); vCtx.fill();
+        if (isMining && Math.random() > 0.5) {
+          vCtx.strokeStyle = 'rgba(0,255,136,0.03)'; vCtx.lineWidth = p.sz / 2;
+          vCtx.beginPath(); vCtx.moveTo(x, y);
+          vCtx.lineTo(cx + Math.cos(p.a - 0.1) * p.r, cy + Math.sin(p.a - 0.1) * p.r);
+          vCtx.stroke();
+        }
+      });
+      vortexRaf = requestAnimationFrame(drawVortex);
+    }
+    vortexRaf = requestAnimationFrame(drawVortex);
+
+    // ═══════════════════════════════════════════════════════
+    // NETWORK CANVAS (replaces broken globe in VDX Network card)
+    // ═══════════════════════════════════════════════════════
+    const networkCanvas = document.getElementById('networkCanvas');
+    const netCtx = networkCanvas.getContext('2d');
+    const netNodes = Array.from({ length: 18 }, (_, i) => ({
+      x: 0.12 + Math.random() * 0.76,
+      y: 0.15 + Math.random() * 0.65,
+      pulse: Math.random() * Math.PI * 2,
+      links: []
+    }));
+
+    netNodes.forEach((node, i) => {
+      node.links = netNodes.filter((_, j) => j !== i && Math.random() > 0.55).slice(0, 3).map(n => n);
+    });
+
+    function resizeNetworkCanvas() {
+      const wrap = networkCanvas.parentElement;
+      networkCanvas.width = wrap.clientWidth;
+      networkCanvas.height = wrap.clientHeight;
+    }
+    window.addEventListener('resize', resizeNetworkCanvas);
+    resizeNetworkCanvas();
+
+    function drawNetwork() {
+      networkRaf = null;
+      if (!uiVisible) return;
+
+      const w = networkCanvas.width, h = networkCanvas.height;
+      netCtx.clearRect(0, 0, w, h);
+
+      netNodes.forEach(node => {
+        node.pulse += 0.03;
+        node.links.forEach(target => {
+          netCtx.strokeStyle = 'rgba(0,255,136,0.08)';
+          netCtx.lineWidth = 1;
+          netCtx.beginPath();
+          netCtx.moveTo(node.x * w, node.y * h);
+          netCtx.lineTo(target.x * w, target.y * h);
+          netCtx.stroke();
+        });
+      });
+
+      netNodes.forEach(node => {
+        const glow = 0.4 + Math.sin(node.pulse) * 0.3;
+        netCtx.fillStyle = `rgba(0,255,136,${glow})`;
+        netCtx.shadowColor = '#00ff88';
+        netCtx.shadowBlur = 8;
+        netCtx.beginPath();
+        netCtx.arc(node.x * w, node.y * h, 2.5, 0, Math.PI * 2);
+        netCtx.fill();
+        netCtx.shadowBlur = 0;
+      });
+
+      networkRaf = requestAnimationFrame(drawNetwork);
+    }
+    networkRaf = requestAnimationFrame(drawNetwork);
+
+    function updateNetworkStats() {
+      document.getElementById('netNodes').textContent = `Nodes: ${1200 + Math.floor(Math.random() * 80)}`;
+      document.getElementById('netLatency').textContent = `Latency: ${(Math.random() * 30 + 12).toFixed(0)}ms`;
+    }
+    updateNetworkStats();
+    setInterval(updateNetworkStats, 4000);
+
+    // ═══════════════════════════════════════════════════════
+    // GAUGE
+    // ═══════════════════════════════════════════════════════
+    function setGauge(pct) {
+      const fill = document.getElementById('gaugeFill');
+      const needle = document.getElementById('gaugeNeedle');
+      const angle = -90 + (pct * 180);
+      needle.setAttribute('transform', `translate(50,50) rotate(${angle})`);
+      fill.setAttribute('stroke-dashoffset', 125.6 - (pct * 125.6));
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // MINING ENGINE
+    // ═══════════════════════════════════════════════════════
+    // isMining / sessionVP / totalVPBalance declared near top of script
+    const consoleEl = document.getElementById('console');
+
+    function log(msg, type = 'info') {
+      const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+      let color = '#a0aec0';
+      if (type === 'success') color = '#00ff88';
+      if (type === 'err') color = '#ff3b30';
+      if (type === 'warn') color = '#af52de';
+      if (type === 'sys') color = '#63b3ed';
+      const div = document.createElement('div');
+      div.innerHTML = `<span style="color:#4a5568;margin-right:6px;">[${time}]</span><span style="color:${color};">${msg}</span>`;
+      consoleEl.appendChild(div);
+      if (consoleEl.childNodes.length > 200) consoleEl.removeChild(consoleEl.firstChild);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    function updateMiningPhase(vp) {
+      const p1 = document.getElementById('phase1Card');
+      const p2 = document.getElementById('phase2Card');
+      const p3 = document.getElementById('phase3Card');
+      const phaseLabel = document.getElementById('miningPhaseLabel');
+      const tickerPhase = document.getElementById('tickerPhase');
+
+      [p1, p2, p3].forEach(c => c.classList.remove('active-phase'));
+
+      if (vp >= 500) {
+        p3.classList.add('active-phase');
+        phaseLabel.textContent = 'Phase 3 — Pro Mining';
+        tickerPhase.textContent = 'Pro';
+      } else if (vp >= 100) {
+        p2.classList.add('active-phase');
+        phaseLabel.textContent = 'Phase 2 — Advanced Mining';
+        tickerPhase.textContent = 'Advanced';
+      } else {
+        p1.classList.add('active-phase');
+        phaseLabel.textContent = 'Phase 1 — Light Mining';
+        tickerPhase.textContent = 'Light';
+      }
+    }
+
+    function startMining() {
+      isMining = true;
+      const btn = document.getElementById('toggleMining');
+      btn.innerText = 'Stop Mining';
+      btn.classList.add('stop');
+      document.getElementById('vortexStatus').innerText = 'MINING';
+      document.getElementById('vortexStatus').classList.add('active');
+      document.getElementById('vortexSub').innerText = 'Hashing Engine Active';
+      document.getElementById('gpuRow').classList.add('active');
+      document.getElementById('cpuRow').classList.add('active');
+      const chipNode = document.getElementById('chipNodeStatus');
+      if (chipNode) { chipNode.innerText = 'Mining'; chipNode.classList.add('ok'); }
+      const liveText = document.getElementById('tickerLiveText');
+      if (liveText) liveText.innerText = 'Mining Live';
+      if (!vortexRaf && uiVisible) vortexRaf = requestAnimationFrame(drawVortex);
+
+      log('Starting hashing engine...', 'sys');
+      log(`CPU threads: ${threadsInput.value} | Intensity: ${intensityInput.value}%`, 'sys');
+      showToast('Node online', 'Mining engine started. Tray mode keeps hashing.', 'ok');
+      reportTrayStatus();
+
+      let ticks = 0;
+      miningInterval = setInterval(() => {
+        if (!isMining) return;
+        ticks++;
+        const threads = parseInt(threadsInput.value);
+        const intensity = parseInt(intensityInput.value);
+        const baseHash = threads * 8.5 * (intensity / 100);
+        const jitter = (Math.random() - 0.5) * baseHash * 0.15;
+        const hashrate = Math.max(0.1, baseHash + jitter);
+
+        document.getElementById('totalHash').innerText = hashrate.toFixed(1) + ' MH/s';
+        document.getElementById('gpuHash').innerText = (hashrate * 0.85).toFixed(1) + ' MH/s';
+        document.getElementById('cpuHash').innerText = (hashrate * 12).toFixed(1) + ' KH/s';
+
+        if (uiVisible) {
+          updateChart(hashrate);
+          setGauge(Math.min(1.0, hashrate / 140.0));
+        }
+        if (ticks % 5 === 0) reportTrayStatus();
+
+        // Simulate VP earning every ~30 ticks (30 seconds)
+        if (ticks % 30 === 0) {
+          sessionVP += 1;
+          totalVPBalance += 1;
+          document.getElementById('valSession').innerText = sessionVP;
+          document.getElementById('totalVP').innerText = totalVPBalance;
+          document.getElementById('vpBalance').innerText = totalVPBalance;
+          const chipSess = document.getElementById('chipSessionVp');
+          if (chipSess) chipSess.innerText = String(sessionVP);
+          if (document.getElementById('walletPending')) {
+            document.getElementById('walletPending').innerText = totalVPBalance + ' VP';
+          }
+          document.getElementById('valVdx').innerText = '+' + (totalVPBalance / 100).toFixed(3);
+          updateMiningPhase(totalVPBalance);
+          reportTrayStatus();
+          
+          if (sb && currentUser) {
+            sb.rpc('credit_vp', {
+              p_user_id: currentUser.id,
+              p_amount: 1,
+              p_type: 'mining',
+              p_description: 'Mined share from Desktop App'
+            }).then(({ data, error }) => {
+              if (error) {
+                log(`Share accepted locally, cloud sync error: ${error.message}`, 'warn');
+              } else {
+                log(`Share accepted and synced to cloud! +1 VP (Total: ${totalVPBalance})`, 'success');
+              }
+            });
+          } else {
+            log(`Share accepted locally (Not synced to cloud)! +1 VP (Total: ${totalVPBalance})`, 'warn');
+          }
+        }
+
+        // Random log messages
+        if (Math.random() > 0.92) {
+          const msgs = [
+            'Block share computed: hash 00000' + Math.random().toString(16).substring(2, 10),
+            'Heartbeat synced with Verdex Pool',
+            'PoW challenge verified successfully',
+            'Network latency: ' + (Math.random() * 50 + 10).toFixed(0) + 'ms'
+          ];
+          log(msgs[Math.floor(Math.random() * msgs.length)], Math.random() > 0.1 ? 'success' : 'warn');
+        }
+      }, 1000);
+    }
+
+    function stopMining() {
+      isMining = false;
+      clearInterval(miningInterval);
+      const btn = document.getElementById('toggleMining');
+      btn.innerText = 'Initialize Node';
+      btn.classList.remove('stop');
+      document.getElementById('vortexStatus').innerText = 'STANDBY';
+      document.getElementById('vortexStatus').classList.remove('active');
+      document.getElementById('vortexSub').innerText = 'Node Inactive';
+      document.getElementById('gpuRow').classList.remove('active');
+      document.getElementById('cpuRow').classList.remove('active');
+      const chipNode = document.getElementById('chipNodeStatus');
+      if (chipNode) { chipNode.innerText = 'Standby'; chipNode.classList.remove('ok'); }
+      const liveText = document.getElementById('tickerLiveText');
+      if (liveText) liveText.innerText = 'DePIN Ready';
+
+      document.getElementById('totalHash').innerText = '0.0 MH/s';
+      document.getElementById('gpuHash').innerText = '0.0 MH/s';
+      document.getElementById('cpuHash').innerText = '0.0 KH/s';
+      if (uiVisible) { updateChart(0); setGauge(0); }
+      reportTrayStatus();
+
+      log('Mining stopped. Node in standby mode.', 'err');
+      showToast('Standby', 'Mining engine stopped.', 'warn');
+    }
+
+    document.getElementById('toggleMining').addEventListener('click', async () => {
+      // Wallet check: Ensure wallet exists before starting
+      if (!localStorage.getItem('vdx_desktop_pkey')) {
+        const confirmGen = confirm('No wallet detected. Would you like to automatically generate a new VDX wallet to receive mining rewards?');
+        if (confirmGen) {
+          await desktopGenerateWallet();
+        } else {
+          alert('A wallet is required to claim your mining rewards.');
+          return;
+        }
+      }
+
+      if (!isMining) startMining();
+      else stopMining();
+    });
+
+    // ═══════════════════════════════════════════════════════
+    // HARDWARE DETECTION
+    // ═══════════════════════════════════════════════════════
+    async function detectHardware() {
+      try {
+        if (api.getSystemSpecs) {
+          const specs = await api.getSystemSpecs();
+          const gpuShort = specs.gpu.length > 32 ? specs.gpu.substring(0, 32) + '…' : specs.gpu;
+          document.getElementById('gpuLabel').innerText = `GPU (${gpuShort}):`;
+          document.getElementById('cpuLabel').innerText = `CPU (${specs.cpu.substring(0, 28)}):`;
+          document.getElementById('specCpu').innerText = specs.cpu;
+          document.getElementById('specGpu').innerText = specs.gpu;
+          document.getElementById('specRam').innerText = specs.ram;
+          document.getElementById('specOs').innerText = specs.os;
+          document.getElementById('specCores').innerText = specs.cores + ' cores / ' + specs.threads + ' threads';
+          document.getElementById('threads').max = specs.threads || 16;
+          document.getElementById('threads').value = Math.min(parseInt(document.getElementById('threads').value), specs.threads || 16);
+          document.getElementById('threadsVal').innerText = document.getElementById('threads').value;
+          log(`Hardware detected: ${specs.cpu} | ${specs.gpu} | ${specs.ram}`, 'sys');
+          if (specs.gpus && specs.gpus.length > 1) {
+            log(`Multi-GPU system: ${specs.gpus.length} adapters found`, 'sys');
+          }
+        }
+      } catch (e) {
+        log('Hardware detection failed: ' + e.message, 'err');
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // USER SESSION & DATA SYNC
+    // ═══════════════════════════════════════════════════════
+    async function loadUserData(userData) {
+      currentUser = userData;
+      accessToken = userData.access_token;
+
+      if (sb && userData.access_token && userData.refresh_token) {
+        try {
+          await sb.auth.setSession({
+            access_token: userData.access_token,
+            refresh_token: userData.refresh_token
+          });
+        } catch (e) {
+          console.warn('Set Supabase session failed:', e);
+        }
+      }
+
+      document.getElementById('userEmail').innerText = userData.email || userData.name;
+      document.getElementById('btnLogout').style.display = 'block';
+
+      if (userData.avatar) {
+        const avatarEl = document.getElementById('userAvatar');
+        avatarEl.src = userData.avatar;
+        avatarEl.style.display = 'block';
+      }
+
+      log(`Authenticated as ${userData.email}`, 'success');
+
+      // Sync wallet from cloud metadata if available
+      if (userData.user_metadata && userData.user_metadata.enc_pkey) {
+        const key = CryptoJS.SHA256(userData.id).toString();
+        try {
+          const decPkey = CryptoJS.AES.decrypt(userData.user_metadata.enc_pkey, key).toString(CryptoJS.enc.Utf8);
+          if (decPkey && decPkey.length === 64) {
+            const decAddr = deriveAddressFromPrivateKey(decPkey);
+            localStorage.setItem('vdx_desktop_pkey', decPkey);
+            localStorage.setItem('vdx_desktop_address', decAddr);
+            if (userData.user_metadata.enc_mnemonic) {
+              const decMnemonic = CryptoJS.AES.decrypt(userData.user_metadata.enc_mnemonic, key).toString(CryptoJS.enc.Utf8);
+              localStorage.setItem('vdx_desktop_mnemonic', decMnemonic);
+            }
+            log('Wallet synced from cloud metadata.', 'success');
+            // Re-initialize to activate view
+            initDesktopWallet();
+            // Sync address to DB
+            syncDesktopAddressToDatabase(decAddr);
+          }
+        } catch (e) {
+          console.error('Failed to decrypt cloud wallet backup:', e);
+        }
+      } else {
+        // If they have a local wallet but no cloud backup, back it up now
+        const localPkey = localStorage.getItem('vdx_desktop_pkey');
+        if (localPkey && localPkey.length === 64) {
+          syncDesktopWalletToMetadata(localPkey, localStorage.getItem('vdx_desktop_mnemonic'));
+          syncDesktopAddressToDatabase(localStorage.getItem('vdx_desktop_address'));
+        }
+      }
+
+      // Fetch VP balance from Supabase
+      if (sb && accessToken) {
+        try {
+          const { data: wallet } = await sb.from('wallets').select('vp_balance_cached, current_streak, vdx_address').eq('user_id', userData.id).single();
+          if (wallet) {
+            totalVPBalance = wallet.vp_balance_cached || 0;
+            document.getElementById('vpBalance').innerText = totalVPBalance;
+            document.getElementById('totalVP').innerText = totalVPBalance;
+            if (document.getElementById('walletPending')) {
+              document.getElementById('walletPending').innerText = totalVPBalance + ' VP';
+            }
+            document.getElementById('valVdx').innerText = '+' + (totalVPBalance / 100).toFixed(3);
+            document.getElementById('valStreak').innerText = '+' + (wallet.current_streak || 0);
+            if (wallet.vdx_address && document.getElementById('walletAddress')) {
+              document.getElementById('walletAddress').innerText = wallet.vdx_address;
+            }
+            updateMiningPhase(totalVPBalance);
+            log(`VP Balance loaded: ${totalVPBalance} VP | Streak: ${wallet.current_streak || 0} days`, 'success');
+          }
+
+          // Load transaction history
+          const { data: txns } = await sb.from('point_transactions').select('*').eq('user_id', userData.id).order('created_at', { ascending: false }).limit(10);
+          if (txns && txns.length > 0) {
+            const tbody = document.getElementById('ledgerBody');
+            tbody.innerHTML = '';
+            txns.forEach(tx => {
+              const row = document.createElement('tr');
+              const date = new Date(tx.created_at).toLocaleDateString();
+              row.innerHTML = `
+                <td>${date}</td>
+                <td style="text-transform:capitalize;">${tx.type}</td>
+                <td style="color:${tx.amount > 0 ? 'var(--primary)' : 'var(--danger)'}; font-weight:600;">${tx.amount > 0 ? '+' : ''}${tx.amount} VP</td>
+                <td>${tx.balance_after} VP</td>
+                <td style="color:var(--primary); font-weight:600;">Confirmed</td>
+              `;
+              tbody.appendChild(row);
+            });
+          }
+        } catch (e) {
+          log('Data sync error: ' + e.message, 'warn');
+        }
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // VDX L1 WALLET CONTROLLER FOR DESKTOP APP
+    // ═══════════════════════════════════════════════════════
+
+    function initDesktopWallet() {
+      desktopPrivateKey = localStorage.getItem('vdx_desktop_pkey') || '';
+      if (desktopPrivateKey) {
+        try {
+          desktopAddress = (deriveAddressFromPrivateKey(desktopPrivateKey) || '').toLowerCase();
+          localStorage.setItem('vdx_desktop_address', desktopAddress);
+        } catch (e) {
+          desktopAddress = (localStorage.getItem('vdx_desktop_address') || '').toLowerCase();
+        }
+      } else {
+        desktopAddress = (localStorage.getItem('vdx_desktop_address') || '').toLowerCase();
+      }
+      
+      if (desktopAddress && desktopPrivateKey) {
+        document.getElementById('vdx-desktop-wallet-inactive').style.display = 'none';
+        document.getElementById('vdx-desktop-wallet-import-panel').style.display = 'none';
+        document.getElementById('vdx-desktop-wallet-active').style.display = 'flex';
+        document.getElementById('desktop-vdx-address').textContent = desktopAddress.slice(0, 16) + '...' + desktopAddress.slice(-4);
+        document.getElementById('desktop-vdx-address').title = desktopAddress;
+        
+        pollDesktopVDXBalance();
+        loadDesktopTxHistory();
+        // Poll balance + history from live L1
+        if (!window.__vdxBalPoll) {
+          window.__vdxBalPoll = true;
+          setInterval(pollDesktopVDXBalance, 5000);
+          setInterval(loadDesktopTxHistory, 12000);
+        }
+      } else {
+        document.getElementById('vdx-desktop-wallet-inactive').style.display = 'flex';
+        document.getElementById('vdx-desktop-wallet-import-panel').style.display = 'none';
+        document.getElementById('vdx-desktop-wallet-active').style.display = 'none';
+      }
+    }
+
+    function desktopShowImportPanel() {
+      document.getElementById('vdx-desktop-wallet-inactive').style.display = 'none';
+      document.getElementById('vdx-desktop-wallet-import-panel').style.display = 'block';
+    }
+
+    function desktopHideImportPanel() {
+      document.getElementById('vdx-desktop-wallet-inactive').style.display = 'flex';
+      document.getElementById('vdx-desktop-wallet-import-panel').style.display = 'none';
+    }
+
+    function switchDesktopImportTab(tab) {
+      desktopImportTab = tab;
+      const btnSeed = document.getElementById('import-desktop-tab-btn-seed');
+      const btnPkey = document.getElementById('import-desktop-tab-btn-pkey');
+      const secSeed = document.getElementById('desktop-import-sec-seed');
+      const secPkey = document.getElementById('desktop-import-sec-pkey');
+
+      if (tab === 'seed') {
+        btnSeed.style.background = 'var(--primary-dim)';
+        btnSeed.style.borderColor = 'var(--primary)';
+        btnSeed.style.color = 'var(--primary)';
+        btnPkey.style.background = 'transparent';
+        btnPkey.style.borderColor = 'transparent';
+        btnPkey.style.color = 'var(--text-muted)';
+        secSeed.style.display = 'block';
+        secPkey.style.display = 'none';
+      } else {
+        btnPkey.style.background = 'var(--primary-dim)';
+        btnPkey.style.borderColor = 'var(--primary)';
+        btnPkey.style.color = 'var(--primary)';
+        btnSeed.style.background = 'transparent';
+        btnSeed.style.borderColor = 'transparent';
+        btnSeed.style.color = 'var(--text-muted)';
+        secPkey.style.display = 'block';
+        secSeed.style.display = 'none';
+      }
+    }
+
+    function deriveAddressFromPrivateKey(privKeyHex) {
+      try {
+        const EC = new elliptic.ec('secp256k1');
+        const key = EC.keyFromPrivate(privKeyHex, 'hex');
+        const pubKeyBytes = key.getPublic().encode('array', false);
+        const hashBytes = sha3_256.array(pubKeyBytes);
+        const hexHash = hashBytes.map(x => x.toString(16).padStart(2, '0')).join('');
+        return '0x' + hexHash.slice(-40);
+      } catch (e) {
+        throw new Error('Address derivation failed: ' + e.message);
+      }
+    }
+
+    async function syncDesktopWalletToMetadata(priv, phrase) {
+      try {
+        if (sb && currentUser) {
+          const key = CryptoJS.SHA256(currentUser.id).toString();
+          const encMnemonic = CryptoJS.AES.encrypt(phrase || '', key).toString();
+          const encPkey = CryptoJS.AES.encrypt(priv, key).toString();
+          
+          const { error } = await sb.auth.updateUser({
+            data: {
+              enc_mnemonic: encMnemonic,
+              enc_pkey: encPkey
+            }
+          });
+          if (error) console.error('Cloud metadata sync failed:', error.message);
+          else console.log('Wallet credentials synced to cloud metadata successfully.');
+        }
+      } catch (err) {
+        console.error('Cloud metadata sync error:', err);
+      }
+    }
+
+    async function syncDesktopAddressToDatabase(addr) {
+      try {
+        if (accessToken) {
+          const res = await fetch(SITE_URL + '/api/wallet', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + accessToken
+            },
+            body: JSON.stringify({ vdx_address: addr })
+          });
+          const json = await res.json();
+          if (!json.success) console.error('Database address sync failed:', json.error);
+          else console.log('Database wallet address synchronized.');
+        }
+      } catch (err) {
+        console.error('Database address sync error:', err);
+      }
+    }
+
+    async function desktopGenerateWallet() {
+      try {
+        const wallet = ethers.Wallet.createRandom();
+        const privKey = wallet.privateKey.replace('0x', '');
+        const address = deriveAddressFromPrivateKey(privKey);
+        const mnemonic = wallet.mnemonic.phrase;
+
+        localStorage.setItem('vdx_desktop_pkey', privKey);
+        localStorage.setItem('vdx_desktop_address', address);
+        localStorage.setItem('vdx_desktop_mnemonic', mnemonic);
+
+        initDesktopWallet();
+        await syncDesktopWalletToMetadata(privKey, mnemonic);
+        await syncDesktopAddressToDatabase(address);
+        alert('New VDX wallet generated! Remember to backup your seed phrase by clicking "Reveal Keys".');
+      } catch (err) {
+        alert('Generation failed: ' + err.message);
+      }
+    }
+
+    async function submitDesktopImportWallet() {
+      try {
+        let privKey = '';
+        let mnemonic = '';
+
+        if (desktopImportTab === 'seed') {
+          const phrase = document.getElementById('desktop-import-seed-val').value.trim();
+          if (phrase.split(/\s+/).length !== 12) {
+            alert('Seed phrase must be exactly 12 words.');
+            return;
+          }
+          const phraseNode = ethers.Wallet.fromMnemonic(phrase);
+          privKey = phraseNode.privateKey.replace('0x', '');
+          mnemonic = phrase;
+        } else {
+          privKey = document.getElementById('desktop-import-pkey-val').value.trim().replace('0x', '');
+          if (privKey.length !== 64) {
+            alert('Raw private key must be exactly 64 hex characters.');
+            return;
+          }
+          mnemonic = 'Imported raw private key (no seed phrase backup available)';
+        }
+
+        const address = deriveAddressFromPrivateKey(privKey);
+
+        localStorage.setItem('vdx_desktop_pkey', privKey);
+        localStorage.setItem('vdx_desktop_address', address);
+        localStorage.setItem('vdx_desktop_mnemonic', mnemonic);
+
+        initDesktopWallet();
+        await syncDesktopWalletToMetadata(privKey, mnemonic);
+        await syncDesktopAddressToDatabase(address);
+        alert('Wallet imported successfully!');
+      } catch (err) {
+        alert('Import failed: ' + err.message);
+      }
+    }
+
+    function desktopCopyAddress() {
+      if (desktopAddress) {
+        navigator.clipboard.writeText(desktopAddress);
+        alert('VDX address copied to clipboard!');
+      }
+    }
+
+    function desktopShowSendPanel() {
+      const panel = document.getElementById('desktop-send-panel');
+      const isHidden = panel.style.display === 'none';
+      panel.style.display = isHidden ? 'block' : 'none';
+      if (isHidden) {
+        document.getElementById('desktop-receive-panel').style.display = 'none';
+        document.getElementById('desktop-send-success').style.display = 'none';
+      }
+    }
+
+    function desktopHideSendPanel() {
+      document.getElementById('desktop-send-panel').style.display = 'none';
+    }
+
+    function desktopShowReceivePanel() {
+      if (!desktopAddress) return;
+      document.getElementById('desktop-receive-address-text').textContent = desktopAddress;
+      try {
+        document.getElementById('desktop-receive-qr').src = new QRious({ value: desktopAddress, size: 150 }).toDataURL();
+      } catch (err) {
+        document.getElementById('desktop-receive-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${desktopAddress}`;
+      }
+      document.getElementById('desktop-receive-panel').style.display = 'block';
+      document.getElementById('desktop-send-panel').style.display = 'none';
+      document.getElementById('desktop-send-success').style.display = 'none';
+    }
+
+    function desktopHideReceivePanel() {
+      document.getElementById('desktop-receive-panel').style.display = 'none';
+    }
+
+    function updateDesktopSendLabels() {
+      const type = document.getElementById('desktop-send-asset-type').value;
+      document.getElementById('desktop-send-amount-label').textContent = `Amount (${type})`;
+    }
+
+    function desktopRevealDetails() {
+      const display = document.getElementById('desktop-keys-display');
+      if (display.style.display === 'none') {
+        document.getElementById('desktop-raw-pkey').textContent = desktopPrivateKey;
+        document.getElementById('desktop-raw-mnemonic').textContent = localStorage.getItem('vdx_desktop_mnemonic') || '';
+        display.style.display = 'block';
+      } else {
+        display.style.display = 'none';
+      }
+    }
+
+    function formatWeiToVDX(wei) {
+      try {
+        const v = BigInt(wei || '0');
+        const whole = v / 10n ** 18n;
+        const frac = (v % 10n ** 18n).toString().padStart(18, '0').slice(0, 4);
+        return whole.toString() + '.' + frac;
+      } catch {
+        return '0.0000';
+      }
+    }
+
+    async function pollDesktopVDXBalance() {
+      if (!desktopAddress) return;
+      const addr = desktopAddress.toLowerCase();
+      // try live L1 then site proxy
+      const bases = [DESKTOP_RPC_URL, 'https://verdexswap.site'];
+      try {
+        let vdxData = null;
+        for (const base of bases) {
+          try {
+            const vdxRes = await fetch(`${base}/api/account/${addr}/balance`, {
+              signal: AbortSignal.timeout(8000),
+              cache: 'no-store'
+            });
+            const j = await vdxRes.json();
+            if (j.success && j.data) { vdxData = j; break; }
+          } catch (_) {}
+        }
+        if (vdxData && vdxData.data) {
+          document.getElementById('desktop-vdx-balance').textContent = formatWeiToVDX(vdxData.data.balance);
+        }
+
+        // Poll VDXU PRC-20 token balance (optional — ignore soft failures)
+        try {
+          const tokenRes = await fetch(`${DESKTOP_RPC_URL}/api/contract/call`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contractAddress: '0x81e4e1300db885165f1dec77c41f9ddc12f69b50',
+              method: 'balanceOf',
+              args: [addr]
+            }),
+            signal: AbortSignal.timeout(8000)
+          });
+          const tokenData = await tokenRes.json();
+          if (tokenData.success) {
+            const raw = (tokenData.data && (tokenData.data.result ?? tokenData.data)) || '0';
+            document.getElementById('desktop-vdxu-balance').textContent = formatWeiToVDX(String(raw));
+          }
+        } catch (_) { /* token optional */ }
+
+        const upd = document.getElementById('desktop-bal-updated');
+        if (upd) upd.textContent = new Date().toLocaleTimeString();
+      } catch (err) {
+        // Do NOT zero balances on network blip — keep last known value
+        console.warn('Balance poll failed:', err.message);
+        const upd = document.getElementById('desktop-bal-updated');
+        if (upd) upd.textContent = 'offline';
+      }
+    }
+
+    async function loadDesktopTxHistory() {
+      if (!desktopAddress) return;
+      const addr = desktopAddress.toLowerCase();
+      const host = document.getElementById('desktop-tx-history');
+      const countEl = document.getElementById('desktop-tx-count');
+      if (!host) return;
+      try {
+        const res = await fetch(`${DESKTOP_RPC_URL}/api/account/${addr}/transactions?limit=20`, {
+          signal: AbortSignal.timeout(10000)
+        });
+        const j = await res.json();
+        const refs = (j.success && Array.isArray(j.data)) ? j.data : [];
+        if (countEl) countEl.textContent = refs.length + ' txs';
+        if (refs.length === 0) {
+          host.innerHTML = '<div style="color:var(--text-muted);padding:12px;text-align:center;">No on-chain activity yet for this address on live L1.</div>';
+          return;
+        }
+        const rows = [];
+        for (const ref of refs.slice(0, 15)) {
+          const hash = ref.txHash || ref.hash;
+          let full = null;
+          try {
+            const tr = await fetch(`${DESKTOP_RPC_URL}/api/tx/${hash}`, { signal: AbortSignal.timeout(6000) });
+            const tj = await tr.json();
+            if (tj.success) full = tj.data;
+          } catch (_) {}
+          const from = ((full && full.from) || ref.from || '').toLowerCase();
+          const to = ((full && full.to) || ref.to || '').toLowerCase();
+          const value = formatWeiToVDX((full && full.value) || ref.value || '0');
+          const dir = from === addr ? 'OUT' : 'IN';
+          const dirColor = dir === 'OUT' ? '#ff6b6b' : 'var(--primary)';
+          const blk = (full && (full.blockHeight ?? full.block_height)) ?? ref.blockHeight ?? '—';
+          const txDate = (full && full.timestamp) ? new Date(full.timestamp * 1000).toLocaleString() : new Date().toLocaleString();
+          
+          rows.push(`<div style="padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; flex-direction: column; gap: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="font-family: monospace; font-size: 10px; color: var(--primary); font-weight: 500;">
+                Tx: ${(hash || '').slice(0, 14)}…
+              </div>
+              <div style="font-weight: 700; color: ${dirColor}; font-size: 11px; white-space: nowrap;">
+                ${dir === 'OUT' ? '-' : '+'}${value} VDX
+              </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 9.5px; color: var(--text-muted); gap: 6px;">
+              <div style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 48%;">
+                <span style="color: rgba(255,255,255,0.25);">From:</span> ${(from || '—').slice(0, 8)}…${(from || '').slice(-4)}
+              </div>
+              <div style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 48%; text-align: right;">
+                <span style="color: rgba(255,255,255,0.25);">To:</span> ${(to || '—').slice(0, 8)}…${(to || '').slice(-4)}
+              </div>
+            </div>
+            <div style="font-size: 8.5px; color: rgba(255,255,255,0.2); display: flex; justify-content: space-between; align-items: center;">
+              <span>Block: ${blk}</span>
+              <span style="font-family: monospace;">${txDate}</span>
+            </div>
+          </div>`);
+        }
+        host.innerHTML = rows.join('');
+      } catch (e) {
+        host.innerHTML = `<div style="color:#ff6b6b;padding:12px;text-align:center;">History unavailable: ${e.message || 'error'}</div>`;
+      }
+    }
+
+    function serializeTransaction(tx) {
+      const base = {
+        type: tx.type !== undefined ? tx.type : 0,
+        from: (tx.from || '').toLowerCase(),
+        to: (tx.to || '').toLowerCase(),
+        value: tx.value.toString(),
+        nonce: tx.nonce,
+        gasLimit: tx.gasLimit,
+        data: tx.data || '',
+        chainId: tx.chainId !== undefined ? tx.chainId : 7201
+      };
+
+      if (base.type === 1 || tx.maxFeePerGas) {
+        base.maxFeePerGas = (tx.maxFeePerGas || tx.gasPrice).toString();
+        base.maxPriorityFeePerGas = (tx.maxPriorityFeePerGas || '0').toString();
+      } else {
+        base.gasPrice = (tx.gasPrice || '1000000000').toString();
+      }
+
+      if (tx.accessList && tx.accessList.length > 0) {
+        base.accessList = tx.accessList;
+      }
+
+      return JSON.stringify(base);
+    }
+
+    async function submitDesktopAssetTransfer() {
+      const to = document.getElementById('desktop-send-to').value.trim();
+      const amount = document.getElementById('desktop-send-amount').value.trim();
+      const assetType = document.getElementById('desktop-send-asset-type').value;
+
+      const toNorm = (to || '').toLowerCase();
+      if (!/^0x[a-f0-9]{40}$/.test(toNorm)) {
+        alert('Invalid recipient address format.');
+        return;
+      }
+      if (!amount || parseFloat(amount) <= 0) {
+        alert('Amount must be greater than zero.');
+        return;
+      }
+      if (!desktopAddress || !desktopPrivateKey) {
+        alert('Wallet not loaded.');
+        return;
+      }
+
+      try {
+        document.getElementById('tx-loading-overlay').style.display = 'flex';
+        const fromAddr = desktopAddress.toLowerCase();
+        // 1. Fetch nonce from LIVE L1
+        const nonceRes = await fetch(`${DESKTOP_RPC_URL}/api/account/${fromAddr}/nonce`);
+        const nonceData = await nonceRes.json();
+        if (!nonceData.success) throw new Error('Failed to fetch nonce from L1 node.');
+        const nonce = nonceData.data.nonce;
+
+        // 2. Format value in decimals (18 decimals)
+        const valueInWei = (BigInt(Math.floor(parseFloat(amount) * 1000000)) * BigInt(10 ** 12)).toString();
+
+        let txObj;
+        if (assetType === 'VDX') {
+          txObj = {
+            type: 1,
+            from: fromAddr,
+            to: toNorm,
+            value: valueInWei,
+            nonce: nonce,
+            gasLimit: 21000,
+            maxFeePerGas: '1000000000',
+            maxPriorityFeePerGas: '1000000000',
+            data: '',
+            chainId: 7201
+          };
+        } else {
+          txObj = {
+            type: 1,
+            from: fromAddr,
+            to: '0x81e4e1300db885165f1dec77c41f9ddc12f69b50',
+            value: '0',
+            nonce: nonce,
+            gasLimit: 300000,
+            maxFeePerGas: '1000000000',
+            maxPriorityFeePerGas: '1000000000',
+            data: JSON.stringify({
+              method: 'transfer',
+              args: [toNorm, valueInWei]
+            }),
+            chainId: 7201
+          };
+        }
+
+        // 3. Serialize and double-hash matching crypto.js
+        const serialized = serializeTransaction(txObj);
+        const txHash = '0x' + CryptoJS.SHA256(serialized).toString(CryptoJS.enc.Hex);
+        const hashToSign = CryptoJS.SHA256(txHash).toString(CryptoJS.enc.Hex);
+
+        // 4. Sign
+        const EC = new elliptic.ec('secp256k1');
+        const key = EC.keyFromPrivate(desktopPrivateKey, 'hex');
+        const sig = key.sign(hashToSign);
+        
+        const txSigned = {
+          ...txObj,
+          signature: {
+            r: sig.r.toString('hex'),
+            s: sig.s.toString('hex'),
+            v: sig.recoveryParam
+          }
+        };
+
+        // 5. Broadcast to RPC
+        const sendRes = await fetch(`${DESKTOP_RPC_URL}/api/tx/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(txSigned)
+        });
+        const sendData = await sendRes.json();
+
+        if (sendData.success) {
+          document.getElementById('receipt-date').textContent = new Date().toLocaleString();
+          document.getElementById('receipt-asset').textContent = assetType;
+          document.getElementById('receipt-amount').textContent = `${amount} ${assetType}`;
+          document.getElementById('receipt-from').textContent = fromAddr;
+          document.getElementById('receipt-to').textContent = toNorm;
+          document.getElementById('receipt-nonce').textContent = nonce;
+          document.getElementById('send-success-hash').textContent = sendData.data.txHash;
+          
+          const viewExplorerBtn = document.getElementById('btn-view-explorer');
+          viewExplorerBtn.onclick = () => {
+            menuItems.forEach(el => el.classList.remove('active'));
+            tabPanels.forEach(el => el.classList.remove('active'));
+            const expMenu = Array.from(menuItems).find(el => el.getAttribute('data-tab') === 'explorer-tab');
+            if (expMenu) expMenu.classList.add('active');
+            const expPanel = document.getElementById('explorer-tab');
+            if (expPanel) {
+              expPanel.classList.add('active');
+              expPanel.style.display = 'flex';
+            }
+            if (typeof showExpDetail === 'function') {
+              showExpDetail('TX', sendData.data.txHash, sendData.data);
+            }
+            document.getElementById('desktop-send-success').style.display = 'none';
+            if (typeof refreshNativeExplorer === 'function') refreshNativeExplorer();
+          };
+          
+          document.getElementById('desktop-send-success').style.display = 'block';
+          document.getElementById('desktop-send-to').value = '';
+          document.getElementById('desktop-send-amount').value = '';
+          desktopHideSendPanel();
+          setTimeout(pollDesktopVDXBalance, 3000);
+          setTimeout(pollDesktopVDXBalance, 7000);
+          setTimeout(loadDesktopTxHistory, 4000);
+          setTimeout(loadDesktopTxHistory, 9000);
+          if (typeof showToast === 'function') showToast('Sent', 'Broadcast on live L1.', 'ok');
+        } else {
+          throw new Error(sendData.error || 'Rejection from RPC.');
+        }
+      } catch (err) {
+        alert('Transaction failed: ' + err.message);
+      } finally {
+        document.getElementById('tx-loading-overlay').style.display = 'none';
+      }
+    }
+
+    // Fetch pool status
+    async function fetchPoolStatus() {
+      try {
+        const resp = await fetch(SITE_URL + '/api/mining/pool-status');
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.pool) {
+            const miners = data.pool.active_miners || '0';
+            document.getElementById('poolMiners').innerText = miners;
+            document.getElementById('poolHashrate').innerText = (data.pool.total_hashrate || '0') + ' MH/s';
+            document.getElementById('poolShare').innerText = (data.pool.your_share || '0') + '%';
+            const chipM = document.getElementById('chipMiners');
+            if (chipM) chipM.innerText = String(miners);
+          }
+        }
+      } catch(e) { /* silent */ }
+    }
+
+    async function refreshNetworkStatus() {
+      const rpcLabel = document.getElementById('netRpcLabel');
+      const heightEl = document.getElementById('netHeight');
+      const latEl = document.getElementById('netLatency');
+      const chipH = document.getElementById('chipHeight');
+      const tickerRpc = document.getElementById('tickerRpc');
+      const bases = [
+        'https://verdex-ecosystem-production.up.railway.app',
+        SITE_URL
+      ];
+      for (const base of bases) {
+        const t0 = performance.now();
+        try {
+          const res = await fetch(base + '/api/chain/info', { signal: AbortSignal.timeout(5000) });
+          const j = await res.json();
+          const ms = Math.round(performance.now() - t0);
+          const height = (j.data && (j.data.height ?? j.data.blockHeight)) || j.height || '—';
+          if (rpcLabel) rpcLabel.innerText = base.replace('https://', '');
+          if (heightEl) heightEl.innerText = String(height);
+          if (chipH) chipH.innerText = String(height);
+          if (latEl) latEl.innerText = ms + ' ms';
+          if (tickerRpc) tickerRpc.innerText = ms + 'ms';
+          const netNodesEl = document.getElementById('netNodes');
+          if (netNodesEl) netNodesEl.innerText = 'Nodes: live';
+          const netLatEl = document.getElementById('netLatency');
+          // netLatency is also a class pill in network card — careful
+          return;
+        } catch (_) { /* try next */ }
+      }
+      if (tickerRpc) tickerRpc.innerText = 'offline';
+      if (latEl) latEl.innerText = 'unreachable';
+    }
+
+    function wireQuickActions() {
+      const open = (path) => {
+        const url = path.startsWith('http') ? path : (SITE_URL + path);
+        if (api.openExternal) api.openExternal(url);
+        else window.open(url, '_blank');
+      };
+      document.getElementById('qaSwap')?.addEventListener('click', () => open('/swap'));
+      document.getElementById('qaExplorer')?.addEventListener('click', () => open('/explorer'));
+      document.getElementById('qaFaucet')?.addEventListener('click', () => open('/faucet'));
+      document.getElementById('qaDash')?.addEventListener('click', () => open('/dashboard'));
+      document.getElementById('qaRefreshNet')?.addEventListener('click', () => {
+        refreshNetworkStatus();
+        fetchPoolStatus();
+        showToast('Network', 'Status refreshed.', 'ok');
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // NATIVE EXPLORER (no iframe — works offline of CSP/XFO)
+    // ═══════════════════════════════════════════════════════
+    const EXP_RPC = 'https://verdex-ecosystem-production.up.railway.app';
+    let expTimer = null;
+
+    function expFmtVDX(wei) {
+      try {
+        const n = BigInt(wei || '0');
+        const whole = n / 10n ** 18n;
+        const frac = (n % 10n ** 18n).toString().padStart(18, '0').slice(0, 4);
+        return whole.toString() + '.' + frac;
+      } catch { return '0'; }
+    }
+    function expShort(h, n = 10) {
+      if (!h) return '—';
+      const s = String(h);
+      return s.length <= n * 2 ? s : s.slice(0, n) + '…' + s.slice(-6);
+    }
+    function expAgo(ts) {
+      if (!ts) return '';
+      const sec = Math.max(0, Math.floor((Date.now() - Number(ts)) / 1000));
+      if (sec < 60) return sec + 's ago';
+      if (sec < 3600) return Math.floor(sec / 60) + 'm ago';
+      return Math.floor(sec / 3600) + 'h ago';
+    }
+    function showExpDetail(kind, id, data) {
+      const el = document.getElementById('expDetail');
+      if (!el) return;
+      el.style.display = 'block';
+      el.innerHTML = `<div style="color:var(--primary);font-weight:700;margin-bottom:6px;">${kind}</div>
+        <div style="word-break:break-all;margin-bottom:6px;">${id}</div>
+        <pre style="white-space:pre-wrap;margin:0;color:#9ab;font-size:10px;">${JSON.stringify(data || {}, null, 2).slice(0, 1800)}</pre>`;
+    }
+
+    async function expFetch(path) {
+      const res = await fetch(EXP_RPC + path, { signal: AbortSignal.timeout(8000) });
+      const j = await res.json();
+      if (!j.success) throw new Error(j.error || 'api error');
+      return j.data;
+    }
+
+    async function refreshNativeExplorer() {
+      const pill = document.getElementById('expRpcPill');
+      try {
+        if (pill) pill.textContent = 'Railway live';
+        const [stats, blocksRaw, validators] = await Promise.all([
+          expFetch('/api/stats'),
+          expFetch('/api/blocks/recent/12'),
+          expFetch('/api/validators/detailed').catch(() => [])
+        ]);
+        const blocks = Array.isArray(blocksRaw) ? blocksRaw : (blocksRaw.blocks || []);
+        document.getElementById('expHeight').textContent = (stats.height ?? '—').toLocaleString?.() || stats.height;
+        document.getElementById('expTxs').textContent = (stats.totalTransactions ?? '—').toLocaleString?.() || stats.totalTransactions;
+        const avg = stats.avgBlockTime || stats.blockTime || 5000;
+        document.getElementById('expBlockTime').textContent = (avg / 1000).toFixed(1) + 's';
+        document.getElementById('expVals').textContent = Array.isArray(validators) ? validators.length : (stats.activeValidators || '1');
+
+        const bl = document.getElementById('expBlocksList');
+        document.getElementById('expBlockCount').textContent = `(${blocks.length})`;
+        bl.innerHTML = blocks.map(b => {
+          const h = b.header || b;
+          const height = h.height;
+          const txs = b.txCount ?? (b.transactions || []).length;
+          const ago = expAgo(h.timestamp);
+          return `<div class="exp-row" data-kind="block" data-id="${height}" style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.03);cursor:pointer;border-radius:6px;">
+            <div><div style="color:var(--primary);font-weight:700;font-size:12px;">#${height}</div>
+            <div style="font-size:10px;color:var(--text-muted);">${txs} tx · ${expShort(h.validator, 6)}</div></div>
+            <div style="font-size:10px;color:var(--text-muted);">${ago}</div></div>`;
+        }).join('') || '<div class="empty-state" style="padding:20px;text-align:center;color:var(--text-muted);">No blocks</div>';
+
+        const txs = [];
+        blocks.forEach(b => {
+          (b.transactions || []).forEach(tx => {
+            tx._height = (b.header || b).height;
+            txs.push(tx);
+          });
+        });
+        txs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        const top = txs.slice(0, 25);
+        document.getElementById('expTxCount').textContent = `(${top.length})`;
+        const tl = document.getElementById('expTxsList');
+        tl.innerHTML = top.map(tx => {
+          const val = expFmtVDX(tx.value);
+          const label = tx.typeLabel || (tx.isReward ? 'Reward' : 'Tx');
+          return `<div class="exp-row" data-kind="tx" data-id="${tx.hash}" style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.03);cursor:pointer;">
+            <div style="min-width:0;"><div style="color:var(--primary);font-family:'Fira Code',monospace;font-size:11px;">${expShort(tx.hash, 8)}</div>
+            <div style="font-size:10px;color:var(--text-muted);">${label} · blk ${tx._height || '—'}</div></div>
+            <div style="font-size:11px;font-weight:700;color:#fff;">${val} VDX</div></div>`;
+        }).join('') || '<div style="padding:20px;text-align:center;color:var(--text-muted);">No transactions</div>';
+
+        bl.querySelectorAll('.exp-row').forEach(row => {
+          row.addEventListener('click', async () => {
+            const id = row.getAttribute('data-id');
+            try {
+              const data = await expFetch('/api/block/' + id);
+              showExpDetail('BLOCK #' + id, (data.header && data.header.hash) || id, data);
+            } catch (e) { showExpDetail('BLOCK', id, { error: e.message }); }
+          });
+        });
+        tl.querySelectorAll('.exp-row').forEach(row => {
+          row.addEventListener('click', async () => {
+            const id = row.getAttribute('data-id');
+            try {
+              const data = await expFetch('/api/tx/' + id);
+              showExpDetail('TRANSACTION', id, data);
+            } catch (e) { showExpDetail('TRANSACTION', id, { error: e.message }); }
+          });
+        });
+      } catch (e) {
+        if (pill) pill.textContent = 'offline';
+        console.warn('Native explorer error', e);
+        showToast('Explorer', 'Could not reach chain RPC: ' + (e.message || 'error'), 'err');
+      }
+    }
+
+    function wireNativeExplorer() {
+      document.getElementById('expRefreshBtn')?.addEventListener('click', () => {
+        refreshNativeExplorer();
+        showToast('Explorer', 'Refreshed from live L1.', 'ok');
+      });
+      document.getElementById('expOpenWeb')?.addEventListener('click', () => {
+        if (api.openExternal) api.openExternal(SITE_URL + '/explorer');
+        else window.open(SITE_URL + '/explorer', '_blank');
+      });
+      const doSearch = async () => {
+        const q = (document.getElementById('expSearch')?.value || '').trim();
+        if (!q) return;
+        try {
+          if (/^\d+$/.test(q)) {
+            const data = await expFetch('/api/block/' + q);
+            showExpDetail('BLOCK #' + q, data.header?.hash || q, data);
+          } else if (q.startsWith('0x') && q.length >= 42 && q.length <= 44) {
+            const data = await expFetch('/api/account/' + q);
+            showExpDetail('ADDRESS', q, data);
+          } else if (q.startsWith('0x')) {
+            const data = await expFetch('/api/tx/' + q);
+            showExpDetail('TRANSACTION', q, data);
+          } else {
+            showToast('Search', 'Enter a block height, tx hash, or address.', 'warn');
+          }
+        } catch (e) {
+          showToast('Search', e.message || 'Not found', 'err');
+        }
+      };
+      document.getElementById('expSearchBtn')?.addEventListener('click', doSearch);
+      document.getElementById('expSearch')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') doSearch();
+      });
+      // auto refresh while tab is visible
+      if (expTimer) clearInterval(expTimer);
+      expTimer = setInterval(() => {
+        const panel = document.getElementById('explorer-tab');
+        if (panel && panel.classList.contains('active') && uiVisible) refreshNativeExplorer();
+      }, 8000);
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // INITIALIZATION
+    // ═══════════════════════════════════════════════════════
+    async function init() {
+      detectHardware();
+      fetchPoolStatus();
+      refreshNetworkStatus();
+      wireQuickActions();
+      wireNativeExplorer();
+      initDesktopWallet();
+      reportTrayStatus();
+      setInterval(refreshNetworkStatus, 20000);
+
+      // Listen for user data from main process
+      if (api.onUserData) {
+        api.onUserData(async (userData) => {
+          await loadUserData(userData);
+        });
+      }
+
+      // Also check Supabase session directly
+      if (sb) {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session && session.user) {
+          await loadUserData({
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.user_metadata?.full_name || session.user.email,
+            avatar: session.user.user_metadata?.avatar_url || '',
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+            user_metadata: session.user.user_metadata
+          });
+        }
+      }
+
+      // Refresh pool status every 60s
+      setInterval(fetchPoolStatus, 60000);
+    }
+
+    init();
+  </script>
+</body>
+</html>
