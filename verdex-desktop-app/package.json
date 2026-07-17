@@ -1,16 +1,18 @@
 {
   "name": "verdex-miner",
-  "version": "3.0.0",
-  "description": "Verdex DePIN Desktop Miner — Mine VDX with CPU & GPU",
+  "version": "4.0.2",
+  "description": "Verdex DePIN Desktop Miner — Mine VP/VDX with CPU & GPU on Chain 7201",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --windows"
+    "build": "electron-builder --windows",
+    "build:publish": "electron-builder --windows --publish never"
   },
   "author": "Verdex",
   "license": "MIT",
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
+    "electron-updater": "^6.3.9",
     "node-fetch": "^2.6.7",
     "systeminformation": "^5.22.0"
   },
@@ -21,21 +23,42 @@
   "build": {
     "appId": "com.verdex.miner",
     "productName": "Verdex Miner",
+    "artifactName": "Verdex-Miner-Setup-${version}.${ext}",
     "win": {
       "target": "nsis",
-      "icon": "assets/icon.ico"
+      "icon": "assets/icon.ico",
+      "publish": [
+        {
+          "provider": "generic",
+          "url": "https://verdexswap.site/updates",
+          "channel": "latest"
+        }
+      ]
     },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Verdex Miner",
+      "runAfterFinish": true
     },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://verdexswap.site/updates",
+        "channel": "latest"
+      }
+    ],
     "files": [
       "main.js",
       "preload.js",
       "package.json",
       "splash.html",
       "auth.html",
+      "update.html",
       "ui/**/*",
       "assets/**/*",
       "handle/**/*",
