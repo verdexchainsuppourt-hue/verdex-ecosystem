@@ -4,12 +4,16 @@
   "minVersion": "3.3.0",
   "productName": "Verdex Miner",
   "releaseDate": "2026-07-17",
-  "notes": "Crystal logo · Enhanced auth (Google + email/password) · Live network stats on login · P2P network visualization · Mining stability improvements · Bug fixes.",
+  "notes": "Crystal logo \u00c2\u00b7 Enhanced auth (Google + email/password) \u00c2\u00b7 Live network stats on login \u00c2\u00b7 P2P network visualization \u00c2\u00b7 Mining stability improvements \u00c2\u00b7 Bug fixes.",
   "downloads": {
     "windows": {
-      "url": "https://verdexswap.site/assets/downloads/Verdex-Miner-Setup-4.0.2.exe",
+      "url": "https://github.com/verdexchainsuppourt-hue/verdex-ecosystem/releases/download/v4.0.2/Verdex-Miner-Setup-4.0.2.exe",
       "fileName": "Verdex-Miner-Setup-4.0.2.exe",
       "size": 87066846
+    },
+    "android": {
+      "url": "https://github.com/verdexchainsuppourt-hue/verdex-ecosystem/releases/download/v4.0.2/Verdex-Android-1.9.2.apk",
+      "fileName": "Verdex-Android-1.9.2.apk"
     }
   },
   "feedUrl": "https://verdexswap.site/updates"
