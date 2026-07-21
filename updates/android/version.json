@@ -10,12 +10,13 @@
   "network": "mainnet",
   "chainId": 72010,
   "apkUrl": "https://verdexswap.site/assets/downloads/Verdex-Android-1.25.1-build78.apk",
-  "sha256": "7af5dbb8cf0def5f98caacb6e3ce4311b5e70af35886ad67f0014fa0f939700d",
+  "sha256": "819fffef3a6289daf8e1afcf6643ba58b7905208ad7ae43c9ae6b9bf85b07fa7",
   "changelog": [
     "NEW: Version 1.25.1 Build 78 official release",
-    "NEW: Centralized Master Admin Ban/Unban enforcement across P2P trading, VP token conversions, and wallet operations",
-    "FIXED: Seamless zero-failure KYC submission & real-time Admin Panel review queue integration",
-    "FIXED: Mainnet status & chain explorer online monitoring"
+    "FIXED: Mining points loss bug — VP balance now monotonically increases",
+    "FIXED: VP to VDX token conversion reset in engine",
+    "NEW: Enhanced P2P Edit and Delete buttons on user listings",
+    "NEW: Tap-to-copy address on Vault deposit screen with toast notifications"
   ],
-  "releasedAt": "2026-07-22T01:25:00.000Z"
+  "releasedAt": "2026-07-22T01:43:00.000Z"
 }
