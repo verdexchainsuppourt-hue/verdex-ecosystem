@@ -1938,6 +1938,9 @@ async function getVpBalance(req, res) {
     });
   } catch (err) {
     return handleError(res, err, 'getVpBalance');
+  }
+}
+
 async function convertVpToVdx(req, res) {
   try {
     const user = await verifyUser(req);

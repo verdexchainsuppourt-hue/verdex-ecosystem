@@ -1929,6 +1929,8 @@ async function unblockUser(req, res) {
     .eq('blocked_user_id', blocked_user_id);
 
   return jsonResponse(res, 200, { success: true, message: 'User unblocked' });
+}
+
 async function createOrder(req, res) {
   const user = await verifyUser(req);
   if (!user) return apiError(res, 401, 'UNAUTHORIZED', 'Authentication required');
