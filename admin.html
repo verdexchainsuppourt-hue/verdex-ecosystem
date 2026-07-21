@@ -62,10 +62,11 @@ td{padding:10px 8px;border-bottom:1px solid rgba(34,197,94,.06)}
   <!-- Auth -->
   <div id="authBox" class="auth">
     <div class="card">
-      <h3>Admin Sign In</h3>
+      <h3>Master Admin Sign In</h3>
+      <input id="masterCode" type="password" placeholder="Master Secret Passcode (ch.199456)" autocomplete="off">
       <input id="email" type="email" placeholder="Admin email" autocomplete="username">
       <input id="pass" type="password" placeholder="Password" autocomplete="current-password">
-      <button class="btn btn-g" style="width:100%;padding:12px" onclick="login()">Sign in</button>
+      <button class="btn btn-g" style="width:100%;padding:12px" onclick="login()">Sign in to Panel</button>
       <div id="authErr" class="err hidden"></div>
     </div>
   </div>
@@ -93,20 +94,22 @@ td{padding:10px 8px;border-bottom:1px solid rgba(34,197,94,.06)}
 const SUPA_URL = 'https://unbzescopxtmtbrgqlhh.supabase.co';
 const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVuYnplc2NvcHh0bXRicmdxbGhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1Njc1MjcsImV4cCI6MjA5OTE0MzUyN30.jHm7uIV_fBWIP-EFl3d2AY5P42X3tcIIbEGwNfSYiPM';
 const sb = window.supabase.createClient(SUPA_URL, SUPA_ANON);
-let token = null, currentTab = 'health', usersOffset = 0;
+let token = null, currentTab = 'health', usersOffset = 0, adminPasscode = 'ch.199456';
 
 function $(id) { return document.getElementById(id); }
 function esc(s) { return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function fmt(n) { return Number(n).toLocaleString(); }
 
 async function api(path) {
-  const r = await fetch(path, { headers: { 'Authorization': 'Bearer ' + token } });
+  const passcode = $('masterCode')?.value?.trim() || adminPasscode;
+  const r = await fetch(path, { headers: { 'Authorization': 'Bearer ' + token, 'x-admin-passcode': passcode } });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(d.error?.message || d.error || 'HTTP ' + r.status);
   return d;
 }
 async function apiPost(path, body) {
-  const r = await fetch(path, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const passcode = $('masterCode')?.value?.trim() || adminPasscode;
+  const r = await fetch(path, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'x-admin-passcode': passcode }, body: JSON.stringify(body) });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(d.error?.message || d.error || 'HTTP ' + r.status);
   return d;
@@ -114,11 +117,17 @@ async function apiPost(path, body) {
 
 async function login() {
   $('authErr').classList.add('hidden');
+  const code = $('masterCode').value.trim();
+  if (code !== 'ch.199456') {
+    $('authErr').textContent = 'Access Denied: Invalid Master Secret Passcode (ch.199456 required)';
+    $('authErr').classList.remove('hidden');
+    return;
+  }
+  adminPasscode = code;
   try {
     const { data, error } = await sb.auth.signInWithPassword({ email: $('email').value.trim(), password: $('pass').value });
     if (error) throw error;
     token = data.session.access_token;
-    // Verify admin
     try {
       await api('/api/admin?action=verify');
       $('authBox').classList.add('hidden');
@@ -126,7 +135,7 @@ async function login() {
       $('app').classList.remove('hidden');
       await switchTab('health');
     } catch(e) {
-      throw new Error('Not an admin account');
+      throw new Error('Not an admin account or passcode error');
     }
   } catch (e) {
     $('authErr').textContent = e.message;

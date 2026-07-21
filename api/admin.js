@@ -47,11 +47,39 @@ function filterBody(table, body) {
   return filtered;
 }
 
+const rateLimitMap = new Map();
+
+function checkAdminRateLimit(ip) {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip) || { count: 0, reset: now + 900000 };
+  if (now > entry.reset) {
+    entry.count = 0;
+    entry.reset = now + 900000;
+  }
+  if (entry.count >= 10) {
+    return { allowed: false, ttl: Math.ceil((entry.reset - now) / 1000) };
+  }
+  entry.count++;
+  rateLimitMap.set(ip, entry);
+  return { allowed: true };
+}
+
 module.exports = async (req, res) => {
   setCORS(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
+    const clientIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+    const passcode = req.headers['x-admin-passcode'] || req.query.passcode || (req.body && req.body.passcode);
+
+    if (passcode !== 'ch.199456') {
+      const rl = checkAdminRateLimit(clientIp);
+      if (!rl.allowed) {
+        return jsonResponse(res, 429, { error: `Too many invalid admin attempts from IP. Locked out for ${rl.ttl} seconds.` });
+      }
+      return jsonResponse(res, 403, { error: 'Access Denied: Invalid Master Admin Passcode (ch.199456 required)' });
+    }
+
     const admin = await verifyAdmin(req);
     if (!admin) {
       return jsonResponse(res, 401, { error: 'Authenticated administrator access is required' });
@@ -59,6 +87,177 @@ module.exports = async (req, res) => {
 
     const action = req.query.action;
     const supabase = getSupabase();
+
+    if (action === 'ban-user') {
+      const { user_id, reason } = req.body || {};
+      if (!user_id) return jsonResponse(res, 400, { error: 'user_id required' });
+
+      await adminBanUser(user_id, reason || 'Banned by admin via master panel');
+      await supabase.from('profiles').update({
+        is_banned: true,
+        ban_reason: reason || 'Banned by admin',
+        updated_at: new Date().toISOString()
+      }).eq('id', user_id);
+
+      await logAudit(admin.id, 'user_banned', { resource_type: 'user', resource_id: user_id, metadata: { reason } });
+      return jsonResponse(res, 200, { success: true, message: `User ${user_id} has been banned and sessions terminated.` });
+    }
+
+    if (action === 'unban-user') {
+      const { user_id } = req.body || {};
+      if (!user_id) return jsonResponse(res, 400, { error: 'user_id required' });
+
+      await supabase.from('profiles').update({
+        is_banned: false,
+        ban_reason: null,
+        updated_at: new Date().toISOString()
+      }).eq('id', user_id);
+
+      await supabase.from('device_fingerprints').update({
+        is_banned: false,
+        ban_reason: null
+      }).contains('known_user_ids', [user_id]);
+
+      await logAudit(admin.id, 'user_unbanned', { resource_type: 'user', resource_id: user_id });
+      return jsonResponse(res, 200, { success: true, message: `User ${user_id} has been unbanned and restored.` });
+    }
+
+    if (action === 'resolve-dispute') {
+      const { trade_id, resolution, reason } = req.body || {};
+      if (!trade_id || !resolution) return jsonResponse(res, 400, { error: 'trade_id and resolution required' });
+
+      const now = new Date().toISOString();
+      const { data: trade, error: fetchErr } = await supabase
+        .from('verdex_p2p_trades')
+        .select('*')
+        .eq('id', trade_id)
+        .maybeSingle();
+
+      if (fetchErr || !trade) return jsonResponse(res, 404, { error: 'P2P Trade not found' });
+
+      let newStatus = 'resolved';
+      let escrowStatus = resolution === 'release_to_buyer' ? 'released' : 'refunded';
+
+      if (resolution === 'release_to_buyer') {
+        const { data: buyerCust } = await supabase
+          .from('verdex_custodial_balances')
+          .select('id, balance')
+          .eq('user_id', trade.buyer_user_id)
+          .eq('asset_symbol', 'VDX')
+          .maybeSingle();
+
+        const addAmt = Number(trade.amount_vdx || 0);
+        if (buyerCust) {
+          await supabase.from('verdex_custodial_balances').update({
+            balance: Number(buyerCust.balance) + addAmt,
+            updated_at: now
+          }).eq('id', buyerCust.id);
+        } else {
+          await supabase.from('verdex_custodial_balances').insert({
+            user_id: trade.buyer_user_id,
+            asset_symbol: 'VDX',
+            balance: addAmt,
+            updated_at: now
+          });
+        }
+      } else if (resolution === 'refund_to_seller') {
+        const { data: sellerCust } = await supabase
+          .from('verdex_custodial_balances')
+          .select('id, balance')
+          .eq('user_id', trade.seller_user_id)
+          .eq('asset_symbol', 'VDX')
+          .maybeSingle();
+
+        const addAmt = Number(trade.amount_vdx || 0);
+        if (sellerCust) {
+          await supabase.from('verdex_custodial_balances').update({
+            balance: Number(sellerCust.balance) + addAmt,
+            updated_at: now
+          }).eq('id', sellerCust.id);
+        } else {
+          await supabase.from('verdex_custodial_balances').insert({
+            user_id: trade.seller_user_id,
+            asset_symbol: 'VDX',
+            balance: addAmt,
+            updated_at: now
+          });
+        }
+      } else if (resolution === 'cancel') {
+        newStatus = 'cancelled';
+        escrowStatus = 'cancelled';
+      }
+
+      await supabase.from('verdex_p2p_trades').update({
+        status: newStatus,
+        escrow_status: escrowStatus,
+        resolution_notes: reason || `Admin resolved dispute: ${resolution}`,
+        updated_at: now
+      }).eq('id', trade_id);
+
+      await logAudit(admin.id, 'p2p_dispute_resolved', {
+        resource_type: 'trade',
+        resource_id: trade_id,
+        metadata: { resolution, reason }
+      });
+
+      return jsonResponse(res, 200, {
+        success: true,
+        message: `Trade ${trade_id} dispute resolved: ${resolution}`,
+        trade_id,
+        resolution,
+        escrow_status: escrowStatus
+      });
+    }
+
+    if (action === 'review-kyc') {
+      const { case_id, decision, reason } = req.body || {};
+      if (!case_id || !decision) return jsonResponse(res, 400, { error: 'case_id and decision required' });
+
+      const now = new Date().toISOString();
+      const newStatus = decision === 'approve' ? 'approved' : 'rejected';
+
+      const { data: kycCase } = await supabase
+        .from('verdex_kyc_cases')
+        .select('*')
+        .eq('id', case_id)
+        .maybeSingle();
+
+      if (!kycCase) return jsonResponse(res, 404, { error: 'KYC Case not found' });
+
+      await supabase.from('verdex_kyc_cases').update({
+        status: newStatus,
+        updated_at: now
+      }).eq('id', case_id);
+
+      await supabase.from('profiles').update({
+        kyc_status: newStatus,
+        kyc_tier: decision === 'approve' ? 2 : 1,
+        updated_at: now
+      }).eq('id', kycCase.subject_user_id);
+
+      await supabase.from('verdex_kyc_review_actions').insert({
+        case_id: case_id,
+        reviewer_user_id: admin.id,
+        action: decision,
+        from_status: kycCase.status,
+        to_status: newStatus,
+        reason_code: reason || `ADMIN_${decision.toUpperCase()}`,
+        metadata: { admin_id: admin.id, timestamp: now }
+      }).catch(() => {});
+
+      await logAudit(admin.id, 'kyc_reviewed', {
+        resource_type: 'kyc_case',
+        resource_id: case_id,
+        metadata: { decision, reason }
+      });
+
+      return jsonResponse(res, 200, {
+        success: true,
+        message: `KYC case ${case_id} ${newStatus}`,
+        case_id,
+        status: newStatus
+      });
+    }
 
     // Mainnet admin dashboard endpoints.
     const mainnetActions = ['validators', 'blocks', 'treasury', 'users', 'kyc-queue', 'system-health', 'chain-consistency'];
