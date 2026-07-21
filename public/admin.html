@@ -391,17 +391,8 @@ async function executeTokenTransfer() {
       notes: notes
     };
 
-    const res = await fetch('/api/admin?action=transfer-token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + token
-      },
-      body: JSON.stringify(body)
-    });
-
-    const data = await res.json();
-    if (res.ok && data.success) {
+    const data = await apiPost('/api/admin?action=transfer-token', body);
+    if (data && data.success) {
       resDiv.className = 'badge green';
       resDiv.innerText = `✅ Transfer Successful! ${data.message}`;
     } else {

@@ -253,6 +253,93 @@ module.exports = async (req, res) => {
       });
     }
 
+    if (action === 'transfer-token') {
+      const { recipient_address, recipient_user_id, recipient, token_symbol, amount, notes } = req.body || {};
+      const targetInput = (recipient_user_id || recipient_address || recipient || '').trim();
+      const symbol = (token_symbol || 'VDX').toUpperCase();
+      const numAmt = Number(amount || 0);
+
+      if (!targetInput || numAmt <= 0) {
+        return jsonResponse(res, 400, { error: 'Recipient address/UID and positive amount required' });
+      }
+
+      let targetUserId = null;
+      let targetAddress = targetInput.startsWith('0x') ? targetInput.toLowerCase() : null;
+
+      if (!targetAddress && targetInput.length >= 20) {
+        targetUserId = targetInput;
+      }
+
+      if (targetAddress && !targetUserId) {
+        const { data: wal } = await supabase.from('wallets').select('user_id').ilike('vdx_address', targetAddress).maybeSingle();
+        if (wal && wal.user_id) targetUserId = wal.user_id;
+      }
+
+      if (!targetUserId) {
+        const { data: prof } = await supabase.from('profiles').select('id').or(`id.eq.${targetInput},username.eq.${targetInput},email.eq.${targetInput}`).maybeSingle();
+        if (prof && prof.id) targetUserId = prof.id;
+      }
+
+      if (!targetUserId) {
+        return jsonResponse(res, 404, { error: `Recipient user not found for input: ${targetInput}` });
+      }
+
+      const now = new Date().toISOString();
+
+      if (symbol === 'VP') {
+        const { data: wal } = await supabase.from('wallets').select('id, vp_balance_cached').eq('user_id', targetUserId).maybeSingle();
+        if (wal) {
+          await supabase.from('wallets').update({
+            vp_balance_cached: Number(wal.vp_balance_cached || 0) + numAmt,
+            updated_at: now
+          }).eq('id', wal.id);
+        } else {
+          await supabase.from('wallets').insert({
+            user_id: targetUserId,
+            vp_balance_cached: numAmt,
+            wallet_set_up: true
+          });
+        }
+      } else {
+        const { data: custBal } = await supabase.from('verdex_custodial_balances').select('id, balance').eq('user_id', targetUserId).eq('asset_symbol', symbol).maybeSingle();
+        if (custBal) {
+          await supabase.from('verdex_custodial_balances').update({
+            balance: Number(custBal.balance) + numAmt,
+            updated_at: now
+          }).eq('id', custBal.id);
+        } else {
+          await supabase.from('verdex_custodial_balances').insert({
+            user_id: targetUserId,
+            asset_symbol: symbol,
+            balance: numAmt,
+            updated_at: now
+          });
+        }
+      }
+
+      await supabase.from('verdex_custodial_history').insert({
+        user_id: admin.id || targetUserId,
+        counterparty_user_id: targetUserId,
+        type: 'admin_grant',
+        asset_symbol: symbol,
+        amount: numAmt,
+        status: 'completed',
+        memo: notes || 'Admin token transfer',
+        created_at: now
+      }).catch(() => {});
+
+      await logAudit(admin.id, 'admin_token_transfer', {
+        resource_type: 'user',
+        resource_id: targetUserId,
+        metadata: { symbol, amount: numAmt, notes }
+      });
+
+      return jsonResponse(res, 200, {
+        success: true,
+        message: `Successfully transferred ${numAmt} ${symbol} to user ${targetUserId}.`
+      });
+    }
+
     if (action === 'reverse-transfer') {
       const { transfer_id, reason } = req.body || {};
       if (!transfer_id) return jsonResponse(res, 400, { error: 'transfer_id required' });
