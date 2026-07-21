@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- skill:chrome -->
+<style>
+/* Credit line — bottom-right */
+.design-ui-credit {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  font: 11px/1 system-ui, sans-serif;
+  color: rgba(128,128,128,0.5);
+  pointer-events: none;
+  z-index: 2147483647;
+  transition: opacity 0.4s ease;
+  user-select: none;
+  letter-spacing: 0.02em;
+}
+
+/* Hide chrome on touch devices */
+@media (hover: none) {
+  .design-ui-credit { display: none; }
+}
+
+/* Print fixes */
+@media print {
+  * {
+    transition: none !important;
+    animation: none !important;
+    box-shadow: none !important;
+  }
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .design-ui-credit { display: none !important; }
+}
+
+</style>
+<script>
+(function () {
+    // Design-ui pages are single compositions, so the whole body is editable.
+    function markEditable() {
+        document.body.classList.add('artifact-editable');
+    }
+
+    // Credit badge with idle-fade. Hover devices only.
+    function initChromeUI() {
+        if (!matchMedia('(hover: hover)').matches) return;
+
+        var credit = document.createElement('div');
+        credit.className = 'design-ui-credit';
+        credit.setAttribute('aria-hidden', 'true');
+        credit.innerHTML = '\u{1F49C} by ClickUp Brain';
+        document.body.appendChild(credit);
+
+        var timer = null;
+        var fade = function (out) { credit.style.opacity = out ? '0' : ''; };
+        fade(true);
+        var show = function () {
+            fade(false);
+            clearTimeout(timer);
+            timer = setTimeout(function () { fade(true); }, 3000);
+        };
+        document.addEventListener('mousemove', show);
+        show();
+    }
+
+    function init() {
+        markEditable();
+        initChromeUI();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+
+</script>
+<!-- /skill:chrome -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verdex Chain — Developer Documentation</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+    <style>
+        :root {
+            --bg: oklch(12% 0.02 145);
+            --bg-surface: oklch(16% 0.018 145);
+            --bg-elevated: oklch(20% 0.015 145);
+            --text: oklch(92% 0.01 145);
+            --text-secondary: oklch(65% 0.01 145);
+            --text-tertiary: oklch(48% 0.01 145);
+            --accent: oklch(72% 0.2 145);
+            --accent-dim: oklch(40% 0.12 145);
+            --accent-subtle: oklch(20% 0.04 145);
+            --border: oklch(24% 0.015 145);
+            --font-body: 'Space Grotesk', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 16px;
+            line-height: 1.6;
+            font-weight: 400;
+            letter-spacing: 0.01em;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Layout */
+        .layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border);
+            padding: 32px 0;
+        }
+
+        .sidebar-brand {
+            padding: 0 24px 32px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .sidebar-brand h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: -0.02em;
+        }
+
+        .sidebar-brand span {
+            font-size: 12px;
+            font-family: var(--font-mono);
+            color: var(--text-tertiary);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .nav-section {
+            padding: 0 16px;
+            margin-bottom: 24px;
+        }
+
+        .nav-section-title {
+            font-size: 11px;
+            font-family: var(--font-mono);
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 0 8px 8px;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 8px 12px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .nav-link:hover {
+            background: var(--accent-subtle);
+            color: var(--text);
+        }
+
+        .nav-link.active {
+            background: var(--accent-subtle);
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main {
+            padding: 64px 80px;
+            max-width: 900px;
+        }
+
+        .main h1 {
+            font-size: 40px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+
+        .main h2 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-top: 56px;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+
+        .main h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-top: 40px;
+            margin-bottom: 12px;
+            color: var(--text);
+        }
+
+        .main p {
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            max-width: 65ch;
+            line-height: 1.7;
+        }
+
+        .main ul, .main ol {
+            padding-left: 24px;
+            margin-bottom: 16px;
+        }
+
+        .main li {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .lead {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 60ch;
+        }
+
+        /* Network Info Box */
+        .network-box {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px 32px;
+            margin: 32px 0;
+        }
+
+        .network-box h4 {
+            font-size: 14px;
+            font-family: var(--font-mono);
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 16px;
+        }
+
+        .network-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .network-row:last-child { border-bottom: none; }
+
+        .network-row .label {
+            font-size: 14px;
+            color: var(--text-tertiary);
+        }
+
+        .network-row .value {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
+            overflow-x: auto;
+            margin: 20px 0 24px;
+            font-family: var(--font-mono);
+            font-size: 13.5px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+
+        code {
+            font-family: var(--font-mono);
+            font-size: 0.875em;
+            background: var(--accent-subtle);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--accent);
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+
+        .keyword { color: oklch(72% 0.15 300); }
+        .type { color: var(--accent); }
+        .string { color: oklch(72% 0.12 80); }
+        .comment { color: var(--text-tertiary); font-style: italic; }
+        .func { color: oklch(75% 0.15 220); }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0 24px;
+            font-size: 14px;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 12px;
+            font-family: var(--font-mono);
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-family: var(--font-mono);
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: var(--accent-subtle);
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Section divider */
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 48px 0;
+        }
+
+        /* Callout */
+        .callout {
+            background: var(--accent-subtle);
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin: 24px 0;
+        }
+
+        .callout p {
+            color: var(--text);
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .callout strong {
+            color: var(--accent);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .layout { grid-template-columns: 1fr; }
+            .sidebar { display: none; }
+            .main { padding: 32px 24px; }
+            .main h1 { font-size: 32px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h1>▲ Verdex</h1>
+                <span>Developer Docs v1.0</span>
+            </div>
+            <nav>
+                <div class="nav-section">
+                    <div class="nav-section-title">Getting Started</div>
+                    <a href="#introduction" class="nav-link active">Introduction</a>
+                    <a href="#network" class="nav-link">Network Details</a>
+                    <a href="#quickstart" class="nav-link">Quickstart</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">PRC20 Standard</div>
+                    <a href="#prc20-overview" class="nav-link">Overview</a>
+                    <a href="#prc20-interface" class="nav-link">Interface</a>
+                    <a href="#prc20-implementation" class="nav-link">Implementation</a>
+                    <a href="#prc20-deploy" class="nav-link">Deploy a Token</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Core Protocol</div>
+                    <a href="#verdex-router" class="nav-link">Verdex Router</a>
+                    <a href="#verdex-factory" class="nav-link">Verdex Factory</a>
+                    <a href="#verdex-farm" class="nav-link">Verdex Farm</a>
+                    <a href="#lp-tokens" class="nav-link">LP Tokens</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">SDK</div>
+                    <a href="#sdk-install" class="nav-link">Installation</a>
+                    <a href="#sdk-usage" class="nav-link">Usage Examples</a>
+                    <a href="#rpc-methods" class="nav-link">RPC Methods</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Guides</div>
+                    <a href="#guide-token" class="nav-link">Create a PRC20 Token</a>
+                    <a href="#guide-pool" class="nav-link">Create a Pool</a>
+                    <a href="#guide-integrate" class="nav-link">Integrate Verdex Swap</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Security</div>
+                    <a href="#audits" class="nav-link">Audits</a>
+                    <a href="#best-practices" class="nav-link">Best Practices</a>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="main">
+            <h1 id="introduction">Verdex Chain</h1>
+            <p class="lead">A high-performance Layer 1 blockchain purpose-built for decentralized trading. Native VDX token. PRC20 token standard. Verdex DEX at the core.</p>
+
+            <div class="callout">
+                <p><strong>Phases 0–3 live.</strong> Verdex Testnet (chain ID <strong>7201</strong>), faucet, explorer, VP mining, and PRC20 Solidity contracts are available. <strong>Phase 4 (DEX swap)</strong> is not deployed yet — Router/Factory sections below are the planned interface.</p>
+            </div>
+
+            <div class="callout" style="border-left: 3px solid oklch(72% 0.15 50); margin-top: 12px;">
+                <p><strong>⚠️ Current Architecture:</strong> The hosted RPC (<code>/api/rpc</code>) is backed by Supabase and supports read-only <code>eth_*</code> methods (chain ID, balances, blocks). It does <strong>not</strong> execute EVM bytecode or process <code>eth_sendRawTransaction</code> yet. A full Geth Clique PoA testnet is in development. Hardhat deploy will work once the Geth node is live. PRC20 contracts compile against Hardhat's local network today.</p>
+            </div>
+
+            <h2 id="what-is-verdex">What is VerdexSwap and how does the ecosystem work?</h2>
+            <p>VerdexSwap is a decentralized finance (DeFi) ecosystem built on a custom L1 blockchain. It consists of a DePIN points mining network, a testnet L1 with native VDX gas, and the PRC20 token standard for developers. The automated market maker (AMM) including Swap, Pool, and Farm ships in Phase 4.</p>
+            <p>The PRC20 token standard is <strong>identical to ERC-20</strong> at the ABI level. Use standard OpenZeppelin ERC20 templates and Hardhat. The hosted JSON-RPC is available at <code>https://verdex-ecosystem-production.up.railway.app/rpc</code> (read-only currently). A full EVM Geth node is currently in development.</p>
+
+            <h3>Key Properties</h3>
+            <ul>
+                <li><strong>Native token:</strong> VDX (gas, governance, staking, future base pair)</li>
+                <li><strong>Token standard:</strong> PRC20 (ERC-20 compatible Solidity)</li>
+                <li><strong>Consensus (testnet):</strong> Proof of Authority — single validator (PoS roadmap deferred)</li>
+                <li><strong>Tooling:</strong> MetaMask (add network), Hardhat (local compile + test), JSON-RPC eth_* (read-only until Geth live)</li>
+                <li><strong>Chain ID:</strong> 7201 (0x1c21)</li>
+                <li><strong>Block time:</strong> ~5s hosted ledger / ~2–5s on upcoming Geth Clique testnet</li>
+            </ul>
+
+            <hr class="divider">
+
+            <h2 id="network">How do I connect to the Verdex Testnet network?</h2>
+
+            <div class="network-box">
+                <h4>Verdex Testnet</h4>
+                <div class="network-row">
+                    <span class="label">Network Name</span>
+                    <span class="value">Verdex Testnet</span>
+                </div>
+                <div class="network-row">
+                    <span class="label">Chain ID</span>
+                    <span class="value">7201</span>
+                </div>
+                <div class="network-row">
+                    <span class="label">RPC URL</span>
+                    <span class="value">https://verdex-ecosystem-production.up.railway.app/rpc</span>
+                </div>
+                <div class="network-row">
+                    <span class="label">Block Explorer</span>
+                    <span class="value">https://verdexswap.site/explorer</span>
+                </div>
+                <div class="network-row">
+                    <span class="label">Faucet</span>
+                    <span class="value">https://verdexswap.site/faucet</span>
+                </div>
+                <div class="network-row">
+                    <span class="label">Currency Symbol</span>
+                    <span class="value">VDX</span>
+                </div>
+                <div class="network-row">
+                    <span class="label">Decimals</span>
+                    <span class="value">18</span>
+                </div>
+            </div>
+
+            <div class="callout">
+                <p><strong>Network pack is live.</strong> Also see <code>GET /api/network</code> and <code>/js/network-config.js</code> for machine-readable config. Note: the RPC currently supports read queries only; transaction submission requires the full Geth node (in development).</p>
+            </div>
+
+            <hr class="divider">
+
+            <h2 id="quickstart">How do developers deploy smart contracts on Verdex?</h2>
+            <p>Getting up and running on the Verdex EVM-compatible chain takes under 5 minutes.</p>
+
+            <h3>1. Add Verdex to MetaMask</h3>
+            <p>Open MetaMask, go to Settings → Networks → Add Network, and enter the testnet details above. Or visit the Verdex website and click "Add Verdex Testnet" to auto-configure.</p>
+
+            <h3>2. Get Testnet VDX</h3>
+            <p>Visit the faucet at <code>verdexswap.site/faucet</code>. Connect your wallet and request test VDX. You'll receive 10 VDX per request (once per 24 hours).</p>
+
+            <h3>How do I deploy my first contract?</h3>
+<pre><code><span class="comment">// hardhat.config.js</span>
+<span class="keyword">module</span>.exports = {
+  networks: {
+    Verdex: {
+      url: <span class="string">"https://verdex-ecosystem-production.up.railway.app/rpc"</span>,
+      chainId: <span class="string">7201</span>,
+      accounts: [process.env.PRIVATE_KEY]
+    }
+  },
+  solidity: <span class="string">"0.8.20"</span>
+};</code></pre>
+
+<pre><code><span class="comment"># Deploy</span>
+npx hardhat run scripts/deploy.js --network Verdex</code></pre>
+
+            <hr class="divider">
+
+            <h2 id="prc20-overview">What is the PRC20 Token Standard?</h2>
+            <p>PRC20 is the fungible token standard natively built for the Verdex Chain. It is fully backwards-compatible with the Ethereum ERC20 interface, meaning existing Solidity tooling, wallets, and libraries like OpenZeppelin work natively out of the box.</p>
+
+            <h3>PRC20 vs ERC20</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>PRC20</th>
+                        <th>ERC20</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Interface</td>
+                        <td>Identical</td>
+                        <td>Standard</td>
+                    </tr>
+                    <tr>
+                        <td>Solidity version</td>
+                        <td>0.8.x</td>
+                        <td>0.8.x</td>
+                    </tr>
+                    <tr>
+                        <td>Gas token</td>
+                        <td>VDX</td>
+                        <td>ETH</td>
+                    </tr>
+                    <tr>
+                        <td>Base pair</td>
+                        <td>VDX (native DEX)</td>
+                        <td>ETH/USDC</td>
+                    </tr>
+                    <tr>
+                        <td>Auto-listed on DEX</td>
+                        <td>Permissionless pool creation (Phase 4)</td>
+                        <td>No</td>
+                    </tr>
+                    <tr>
+                        <td>Gas cost</td>
+                        <td>~0.001 VDX per transfer</td>
+                        <td>Variable</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <hr class="divider">
+
+            <h2 id="prc20-interface">What does the PRC20 Solidity interface look like?</h2>
+            <p>Below is the complete PRC20 interface. Since it maps 1:1 with ERC20, all core functions like transfer, approve, and transferFrom are identical. All functions are required unless marked optional.</p>
+
+<pre><code><span class="comment">// SPDX-License-Identifier: MIT</span>
+<span class="keyword">pragma solidity</span> ^0.8.20;
+
+<span class="keyword">interface</span> <span class="type">IPRC20</span> {
+
+    <span class="comment">// Returns the total token supply</span>
+    <span class="keyword">function</span> <span class="func">totalSupply</span>() <span class="keyword">external view returns</span> (<span class="type">uint256</span>);
+
+    <span class="comment">// Returns the balance of an account</span>
+    <span class="keyword">function</span> <span class="func">balanceOf</span>(<span class="type">address</span> account) <span class="keyword">external view returns</span> (<span class="type">uint256</span>);
+
+    <span class="comment">// Transfers tokens to a recipient</span>
+    <span class="keyword">function</span> <span class="func">transfer</span>(<span class="type">address</span> to, <span class="type">uint256</span> amount) <span class="keyword">external returns</span> (<span class="type">bool</span>);
+
+    <span class="comment">// Returns the remaining allowance for a spender</span>
+    <span class="keyword">function</span> <span class="func">allowance</span>(<span class="type">address</span> owner, <span class="type">address</span> spender) <span class="keyword">external view returns</span> (<span class="type">uint256</span>);
+
+    <span class="comment">// Approves a spender to transfer tokens</span>
+    <span class="keyword">function</span> <span class="func">approve</span>(<span class="type">address</span> spender, <span class="type">uint256</span> amount) <span class="keyword">external returns</span> (<span class="type">bool</span>);
+
+    <span class="comment">// Transfers tokens from sender to recipient using allowance</span>
+    <span class="keyword">function</span> <span class="func">transferFrom</span>(<span class="type">address</span> from, <span class="type">address</span> to, <span class="type">uint256</span> amount) <span class="keyword">external returns</span> (<span class="type">bool</span>);
+
+    <span class="comment">// Events</span>
+    <span class="keyword">event</span> <span class="func">Transfer</span>(<span class="type">address indexed</span> from, <span class="type">address indexed</span> to, <span class="type">uint256</span> value);
+    <span class="keyword">event</span> <span class="func">Approval</span>(<span class="type">address indexed</span> owner, <span class="type">address indexed</span> spender, <span class="type">uint256</span> value);
+}
+
+<span class="comment">// Optional metadata extension</span>
+<span class="keyword">interface</span> <span class="type">IPRC20Metadata</span> <span class="keyword">is</span> <span class="type">IPRC20</span> {
+    <span class="keyword">function</span> <span class="func">name</span>() <span class="keyword">external view returns</span> (<span class="type">string memory</span>);
+    <span class="keyword">function</span> <span class="func">symbol</span>() <span class="keyword">external view returns</span> (<span class="type">string memory</span>);
+    <span class="keyword">function</span> <span class="func">decimals</span>() <span class="keyword">external view returns</span> (<span class="type">uint8</span>);
+}
+
+<span class="comment">// Optional burn extension</span>
+<span class="keyword">interface</span> <span class="type">IPRC20Burnable</span> <span class="keyword">is</span> <span class="type">IPRC20</span> {
+    <span class="keyword">function</span> <span class="func">burn</span>(<span class="type">uint256</span> amount) <span class="keyword">external</span>;
+    <span class="keyword">function</span> <span class="func">burnFrom</span>(<span class="type">address</span> account, <span class="type">uint256</span> amount) <span class="keyword">external</span>;
+}
+
+<span class="comment">// Optional mint extension (restricted to owner/minter role)</span>
+<span class="keyword">interface</span> <span class="type">IPRC20Mintable</span> <span class="keyword">is</span> <span class="type">IPRC20</span> {
+    <span class="keyword">function</span> <span class="func">mint</span>(<span class="type">address</span> to, <span class="type">uint256</span> amount) <span class="keyword">external</span>;
+}</code></pre>
+
+            <hr class="divider">
+
+            <h2 id="prc20-implementation">How do I implement a PRC20 token in Solidity?</h2>
+            <p>This is a complete, production-ready PRC20 token contract written in Solidity. It can be compiled using solc 0.8.20 and deployed directly to the Verdex testnet via Hardhat.</p>
+
+<pre><code><span class="comment">// SPDX-License-Identifier: MIT</span>
+<span class="keyword">pragma solidity</span> ^0.8.20;
+
+<span class="keyword">contract</span> <span class="type">PRC20Token</span> {
+    <span class="keyword">string public</span> name;
+    <span class="keyword">string public</span> symbol;
+    <span class="keyword">uint8 public</span> decimals = 18;
+    <span class="keyword">uint256 public</span> totalSupply;
+
+    <span class="keyword">mapping</span>(<span class="type">address</span> => <span class="type">uint256</span>) <span class="keyword">public</span> balanceOf;
+    <span class="keyword">mapping</span>(<span class="type">address</span> => <span class="keyword">mapping</span>(<span class="type">address</span> => <span class="type">uint256</span>)) <span class="keyword">public</span> allowance;
+
+    <span class="keyword">event</span> <span class="func">Transfer</span>(<span class="type">address indexed</span> from, <span class="type">address indexed</span> to, <span class="type">uint256</span> value);
+    <span class="keyword">event</span> <span class="func">Approval</span>(<span class="type">address indexed</span> owner, <span class="type">address indexed</span> spender, <span class="type">uint256</span> value);
+
+    <span class="keyword">constructor</span>(<span class="type">string memory</span> _name, <span class="type">string memory</span> _symbol, <span class="type">uint256</span> _totalSupply) {
+        name = _name;
+        symbol = _symbol;
+        totalSupply = _totalSupply * 10 ** decimals;
+        balanceOf[msg.sender] = totalSupply;
+        <span class="keyword">emit</span> <span class="func">Transfer</span>(<span class="type">address</span>(0), msg.sender, totalSupply);
+    }
+
+    <span class="keyword">function</span> <span class="func">transfer</span>(<span class="type">address</span> to, <span class="type">uint256</span> amount) <span class="keyword">external returns</span> (<span class="type">bool</span>) {
+        <span class="keyword">require</span>(balanceOf[msg.sender] >= amount, <span class="string">"Insufficient balance"</span>);
+        balanceOf[msg.sender] -= amount;
+        balanceOf[to] += amount;
+        <span class="keyword">emit</span> <span class="func">Transfer</span>(msg.sender, to, amount);
+        <span class="keyword">return true</span>;
+    }
+
+    <span class="keyword">function</span> <span class="func">approve</span>(<span class="type">address</span> spender, <span class="type">uint256</span> amount) <span class="keyword">external returns</span> (<span class="type">bool</span>) {
+        allowance[msg.sender][spender] = amount;
+        <span class="keyword">emit</span> <span class="func">Approval</span>(msg.sender, spender, amount);
+        <span class="keyword">return true</span>;
+    }
+
+    <span class="keyword">function</span> <span class="func">transferFrom</span>(<span class="type">address</span> from, <span class="type">address</span> to, <span class="type">uint256</span> amount) <span class="keyword">external returns</span> (<span class="type">bool</span>) {
+        <span class="keyword">require</span>(balanceOf[from] >= amount, <span class="string">"Insufficient balance"</span>);
+        <span class="keyword">require</span>(allowance[from][msg.sender] >= amount, <span class="string">"Insufficient allowance"</span>);
+        allowance[from][msg.sender] -= amount;
+        balanceOf[from] -= amount;
+        balanceOf[to] += amount;
+        <span class="keyword">emit</span> <span class="func">Transfer</span>(from, to, amount);
+        <span class="keyword">return true</span>;
+    }
+}</code></pre>
+
+            <hr class="divider">
+
+            <h2 id="prc20-deploy">What are the steps to deploy a PRC20 token on the Verdex network?</h2>
+            <p>Follow this step-by-step developer guide to write, compile, and deploy a custom PRC20 token to the live Verdex blockchain using Hardhat.</p>
+
+            <h3>Prerequisites</h3>
+            <ul>
+                <li>Node.js 18+</li>
+                <li>Hardhat or Foundry installed</li>
+                <li>Testnet VDX from the faucet</li>
+                <li>MetaMask connected to Verdex Testnet</li>
+            </ul>
+
+            <h3>Steps</h3>
+
+<pre><code><span class="comment"># 1. Initialize project</span>
+mkdir my-prc20-token && cd my-prc20-token
+npx hardhat init
+
+<span class="comment"># 2. Install OpenZeppelin (PRC20 is ERC20-compatible)</span>
+npm install @openzeppelin/contracts
+
+<span class="comment"># 3. Create your token contract at contracts/MyToken.sol</span>
+<span class="comment"># 4. Configure hardhat.config.js with Verdex network</span>
+<span class="comment"># 5. Write deploy script</span>
+
+npx hardhat run scripts/deploy.js --network Verdex
+
+<span class="comment"># 6. Verify on Verdex Explorer</span>
+npx hardhat verify --network Verdex DEPLOYED_ADDRESS "TokenName" "TKN" "1000000"</code></pre>
+
+            <h3>Deploy Script</h3>
+<pre><code><span class="comment">// scripts/deploy.js</span>
+<span class="keyword">const</span> { ethers } = <span class="func">require</span>(<span class="string">"hardhat"</span>);
+
+<span class="keyword">async function</span> <span class="func">main</span>() {
+  <span class="keyword">const</span> Token = <span class="keyword">await</span> ethers.<span class="func">getContractFactory</span>(<span class="string">"PRC20Token"</span>);
+  <span class="keyword">const</span> token = <span class="keyword">await</span> Token.<span class="func">deploy</span>(<span class="string">"My Token"</span>, <span class="string">"MTK"</span>, <span class="string">1000000</span>);
+  <span class="keyword">await</span> token.<span class="func">waitForDeployment</span>();
+
+  console.<span class="func">log</span>(<span class="string">`Token deployed to: ${token.target}`</span>);
+}
+
+<span class="func">main</span>().<span class="func">catch</span>((error) => {
+  console.<span class="func">error</span>(error);
+  process.exitCode = 1;
+});</code></pre>
+
+            <hr class="divider">
+
+            <h2 id="verdex-router">How will the VerdexSwap Router work?</h2>
+            <p><span class="badge">Phase 4 — not deployed</span> The Verdex Router will act as the primary entry point for all decentralized exchange swap operations. The interface below represents the target API architecture once Phase 4 is deployed. Note: Do not call these smart contracts yet.</p>
+
+            <h3>Key Functions</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>swapExactTokensForTokens</code></td>
+                        <td>Swap exact input amount for minimum output</td>
+                    </tr>
+                    <tr>
+                        <td><code>swapTokensForExactTokens</code></td>
+                        <td>Swap maximum input for exact output amount</td>
+                    </tr>
+                    <tr>
+                        <td><code>swapExactVDXForTokens</code></td>
+                        <td>Swap exact VDX for minimum token output</td>
+                    </tr>
+                    <tr>
+                        <td><code>swapTokensForExactVDX</code></td>
+                        <td>Swap tokens for exact VDX output</td>
+                    </tr>
+                    <tr>
+                        <td><code>addLiquidity</code></td>
+                        <td>Add token pair liquidity to a pool</td>
+                    </tr>
+                    <tr>
+                        <td><code>removeLiquidity</code></td>
+                        <td>Remove liquidity and receive tokens back</td>
+                    </tr>
+                    <tr>
+                        <td><code>getAmountsOut</code></td>
+                        <td>Preview output for a given input (quote)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <hr class="divider">
+
+            <h2 id="verdex-factory">Verdex Factory</h2>
+            <p><span class="badge">Phase 4 — not deployed</span> The Factory contract will create and manage liquidity pools. Any PRC20 token will be able to have a pool created against VDX permissionlessly.</p>
+
+            <h3>Creating a Pool</h3>
+<pre><code><span class="comment">// Create a new trading pair</span>
+<span class="keyword">function</span> <span class="func">createPair</span>(
+    <span class="type">address</span> tokenA,
+    <span class="type">address</span> tokenB
+) <span class="keyword">external returns</span> (<span class="type">address</span> pair);
+
+<span class="comment">// Get existing pair address</span>
+<span class="keyword">function</span> <span class="func">getPair</span>(
+    <span class="type">address</span> tokenA,
+    <span class="type">address</span> tokenB
+) <span class="keyword">external view returns</span> (<span class="type">address</span> pair);</code></pre>
+
+            <hr class="divider">
+
+            <h2 id="verdex-farm">Verdex Farm</h2>
+            <p><span class="badge">Phase 5 — not deployed</span> Farms will distribute VDX rewards to liquidity providers who stake their LP tokens. Emission rate decays 10% quarterly. Farm contracts ship after the DEX core (Phase 4) is stable.</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>stake(poolId, amount)</code></td>
+                        <td>Stake LP tokens in a farm</td>
+                    </tr>
+                    <tr>
+                        <td><code>unstake(poolId, amount)</code></td>
+                        <td>Withdraw LP tokens</td>
+                    </tr>
+                    <tr>
+                        <td><code>harvest(poolId)</code></td>
+                        <td>Claim pending VDX rewards</td>
+                    </tr>
+                    <tr>
+                        <td><code>pendingReward(poolId, user)</code></td>
+                        <td>View unclaimed rewards</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Emission Schedule</h3>
+            <p>Starting at 5,000,000 VDX per week, decaying 10% each quarter:</p>
+            <table>
+                <thead>
+                    <tr><th>Quarter</th><th>Weekly Emission</th><th>Cumulative</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Q1</td><td>5,000,000 VDX</td><td>65,000,000</td></tr>
+                    <tr><td>Q2</td><td>4,500,000 VDX</td><td>123,500,000</td></tr>
+                    <tr><td>Q3</td><td>4,050,000 VDX</td><td>176,150,000</td></tr>
+                    <tr><td>Q4</td><td>3,645,000 VDX</td><td>223,535,000</td></tr>
+                </tbody>
+            </table>
+
+            <hr class="divider">
+
+            <h2 id="lp-tokens">LP Tokens</h2>
+            <p><span class="badge">Phase 4 — not deployed</span> When you add liquidity to a Verdex pool, you will receive LP (Liquidity Provider) tokens. These are PRC20-compatible tokens representing your share of the pool.</p>
+            <ul>
+                <li>LP tokens are transferable and composable</li>
+                <li>Burning LP tokens redeems your proportional share of both assets</li>
+                <li>LP tokens can be staked in Verdex Farms for additional VDX rewards</li>
+            </ul>
+
+            <hr class="divider">
+
+            <h2 id="sdk-install">SDK Installation</h2>
+            <p><span class="badge">Not available yet</span> The <code>@verdex/sdk</code> package is planned for Phase 6. For now, use <code>ethers</code> / <code>viem</code> directly with contract ABIs from the <code>contracts/</code> directory.</p>
+<pre><code><span class="comment"># Recommended today (direct ethers + ABIs)</span>
+npm install ethers @openzeppelin/contracts
+
+<span class="comment"># Future (Phase 6)</span>
+<span class="comment"># npm install @verdex/sdk</span></code></pre>
+
+            <h2 id="sdk-usage">Usage Examples</h2>
+            <p><span class="badge">Planned — Phase 6</span> The examples below show the <strong>planned</strong> SDK interface. These do not work yet. For now, use <code>ethers.js</code> directly with the Verdex RPC and contract ABIs.</p>
+
+            <h3>Connect to Verdex (planned SDK)</h3>
+<pre><code><span class="comment">// ⚠️ @verdex/sdk does not exist yet — planned for Phase 6</span>
+<span class="keyword">import</span> { VerdexProvider, VerdexRouter } <span class="keyword">from</span> <span class="string">'@verdex/sdk'</span>;
+
+<span class="keyword">const</span> provider = <span class="keyword">new</span> <span class="func">VerdexProvider</span>(<span class="string">'https://verdexswap.site/api/rpc'</span>);
+<span class="keyword">const</span> router = <span class="keyword">new</span> <span class="func">VerdexRouter</span>(provider);</code></pre>
+
+            <h3>Get Swap Quote</h3>
+<pre><code><span class="keyword">const</span> quote = <span class="keyword">await</span> router.<span class="func">getQuote</span>({
+  tokenIn: <span class="string">'0x...tokenA'</span>,
+  tokenOut: <span class="string">'0x...tokenB'</span>,
+  amountIn: <span class="func">parseUnits</span>(<span class="string">'100'</span>, 18)
+});
+
+console.<span class="func">log</span>(<span class="string">`Expected output: ${quote.amountOut}`</span>);
+console.<span class="func">log</span>(<span class="string">`Price impact: ${quote.priceImpact}%`</span>);</code></pre>
+
+            <h3>Execute Swap</h3>
+<pre><code><span class="keyword">const</span> tx = <span class="keyword">await</span> router.<span class="func">swap</span>({
+  tokenIn: <span class="string">'0x...tokenA'</span>,
+  tokenOut: <span class="string">'0x...tokenB'</span>,
+  amountIn: <span class="func">parseUnits</span>(<span class="string">'100'</span>, 18),
+  slippage: 0.5, <span class="comment">// 0.5%</span>
+  deadline: Math.<span class="func">floor</span>(Date.<span class="func">now</span>() / 1000) + 600
+});
+
+<span class="keyword">await</span> tx.<span class="func">wait</span>();</code></pre>
+
+            <hr class="divider">
+
+            <h2 id="rpc-methods">RPC Methods</h2>
+            <p>The hosted RPC (<code>/api/rpc</code>) currently supports a subset of standard Ethereum JSON-RPC methods (read-only). Full <code>eth_sendRawTransaction</code> support requires the Geth testnet node (in development).</p>
+
+            <h3>Supported Now (read-only)</h3>
+            <table>
+                <thead>
+                    <tr><th>Method</th><th>Description</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>eth_chainId</code></td><td>Returns chain ID (0x1c21)</td><td>✅ Live</td></tr>
+                    <tr><td><code>eth_blockNumber</code></td><td>Returns latest block height</td><td>✅ Live</td></tr>
+                    <tr><td><code>eth_getBalance</code></td><td>Returns account balance</td><td>✅ Live</td></tr>
+                    <tr><td><code>eth_getBlockByNumber</code></td><td>Returns block data</td><td>✅ Live</td></tr>
+                    <tr><td><code>eth_getTransactionByHash</code></td><td>Returns transaction data</td><td>✅ Live</td></tr>
+                    <tr><td><code>eth_getTransactionCount</code></td><td>Returns account nonce</td><td>✅ Live</td></tr>
+                    <tr><td><code>eth_gasPrice</code></td><td>Returns base gas price</td><td>✅ Live</td></tr>
+                    <tr><td><code>eth_estimateGas</code></td><td>Returns gas estimate (fixed 21000)</td><td>⚠️ Stub</td></tr>
+                    <tr><td><code>eth_call</code></td><td>Simulate contract call</td><td>⚠️ Stub (returns 0x)</td></tr>
+                    <tr><td><code>eth_getCode</code></td><td>Returns contract bytecode</td><td>⚠️ Stub (returns 0x)</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Coming with Geth Testnet</h3>
+            <table>
+                <thead>
+                    <tr><th>Method</th><th>Description</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>eth_sendRawTransaction</code></td><td>Submit signed transaction</td><td>🚧 Geth required</td></tr>
+                    <tr><td><code>eth_getLogs</code></td><td>Query event logs</td><td>🚧 Geth required</td></tr>
+                    <tr><td><code>eth_getTransactionReceipt</code></td><td>Returns tx receipt with logs</td><td>🚧 Geth required</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Custom Extensions</h3>
+            <table>
+                <thead>
+                    <tr><th>Method</th><th>Description</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>verdex_getChainInfo</code></td><td>Returns full network config</td><td>✅ Live</td></tr>
+                    <tr><td><code>verdex_getValidators</code></td><td>Returns current validator set</td><td>✅ Live</td></tr>
+                    <tr><td><code>verdex_getPoolInfo</code></td><td>Returns DEX pool data</td><td>📋 Phase 4</td></tr>
+                    <tr><td><code>verdex_getFarmInfo</code></td><td>Returns farm reward data</td><td>📋 Phase 5</td></tr>
+                </tbody>
+            </table>
+
+            <hr class="divider">
+
+            <h2 id="audits">Has VerdexSwap undergone security audits?</h2>
+            <p>All core smart contracts are scanned using static analysis tools (Slither v0.11.5, Aderyn) and will undergo independent third-party audits before mainnet deployment.</p>
+
+            <table>
+                <thead>
+                    <tr><th>Contract</th><th>Auditor</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>PRC20 Standard</td><td>Slither v0.11.5</td><td><span class="badge" style="background-color: var(--accent-dim); color: var(--accent);">Passed Scan</span></td></tr>
+                    <tr><td>Verdex Router</td><td>TBD</td><td><span class="badge">Pending</span></td></tr>
+                    <tr><td>Verdex Factory</td><td>TBD</td><td><span class="badge">Pending</span></td></tr>
+                    <tr><td>Verdex Farm</td><td>TBD</td><td><span class="badge">Pending</span></td></tr>
+                </tbody>
+            </table>
+
+            <hr class="divider">
+
+            <h2 id="best-practices">What are the best practices for PRC20 developers?</h2>
+            <ul>
+                <li>Always use SafeMath or Solidity 0.8+ built-in overflow checks</li>
+                <li>Implement reentrancy guards on state-changing functions</li>
+                <li>Use <code>approve</code> + <code>transferFrom</code> pattern for DEX integrations</li>
+                <li>Set reasonable initial supply (avoid ultra-high supplies that confuse price display)</li>
+                <li>Emit Transfer event from address(0) on mint for proper explorer indexing</li>
+                <li>Consider adding a <code>burn</code> function for deflationary mechanics</li>
+                <li>Test on Verdex Testnet before any mainnet deployment</li>
+                <li>Get an independent audit for any token handling user funds</li>
+            </ul>
+
+            <hr class="divider">
+
+            <h2>Resources</h2>
+            <div class="network-box">
+                <h4>Links</h4>
+                <div class="network-row">
+                    <span class="label">Testnet Faucet</span>
+                    <span class="value">verdexswap.site/faucet</span>
+                </div>
+                <div class="network-row">
+                    <span class="label">Block Explorer</span>
+                    <span class="value">verdexswap.site/explorer</span>
+                </div>
+                <div class="network-row">
+                    <span class="label">GitHub</span>
+                    <span class="value"><a href="https://github.com/verdexchainsuppourt-hue/verdex-ecosystem" target="_blank" style="color: var(--accent); text-decoration: none;">github.com/verdexchainsuppourt-hue/verdex-ecosystem</a></span>
+                </div>
+                <div class="network-row">
+                    <span class="label">Telegram</span>
+                    <span class="value"><a href="https://t.me/VerdixOffical" target="_blank" style="color: var(--accent); text-decoration: none;">t.me/VerdixOffical</a></span>
+                </div>
+                <div class="network-row">
+                    <span class="label">Twitter / X</span>
+                    <span class="value"><a href="https://x.com/VerdexSwap" target="_blank" style="color: var(--accent); text-decoration: none;">@VerdexSwap</a></span>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

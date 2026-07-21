@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verdex Faucet — Live L1 Testnet VDX</title>
+  <meta name="description" content="Request free testnet VDX on Verdex Live L1 (Chain ID 7201). Balance updates on-chain immediately.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="/js/network-config.js?v=4.1.0"></script>
+  <style>
+    :root {
+      --bg: #020604;
+      --surface: #0a120a;
+      --primary: #22c55e;
+      --primary-dim: rgba(34, 197, 94, 0.12);
+      --text: #f0f5f0;
+      --muted: #6d9472;
+      --border: rgba(34, 197, 94, 0.15);
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, sans-serif;
+      background-image:
+        radial-gradient(ellipse at 20% 0%, rgba(34,197,94,0.08), transparent 50%),
+        radial-gradient(ellipse at 80% 100%, rgba(16,185,129,0.05), transparent 40%);
+    }
+    .wrap { max-width: 520px; margin: 0 auto; padding: 48px 20px; }
+    .brand { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 28px; margin-bottom: 8px; }
+    .brand span { color: var(--primary); }
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--primary); background: var(--primary-dim);
+      border: 1px solid var(--border); border-radius: 999px;
+      padding: 4px 12px; margin-bottom: 24px;
+    }
+    h1 { font-family: 'Space Grotesk', sans-serif; font-size: 32px; margin-bottom: 8px; }
+    .lead { color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px;
+    }
+    label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+    input {
+      width: 100%; padding: 14px 16px; border-radius: 10px;
+      border: 1px solid var(--border); background: #050a06;
+      color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 14px;
+      outline: none;
+    }
+    input:focus { border-color: var(--primary); }
+    .btn {
+      width: 100%; margin-top: 16px; padding: 14px;
+      border: none; border-radius: 10px; cursor: pointer;
+      font-weight: 700; font-size: 15px; font-family: inherit;
+      background: linear-gradient(135deg, #22c55e, #16a34a); color: #021004;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-outline {
+      background: transparent; color: var(--primary);
+      border: 1px solid var(--border); margin-top: 10px;
+    }
+    .bal-box {
+      margin-top: 18px; padding: 14px 16px; border-radius: 12px;
+      background: rgba(0,0,0,0.35); border: 1px solid var(--border);
+    }
+    .bal-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .bal-val { font-size: 28px; font-weight: 800; color: #fff; margin-top: 4px; font-family: 'Space Grotesk', sans-serif; }
+    .bal-val span { font-size: 14px; color: var(--primary); margin-left: 6px; }
+    .meta {
+      margin-top: 20px; font-size: 12px; color: var(--muted);
+      font-family: 'JetBrains Mono', monospace; line-height: 1.8;
+    }
+    .msg {
+      margin-top: 16px; padding: 12px 14px; border-radius: 10px;
+      font-size: 13px; line-height: 1.5; display: none; word-break: break-word;
+    }
+    .msg.ok { display: block; background: var(--primary-dim); border: 1px solid var(--border); color: var(--primary); }
+    .msg.err { display: block; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+    .msg.info { display: block; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #cde; }
+    .nav { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 16px; font-size: 14px; }
+    .nav a { color: var(--primary); text-decoration: none; }
+    .nav a:hover { text-decoration: underline; }
+    .link { color: var(--primary); }
+  </style>
+  <link rel="stylesheet" href="css/premium.css?v=4.0.0">
+</head>
+<body>
+  <div class="aurora" aria-hidden="true">
+    <div class="aurora-blob b1"></div>
+    <div class="aurora-blob b2"></div>
+    <div class="aurora-blob b3"></div>
+  </div>
+  <div class="grain-overlay" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="brand">Ver<span>dex</span></div>
+    <div class="badge" id="chain-badge">Chain ID 7201 · Live L1</div>
+    <h1>Testnet Faucet</h1>
+    <p class="lead">
+      Get free testnet <strong>VDX</strong> on the <strong>live Verdex L1</strong> (same chain as miner &amp; explorer).
+      Amount: <strong>10 VDX</strong> per request.
+    </p>
+
+    <div class="card">
+      <label for="address">EVM wallet address</label>
+      <input id="address" type="text" placeholder="0x..." spellcheck="false" autocomplete="off">
+      <button class="btn" id="claim-btn" type="button">Request 10 VDX</button>
+      <button class="btn btn-outline" id="check-btn" type="button">Check Balance</button>
+      <button class="btn btn-outline" id="metamask-btn" type="button">Add Verdex Testnet to MetaMask</button>
+      <button class="btn btn-outline" id="connect-btn" type="button">Paste from MetaMask</button>
+
+      <div class="bal-box">
+        <div class="bal-label">On-chain balance (live L1)</div>
+        <div class="bal-val"><span id="live-bal">—</span><span>VDX</span></div>
+        <div class="meta" id="bal-meta" style="margin-top:8px;">Enter an address and click Check Balance</div>
+      </div>
+
+      <div class="msg" id="msg"></div>
+      <div class="meta" id="meta"></div>
+    </div>
+
+    <div class="nav">
+      <a href="/">Home</a>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/explorer">Explorer</a>
+      <a href="/swap">Swap</a>
+    </div>
+  </div>
+
+  <script>
+    const n = window.VERDEX_NETWORK || { chainId: 7201, symbol: 'VDX', faucetAmountVdx: 10 };
+    const L1 = (n.liveRpcBase) || 'https://verdex-ecosystem-production.up.railway.app';
+    const AMOUNT = n.faucetAmountVdx || 10;
+
+    document.getElementById('chain-badge').textContent =
+      'Chain ID ' + (n.chainId || 7201) + ' · Live L1';
+    document.getElementById('meta').innerHTML =
+      'L1 RPC: ' + L1 + '<br>' +
+      'Explorer: ' + (n.explorerUrl || '/explorer') + '<br>' +
+      'Symbol: VDX · 18 decimals';
+
+    const msg = document.getElementById('msg');
+    function show(type, text) {
+      msg.className = 'msg ' + type;
+      msg.innerHTML = text;
+    }
+
+    function formatWei(wei) {
+      try {
+        const v = BigInt(wei || '0');
+        const whole = v / 10n ** 18n;
+        const frac = (v % 10n ** 18n).toString().padStart(18, '0').slice(0, 4);
+        return whole.toString() + '.' + frac;
+      } catch { return '0.0000'; }
+    }
+
+    async function fetchBalance(addr) {
+      const r = await fetch(L1 + '/api/account/' + addr.toLowerCase() + '/balance', { cache: 'no-store' });
+      const j = await r.json();
+      if (!j.success) throw new Error(j.error || 'balance failed');
+      return j.data.balance;
+    }
+
+    async function checkBalance() {
+      const addr = (document.getElementById('address').value || '').trim().toLowerCase();
+      if (!/^0x[a-f0-9]{40}$/.test(addr)) {
+        show('err', 'Enter a valid address first.');
+        return null;
+      }
+      try {
+        const wei = await fetchBalance(addr);
+        const pretty = formatWei(wei);
+        document.getElementById('live-bal').textContent = pretty;
+        document.getElementById('bal-meta').textContent =
+          'Address ' + addr.slice(0, 10) + '…' + addr.slice(-6) + ' · live L1';
+        return wei;
+      } catch (e) {
+        show('err', 'Balance check failed: ' + (e.message || e));
+        return null;
+      }
+    }
+
+    document.getElementById('check-btn').onclick = async function () {
+      this.disabled = true;
+      show('info', 'Checking live L1 balance…');
+      const wei = await checkBalance();
+      if (wei !== null) show('ok', 'Balance updated: ' + formatWei(wei) + ' VDX');
+      this.disabled = false;
+    };
+
+    document.getElementById('claim-btn').onclick = async function () {
+      const addr = (document.getElementById('address').value || '').trim().toLowerCase();
+      if (!/^0x[a-f0-9]{40}$/.test(addr)) {
+        show('err', 'Enter a valid EVM address (0x + 40 hex).');
+        return;
+      }
+      this.disabled = true;
+      document.getElementById('check-btn').disabled = true;
+
+      let before = '0';
+      try { before = await fetchBalance(addr); } catch (_) {}
+
+      show('info', 'Sending faucet TX on live L1…');
+      try {
+        const res = await fetch(L1 + '/api/faucet/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address: addr, amount: AMOUNT })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error((data && data.error) || 'Faucet claim failed');
+        }
+        const hash = data.data && data.data.txHash;
+        show('info', 'TX submitted' + (hash ? (': ' + hash.slice(0, 18) + '…') : '') + ' — waiting for block (~5s)…');
+
+        let confirmed = false;
+        let finalBal = before;
+        for (let i = 0; i < 15; i++) {
+          await new Promise(r => setTimeout(r, 1200));
+          try {
+            if (hash) {
+              const txR = await fetch(L1 + '/api/tx/' + hash, { cache: 'no-store' });
+              const txJ = await txR.json();
+              if (txJ.success && txJ.data) confirmed = true;
+            }
+            finalBal = await fetchBalance(addr);
+            document.getElementById('live-bal').textContent = formatWei(finalBal);
+            if (BigInt(finalBal) > BigInt(before)) {
+              confirmed = true;
+              break;
+            }
+            if (confirmed && BigInt(finalBal) >= BigInt(before)) break;
+          } catch (_) {}
+        }
+
+        document.getElementById('live-bal').textContent = formatWei(finalBal);
+        document.getElementById('bal-meta').textContent =
+          'Address ' + addr.slice(0, 10) + '…' + addr.slice(-6) + ' · live L1';
+
+        if (BigInt(finalBal) > BigInt(before)) {
+          show('ok',
+            '✅ Faucet confirmed. Balance: <strong>' + formatWei(finalBal) + ' VDX</strong>' +
+            (hash ? (' · <a class="link" href="/explorer/#/tx/' + hash + '" target="_blank">View TX</a>') : '') +
+            '<br>Open the Miner → Wallet → Refresh to see the same balance.');
+        } else if (confirmed) {
+          show('ok',
+            'TX is on-chain' + (hash ? (' (<a class="link" href="/explorer/#/tx/' + hash + '" target="_blank">' + hash.slice(0, 14) + '…</a>)') : '') +
+            '. Balance now: <strong>' + formatWei(finalBal) + ' VDX</strong>. Click Check Balance again if UI lags.');
+        } else {
+          show('err',
+            'TX was submitted but balance did not increase yet. Wait 10s and click Check Balance. ' +
+            (hash ? ('Hash: ' + hash) : ''));
+        }
+      } catch (e) {
+        show('err', e.message || 'Network error');
+      }
+
+      this.disabled = false;
+      document.getElementById('check-btn').disabled = false;
+    };
+
+    document.getElementById('metamask-btn').onclick = async function () {
+      try {
+        if (window.addVerdexToWallet) {
+          await addVerdexToWallet();
+          show('ok', 'Verdex Testnet added / switched in your wallet.');
+        } else {
+          show('err', 'Wallet helper not loaded.');
+        }
+      } catch (e) {
+        show('err', e.message || String(e));
+      }
+    };
+
+    document.getElementById('connect-btn').onclick = async function () {
+      try {
+        if (!window.ethereum) throw new Error('MetaMask not found');
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts[0]) {
+          document.getElementById('address').value = accounts[0].toLowerCase();
+          await checkBalance();
+        }
+        if (window.addVerdexToWallet) await addVerdexToWallet().catch(() => {});
+      } catch (e) {
+        show('err', e.message || String(e));
+      }
+    };
+
+    // Auto-check if address present
+    document.getElementById('address').addEventListener('change', () => {
+      const a = document.getElementById('address').value.trim();
+      if (/^0x[a-fA-F0-9]{40}$/.test(a)) checkBalance();
+    });
+  </script>
+</body>
+</html>

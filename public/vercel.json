@@ -1,0 +1,241 @@
+{
+  "version": 2,
+  "name": "verdex",
+  "public": true,
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/home",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/faucet",
+      "destination": "/mainnet",
+      "permanent": false
+    },
+    {
+      "source": "/faucet.html",
+      "destination": "/mainnet",
+      "permanent": false
+    },
+    {
+      "source": "/eip155-7201.json",
+      "destination": "/public-network.json",
+      "permanent": false
+    },
+    {
+      "source": "/add-network.html",
+      "destination": "/mainnet",
+      "permanent": false
+    },
+    {
+      "source": "/add-network",
+      "destination": "/mainnet",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/l1",
+      "destination": "/api/chain"
+    },
+    {
+      "source": "/api/mining/:action",
+      "destination": "/api/mining?action=:action"
+    },
+    {
+      "source": "/api/auth/:action",
+      "destination": "/api/auth?action=:action"
+    },
+    {
+      "source": "/api/cron/:action",
+      "destination": "/api/cron?action=:action"
+    },
+    {
+      "source": "/api/admin/:action",
+      "destination": "/api/admin?action=:action"
+    },
+    {
+      "source": "/api/kyc",
+      "destination": "/api/auth?ns=kyc"
+    },
+    {
+      "source": "/api/kyc/:action",
+      "destination": "/api/auth?ns=kyc&action=:action"
+    },
+    {
+      "source": "/api/captcha",
+      "destination": "/api/auth?ns=captcha"
+    },
+    {
+      "source": "/api/captcha/:action",
+      "destination": "/api/auth?ns=captcha&action=:action"
+    },
+    {
+      "source": "/api/rewards",
+      "destination": "/api/auth?ns=rewards"
+    },
+    {
+      "source": "/api/rewards/:action",
+      "destination": "/api/auth?ns=rewards&action=:action"
+    },
+    {
+      "source": "/api/p2p",
+      "destination": "/api/wallet?ns=p2p"
+    },
+    {
+      "source": "/api/p2p/:action",
+      "destination": "/api/wallet?ns=p2p&action=:action"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/kyc-moderation",
+      "destination": "/kyc-moderation.html"
+    },
+    {
+      "source": "/p2p",
+      "destination": "/p2p.html"
+    },
+    {
+      "source": "/mainnet",
+      "destination": "/mainnet.html"
+    },
+    {
+      "source": "/whitepaper",
+      "destination": "/whitepaper.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/wallet-admin",
+      "destination": "/wallet-admin.html"
+    },
+    {
+      "source": "/explorer",
+      "destination": "/explorer/index.html"
+    },
+    {
+      "source": "/developer-docs",
+      "destination": "/verdex-developer-docs.html"
+    },
+    {
+      "source": "/docs",
+      "destination": "/verdex-developer-docs.html"
+    },
+    {
+      "source": "/faq",
+      "destination": "/faq.html"
+    },
+    {
+      "source": "/swap",
+      "destination": "/swap.html"
+    },
+    {
+      "source": "/llms.txt",
+      "destination": "/llms.txt"
+    },
+    {
+      "source": "/api/rpc",
+      "destination": "/api/rpc"
+    },
+    {
+      "source": "/api/network",
+      "destination": "/api/network"
+    },
+    {
+      "source": "/app-auth",
+      "destination": "/app-auth.html"
+    },
+    {
+      "source": "/((?!api/|js/|css/|assets/|updates/|explorer|dashboard|whitepaper|admin|kyc-moderation|p2p|mainnet|developer-docs|docs|public-network|app-auth).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/daily-credit",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/kyc-outbox",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/wallet-deposit-scan",
+      "schedule": "0 2 * * *"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://verdexswap.site https://unbzescopxtmtbrgqlhh.supabase.co; connect-src 'self' https://unbzescopxtmtbrgqlhh.supabase.co wss://unbzescopxtmtbrgqlhh.supabase.co https://api.vercel.com;"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    },
+    {
+      "source": "/updates/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    },
+    {
+      "source": "/public-network.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=60, must-revalidate"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    },
+    {
+      "source": "/assets/downloads/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    }
+  ]
+}

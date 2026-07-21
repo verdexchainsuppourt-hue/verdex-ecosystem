@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verdex Miner Authentication</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <style>
+    body {
+      background: #050a05;
+      color: #f0fdf4;
+      font-family: 'Segoe UI', -apple-system, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .card {
+      text-align: center;
+      background: #0c1a0e;
+      border: 1px solid #153018;
+      border-radius: 20px;
+      padding: 40px 30px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .icon {
+      font-size: 60px;
+      color: #22c55e;
+      animation: pulse 1.5s infinite;
+      margin-bottom: 20px;
+    }
+    h2 {
+      margin: 0 0 10px 0;
+      font-size: 24px;
+    }
+    p {
+      color: #86a389;
+      font-size: 14px;
+      margin: 0 0 20px 0;
+      line-height: 1.5;
+    }
+    .btn-manual {
+      display: none;
+      background: #22c55e;
+      color: #050a05;
+      font-weight: 700;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 14px;
+      cursor: pointer;
+      text-decoration: none;
+      margin-top: 15px;
+      transition: background 0.2s;
+    }
+    .btn-manual:hover {
+      background: #4ade80;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.95); }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon" id="icon">⚡</div>
+    <h2 id="title">Authenticating</h2>
+    <p id="status">Connecting to secure authentication gateway...</p>
+    <a href="#" id="manual-btn" class="btn-manual">Return to App</a>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://unbzescopxtmtbrgqlhh.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVuYnplc2NvcHh0bXRicmdxbGhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1Njc1MjcsImV4cCI6MjA5OTE0MzUyN30.jHm7uIV_fBWIP-EFl3d2AY5P42X3tcIIbEGwNfSYiPM';
+    
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    });
+
+    async function handleAuth() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const returnUrl = urlParams.get('return');
+      
+      if (returnUrl) {
+        // Save return URL in localStorage so it persists across redirects
+        localStorage.setItem('app_return_url', returnUrl);
+        
+        document.getElementById('status').textContent = 'Initiating Google Sign-In...';
+        
+        // Start Google OAuth flow
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: window.location.origin + '/app-auth.html'
+          }
+        });
+        
+        if (error) {
+          document.getElementById('icon').textContent = '❌';
+          document.getElementById('title').textContent = 'Failed';
+          document.getElementById('status').textContent = error.message;
+        }
+      } else {
+        // Returning from Google Redirect
+        document.getElementById('status').textContent = 'Verifying secure session...';
+        
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (session) {
+          const savedReturnUrl = localStorage.getItem('app_return_url') || 'com.verdex.miner://login-callback/';
+          localStorage.removeItem('app_return_url');
+          
+          document.getElementById('icon').textContent = '✅';
+          document.getElementById('title').textContent = 'Authorized';
+          document.getElementById('status').textContent = 'Opening Verdex Miner app... If it does not open automatically, click the button below.';
+          
+          // Build custom redirect deep link url
+          const separator = savedReturnUrl.includes('?') ? '&' : '?';
+          const redirectUrl = savedReturnUrl + separator + 'access_token=' + encodeURIComponent(session.access_token) + '&refresh_token=' + encodeURIComponent(session.refresh_token);
+          
+          // Show manual override button in case browser blocks automatic deep-link
+          const manualBtn = document.getElementById('manual-btn');
+          manualBtn.href = redirectUrl;
+          manualBtn.style.display = 'inline-block';
+          
+          // Automatic redirect
+          window.location.replace(redirectUrl);
+        } else {
+          document.getElementById('icon').textContent = '⚠️';
+          document.getElementById('title').textContent = 'No Session';
+          document.getElementById('status').textContent = 'No active authentication session found. Please re-open the login from your miner app.';
+        }
+      }
+    }
+
+    handleAuth().catch(err => {
+      document.getElementById('icon').textContent = '❌';
+      document.getElementById('title').textContent = 'Error';
+      document.getElementById('status').textContent = err.message || err;
+    });
+  </script>
+</body>
+</html>

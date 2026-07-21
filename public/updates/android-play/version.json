@@ -1,0 +1,16 @@
+{
+  "version": "1.8.1",
+  "versionCode": 27,
+  "channel": "play",
+  "updateMode": "google_play_only",
+  "packageId": "com.verdex.miner",
+  "playStoreUrl": "https://play.google.com/store/apps/details?id=com.verdex.miner",
+  "mandatory": false,
+  "changelog": [
+    "Closed testing build — versionCode 27",
+    "Play Store channel — updates only via Google Play",
+    "Presence / points sessions + wallet"
+  ],
+  "note": "Play flavor never downloads APKs. This file is metadata only.",
+  "releasedAt": "2026-07-16T20:00:00.000Z"
+}

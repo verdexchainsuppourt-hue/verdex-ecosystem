@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verdex Wallet Admin — Dashboard</title>
+  <meta name="description" content="Verdex custodial wallet administration dashboard for monitoring wallets, deposits, withdrawals, escrow, and treasury operations.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #000000;
+      --surface: #0A0A0A;
+      --surface-2: #111111;
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --primary: #22C55E;
+      --primary-dim: rgba(34,197,94,0.12);
+      --danger: #EF4444;
+      --warning: #F59E0B;
+      --blue: #3B82F6;
+      --purple: #8B5CF6;
+      --text: #ffffff;
+      --text-muted: #8A8A8A;
+      --radius: 14px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    a { color: var(--primary); text-decoration: none; }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      width: 240px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+    }
+    .sidebar-brand {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar-brand .logo {
+      width: 32px; height: 32px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 14px; color: #000;
+    }
+    .sidebar-brand h1 { font-size: 16px; font-weight: 800; }
+    .sidebar-brand span { font-size: 10px; color: var(--text-muted); letter-spacing: 0.8px; }
+    .nav-section {
+      padding: 16px 12px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px; margin: 2px 8px;
+      border-radius: 10px; cursor: pointer;
+      font-size: 13px; font-weight: 600;
+      color: rgba(255,255,255,0.55);
+      transition: all 0.15s ease;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+    .nav-item.active { background: var(--primary-dim); color: var(--primary); }
+    .nav-item .icon { font-size: 18px; width: 20px; text-align: center; }
+    .nav-item .badge {
+      margin-left: auto; background: var(--danger);
+      padding: 2px 7px; border-radius: 10px;
+      font-size: 10px; font-weight: 800; color: #fff;
+    }
+
+    /* Main */
+    .main { margin-left: 240px; padding: 24px 28px; min-height: 100vh; }
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .page-header h2 { font-size: 24px; font-weight: 900; }
+    .page-header .status {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--primary-dim);
+      padding: 6px 12px; border-radius: 8px;
+      border: 1px solid rgba(34,197,94,0.2);
+      font-size: 11px; font-weight: 700; color: var(--primary);
+    }
+    .page-header .status .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--primary);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px; margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      transition: border-color 0.2s;
+    }
+    .stat-card:hover { border-color: var(--border-hover); }
+    .stat-card .label {
+      font-size: 11px; font-weight: 600; color: var(--text-muted);
+      letter-spacing: 0.5px; margin-bottom: 8px;
+    }
+    .stat-card .value {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 26px; font-weight: 800;
+    }
+    .stat-card .sub {
+      font-size: 11px; color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .stat-card.primary .value { color: var(--primary); }
+    .stat-card.blue .value { color: var(--blue); }
+    .stat-card.warning .value { color: var(--warning); }
+    .stat-card.danger .value { color: var(--danger); }
+    .stat-card.purple .value { color: var(--purple); }
+
+    /* Tables */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 16px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-header h3 { font-size: 15px; font-weight: 800; }
+    .panel-header .actions { display: flex; gap: 8px; }
+    .btn {
+      padding: 7px 14px; border-radius: 8px;
+      font-size: 12px; font-weight: 700;
+      border: 1px solid var(--border); cursor: pointer;
+      background: transparent; color: var(--text-muted);
+      transition: all 0.15s;
+    }
+    .btn:hover { border-color: var(--border-hover); color: var(--text); }
+    .btn.primary {
+      background: var(--primary); color: #000;
+      border-color: var(--primary);
+    }
+    .btn.primary:hover { opacity: 0.9; }
+    table {
+      width: 100%; border-collapse: collapse;
+      font-size: 13px;
+    }
+    th {
+      text-align: left; padding: 10px 16px;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .mono {
+      font-family: 'Space Grotesk', monospace;
+      font-weight: 600;
+    }
+    .pill {
+      display: inline-block;
+      padding: 3px 8px; border-radius: 6px;
+      font-size: 10px; font-weight: 800;
+      letter-spacing: 0.3px;
+    }
+    .pill.success { background: rgba(34,197,94,0.12); color: var(--primary); }
+    .pill.warning { background: rgba(245,158,11,0.12); color: var(--warning); }
+    .pill.danger { background: rgba(239,68,68,0.12); color: var(--danger); }
+    .pill.blue { background: rgba(59,130,246,0.12); color: var(--blue); }
+    .pill.purple { background: rgba(139,92,246,0.12); color: var(--purple); }
+    .addr {
+      max-width: 120px;
+      overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; cursor: pointer;
+    }
+    .addr:hover { color: var(--primary); }
+
+    /* Tabs */
+    .tab-bar {
+      display: flex; gap: 4px; padding: 4px;
+      background: var(--surface-2);
+      border-radius: 10px;
+      width: fit-content;
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      padding: 8px 16px; border-radius: 8px;
+      font-size: 12px; font-weight: 700;
+      cursor: pointer; border: none;
+      background: transparent; color: var(--text-muted);
+      transition: all 0.15s;
+    }
+    .tab-btn.active { background: var(--primary-dim); color: var(--primary); }
+    .tab-btn:hover:not(.active) { color: var(--text); }
+
+    /* Page sections (show/hide) */
+    .page-section { display: none; }
+    .page-section.active { display: block; }
+
+    /* Loading */
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 40px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty-state {
+      text-align: center; padding: 48px 20px;
+      color: var(--text-muted); font-size: 14px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 20px;
+      font-size: 13px; font-weight: 600;
+      z-index: 1000; display: none;
+      animation: slideIn 0.3s ease;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* Login overlay */
+    .login-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.95);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200;
+    }
+    .login-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%; max-width: 400px;
+      text-align: center;
+    }
+    .login-box h2 { font-size: 22px; margin-bottom: 8px; }
+    .login-box p { color: var(--text-muted); font-size: 13px; margin-bottom: 24px; }
+    .login-box input {
+      width: 100%; padding: 14px 16px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px; font-size: 14px;
+      color: var(--text); margin-bottom: 12px;
+      outline: none;
+    }
+    .login-box input:focus { border-color: var(--primary); }
+    .login-box .login-btn {
+      width: 100%; padding: 14px;
+      background: var(--primary); color: #000;
+      border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 800;
+      cursor: pointer; margin-top: 8px;
+    }
+    .login-box .login-btn:hover { opacity: 0.9; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 16px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Login Overlay -->
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+      <div style="width:48px;height:48px;background:var(--primary);border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;color:#000;margin:0 auto 16px;">V</div>
+      <h2>Wallet Admin</h2>
+      <p>Sign in with your Verdex admin credentials</p>
+      <input type="email" id="loginEmail" placeholder="Email address">
+      <input type="password" id="loginPassword" placeholder="Password">
+      <button class="login-btn" onclick="doLogin()">Sign In</button>
+      <p id="loginError" style="color:var(--danger);margin-top:12px;font-size:12px;display:none;"></p>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo">V</div>
+      <div>
+        <h1>Verdex</h1>
+        <span>WALLET ADMIN</span>
+      </div>
+    </div>
+    <div class="nav-section">Overview</div>
+    <div class="nav-item active" data-page="overview" onclick="showPage('overview')">
+      <span class="icon">📊</span> Dashboard
+    </div>
+    <div class="nav-section">Wallet</div>
+    <div class="nav-item" data-page="wallets" onclick="showPage('wallets')">
+      <span class="icon">👛</span> Wallets
+    </div>
+    <div class="nav-item" data-page="deposits" onclick="showPage('deposits')">
+      <span class="icon">📥</span> Deposits
+    </div>
+    <div class="nav-item" data-page="withdrawals" onclick="showPage('withdrawals')">
+      <span class="icon">📤</span> Withdrawals
+      <span class="badge" id="pendingWdBadge" style="display:none">0</span>
+    </div>
+    <div class="nav-section">Escrow</div>
+    <div class="nav-item" data-page="escrow" onclick="showPage('escrow')">
+      <span class="icon">🔒</span> Escrow Locks
+    </div>
+    <div class="nav-section">Security</div>
+    <div class="nav-item" data-page="risk" onclick="showPage('risk')">
+      <span class="icon">🛡️</span> Risk Alerts
+      <span class="badge" id="riskBadge" style="display:none">0</span>
+    </div>
+    <div class="nav-item" data-page="audit" onclick="showPage('audit')">
+      <span class="icon">📋</span> Audit Log
+    </div>
+    <div class="nav-section">Treasury</div>
+    <div class="nav-item" data-page="treasury" onclick="showPage('treasury')">
+      <span class="icon">🏦</span> Reconciliation
+    </div>
+    <div style="flex:1"></div>
+    <div class="nav-item" onclick="doLogout()" style="margin-bottom:12px;">
+      <span class="icon">🚪</span> Sign Out
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="main" id="mainContent">
+    <!-- Overview Page -->
+    <div class="page-section active" id="page-overview">
+      <div class="page-header">
+        <h2>Dashboard</h2>
+        <div class="status"><span class="dot"></span> System Online</div>
+      </div>
+      <div class="stats-grid" id="overviewStats">
+        <div class="stat-card primary"><div class="label">Total Wallets</div><div class="value" id="statTotalWallets">—</div><div class="sub">Active wallets</div></div>
+        <div class="stat-card blue"><div class="label">Total Balance</div><div class="value" id="statTotalBalance">—</div><div class="sub">All wallets combined</div></div>
+        <div class="stat-card warning"><div class="label">Pending Withdrawals</div><div class="value" id="statPendingWd">—</div><div class="sub">Awaiting approval</div></div>
+        <div class="stat-card danger"><div class="label">Risk Alerts</div><div class="value" id="statRiskAlerts">—</div><div class="sub">Unreviewed AML flags</div></div>
+        <div class="stat-card purple"><div class="label">Escrow Locked</div><div class="value" id="statEscrowLocked">—</div><div class="sub">Active locks</div></div>
+        <div class="stat-card"><div class="label">24h Deposits</div><div class="value" id="statDeposits24h">—</div><div class="sub">Last 24 hours</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h3>Recent Transactions</h3><button class="btn" onclick="loadOverview()">↻ Refresh</button></div>
+        <table><thead><tr><th>Type</th><th>User</th><th>Amount</th><th>Status</th><th>Time</th></tr></thead>
+          <tbody id="recentTxBody"><tr><td colspan="5"><div class="spinner"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Wallets Page -->
+    <div class="page-section" id="page-wallets">
+      <div class="page-header"><h2>Wallets</h2></div>
+      <div class="panel">
+        <div class="panel-header"><h3>All Custodial Wallets</h3><button class="btn" onclick="loadWallets()">↻ Refresh</button></div>
+        <table><thead><tr><th>User ID</th><th>Available</th><th>Pending</th><th>Locked</th><th>Status</th><th>Created</th></tr></thead>
+          <tbody id="walletsBody"><tr><td colspan="6"><div class="spinner"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Deposits Page -->
+    <div class="page-section" id="page-deposits">
+      <div class="page-header"><h2>Deposits</h2></div>
+      <div class="panel">
+        <div class="panel-header"><h3>Deposit Activity</h3><button class="btn" onclick="loadDeposits()">↻ Refresh</button></div>
+        <table><thead><tr><th>Tx Hash</th><th>From</th><th>Amount</th><th>Confirmations</th><th>Status</th><th>Time</th></tr></thead>
+          <tbody id="depositsBody"><tr><td colspan="6"><div class="spinner"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Withdrawals Page -->
+    <div class="page-section" id="page-withdrawals">
+      <div class="page-header"><h2>Withdrawals</h2></div>
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="filterWithdrawals('all', this)">All</button>
+        <button class="tab-btn" onclick="filterWithdrawals('pending_approval', this)">Pending</button>
+        <button class="tab-btn" onclick="filterWithdrawals('approved', this)">Approved</button>
+        <button class="tab-btn" onclick="filterWithdrawals('completed', this)">Completed</button>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h3>Withdrawal Requests</h3><button class="btn" onclick="loadWithdrawals()">↻ Refresh</button></div>
+        <table><thead><tr><th>ID</th><th>User</th><th>Amount</th><th>To Address</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
+          <tbody id="withdrawalsBody"><tr><td colspan="7"><div class="spinner"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Escrow Page -->
+    <div class="page-section" id="page-escrow">
+      <div class="page-header"><h2>Escrow Locks</h2></div>
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="filterEscrow('all', this)">All</button>
+        <button class="tab-btn" onclick="filterEscrow('locked', this)">Locked</button>
+        <button class="tab-btn" onclick="filterEscrow('released', this)">Released</button>
+        <button class="tab-btn" onclick="filterEscrow('refunded', this)">Refunded</button>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h3>P2P Escrow Locks</h3><button class="btn" onclick="loadEscrow()">↻ Refresh</button></div>
+        <table><thead><tr><th>Lock ID</th><th>Trade ID</th><th>User</th><th>Amount VDX</th><th>Status</th><th>Locked At</th><th>Resolved</th></tr></thead>
+          <tbody id="escrowBody"><tr><td colspan="7"><div class="spinner"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Risk Alerts Page -->
+    <div class="page-section" id="page-risk">
+      <div class="page-header"><h2>Risk Alerts</h2></div>
+      <div class="panel">
+        <div class="panel-header"><h3>AML Screening Alerts</h3><button class="btn" onclick="loadRiskAlerts()">↻ Refresh</button></div>
+        <table><thead><tr><th>User</th><th>Type</th><th>Amount</th><th>Risk Level</th><th>Reason</th><th>Time</th></tr></thead>
+          <tbody id="riskBody"><tr><td colspan="6"><div class="spinner"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Audit Log Page -->
+    <div class="page-section" id="page-audit">
+      <div class="page-header"><h2>Audit Log</h2></div>
+      <div class="panel">
+        <div class="panel-header"><h3>Recent Actions</h3>
+          <div class="actions">
+            <input type="text" id="auditFilter" placeholder="Filter by event..." style="padding:7px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none;width:180px;">
+            <button class="btn" onclick="loadAuditLog()">↻ Refresh</button>
+          </div>
+        </div>
+        <table><thead><tr><th>Actor</th><th>Action</th><th>Resource</th><th>Details</th><th>Time</th></tr></thead>
+          <tbody id="auditBody"><tr><td colspan="5"><div class="spinner"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Treasury Page -->
+    <div class="page-section" id="page-treasury">
+      <div class="page-header"><h2>Treasury Reconciliation</h2></div>
+      <div class="stats-grid" id="treasuryStats"></div>
+      <div class="panel">
+        <div class="panel-header"><h3>Treasury Report</h3><button class="btn primary" onclick="loadTreasury()">Run Reconciliation</button></div>
+        <div id="treasuryReport" style="padding:20px;"><div class="empty-state">Click "Run Reconciliation" to generate a report</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const SUPABASE_URL = 'https://unbzescopxtmtbrgqlhh.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVuYnplc2NvcHh0bXRicmdxbGhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1Njc1MjcsImV4cCI6MjA5OTE0MzUyN30.jHm7uIV_fBWIP-EFl3d2AY5P42X3tcIIbEGwNfSYiPM';
+    const API_BASE = '';
+    let jwt = null;
+
+    // ──────── Auth ────────
+    async function doLogin() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const pw = document.getElementById('loginPassword').value;
+      const errEl = document.getElementById('loginError');
+      errEl.style.display = 'none';
+      if (!email || !pw) { errEl.textContent = 'Enter email and password'; errEl.style.display = 'block'; return; }
+      try {
+        const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON },
+          body: JSON.stringify({ email, password: pw })
+        });
+        const d = await r.json();
+        if (!r.ok || !d.access_token) { errEl.textContent = d.error_description || d.msg || 'Login failed'; errEl.style.display = 'block'; return; }
+        jwt = d.access_token;
+        sessionStorage.setItem('verdex_wallet_jwt', jwt);
+        document.getElementById('loginOverlay').style.display = 'none';
+        loadOverview();
+      } catch (e) { errEl.textContent = 'Network error'; errEl.style.display = 'block'; }
+    }
+    function doLogout() {
+      jwt = null;
+      sessionStorage.removeItem('verdex_wallet_jwt');
+      document.getElementById('loginOverlay').style.display = 'flex';
+    }
+    function checkSession() {
+      const saved = sessionStorage.getItem('verdex_wallet_jwt');
+      if (saved) { jwt = saved; document.getElementById('loginOverlay').style.display = 'none'; loadOverview(); }
+    }
+
+    // ──────── API helpers ────────
+    async function api(action, opts = {}) {
+      const method = opts.method || 'GET';
+      const params = opts.params || {};
+      let url = `${API_BASE}/api/wallet?action=${action}`;
+      for (const [k,v] of Object.entries(params)) url += `&${k}=${encodeURIComponent(v)}`;
+      const r = await fetch(url, {
+        method,
+        headers: { 'Authorization': `Bearer ${jwt}`, 'Content-Type': 'application/json' },
+        ...(opts.body ? { body: JSON.stringify(opts.body) } : {}),
+      });
+      return r.json();
+    }
+    function toast(msg, type = 'info') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      t.style.borderColor = type === 'error' ? 'var(--danger)' : type === 'success' ? 'var(--primary)' : 'var(--border)';
+      setTimeout(() => t.style.display = 'none', 3000);
+    }
+    function shortAddr(a) { return a ? `${a.slice(0,8)}…${a.slice(-4)}` : '—'; }
+    function relTime(iso) {
+      if (!iso) return '—';
+      const ms = Date.now() - new Date(iso).getTime();
+      if (ms < 60000) return 'just now';
+      if (ms < 3600000) return `${Math.floor(ms/60000)}m ago`;
+      if (ms < 86400000) return `${Math.floor(ms/3600000)}h ago`;
+      return `${Math.floor(ms/86400000)}d ago`;
+    }
+    function pillClass(status) {
+      if (['completed','confirmed','credited','released','approved'].includes(status)) return 'success';
+      if (['pending','processing','confirming','detected','pending_approval','awaiting_approval','locked'].includes(status)) return 'warning';
+      if (['failed','cancelled','rejected','expired'].includes(status)) return 'danger';
+      if (['refunded'].includes(status)) return 'blue';
+      return 'purple';
+    }
+
+    // ──────── Pages ────────
+    function showPage(page) {
+      document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      const el = document.getElementById(`page-${page}`);
+      if (el) el.classList.add('active');
+      const nav = document.querySelector(`.nav-item[data-page="${page}"]`);
+      if (nav) nav.classList.add('active');
+      // Load data
+      if (page === 'overview') loadOverview();
+      else if (page === 'wallets') loadWallets();
+      else if (page === 'deposits') loadDeposits();
+      else if (page === 'withdrawals') loadWithdrawals();
+      else if (page === 'escrow') loadEscrow();
+      else if (page === 'risk') loadRiskAlerts();
+      else if (page === 'audit') loadAuditLog();
+      else if (page === 'treasury') {}
+    }
+
+    // ──────── Overview ────────
+    async function loadOverview() {
+      try {
+        const [health, balances, pendingWd, risk] = await Promise.all([
+          api('admin-health'),
+          api('admin-balances'),
+          api('admin-pending-withdrawals'),
+          api('admin-risk-alerts', { params: { limit: 50 } }),
+        ]);
+        const h = health.data || health;
+        const bData = balances.data || [];
+        const wdData = Array.isArray(pendingWd.data) ? pendingWd.data : (Array.isArray(pendingWd) ? pendingWd : []);
+        const rData = risk.data || [];
+
+        document.getElementById('statTotalWallets').textContent = h.total_wallets || bData.length || '0';
+        document.getElementById('statPendingWd').textContent = wdData.length;
+        document.getElementById('statRiskAlerts').textContent = rData.length;
+
+        // Pending badge
+        const badge = document.getElementById('pendingWdBadge');
+        if (wdData.length > 0) { badge.textContent = wdData.length; badge.style.display = 'inline'; }
+        else badge.style.display = 'none';
+
+        // Risk badge
+        const rBadge = document.getElementById('riskBadge');
+        if (rData.length > 0) { rBadge.textContent = rData.length; rBadge.style.display = 'inline'; }
+        else rBadge.style.display = 'none';
+
+        // Total balance
+        let totalBal = 0;
+        bData.forEach(b => { totalBal += parseFloat(b.available || b.available_vdx || 0); });
+        document.getElementById('statTotalBalance').textContent = totalBal.toFixed(2);
+        document.getElementById('statEscrowLocked').textContent = h.total_locked || '—';
+        document.getElementById('statDeposits24h').textContent = h.deposits_24h || '—';
+
+        // Recent transactions
+        const txRes = await api('admin-balances');
+        const rows = bData.slice(0, 10).map(b => `
+          <tr>
+            <td><span class="pill success">wallet</span></td>
+            <td class="addr" title="${b.user_id || ''}">${shortAddr(b.user_id || '')}</td>
+            <td class="mono">${parseFloat(b.available || b.available_vdx || 0).toFixed(4)}</td>
+            <td><span class="pill success">active</span></td>
+            <td>${relTime(b.created_at)}</td>
+          </tr>
+        `).join('');
+        document.getElementById('recentTxBody').innerHTML = rows || '<tr><td colspan="5" class="empty-state">No data</td></tr>';
+      } catch (e) {
+        console.error(e);
+        toast('Failed to load dashboard', 'error');
+      }
+    }
+
+    // ──────── Wallets ────────
+    async function loadWallets() {
+      try {
+        const r = await api('admin-balances');
+        const data = r.data || [];
+        const rows = data.map(w => `
+          <tr>
+            <td class="addr" title="${w.user_id}">${shortAddr(w.user_id)}</td>
+            <td class="mono">${w.available || w.available_vdx || '0'}</td>
+            <td class="mono">${w.pending || w.pending_vdx || '0'}</td>
+            <td class="mono">${w.locked || w.locked_vdx || '0'}</td>
+            <td><span class="pill success">active</span></td>
+            <td>${relTime(w.created_at)}</td>
+          </tr>
+        `).join('');
+        document.getElementById('walletsBody').innerHTML = rows || '<tr><td colspan="6" class="empty-state">No wallets</td></tr>';
+      } catch (e) { toast('Failed to load wallets', 'error'); }
+    }
+
+    // ──────── Deposits ────────
+    async function loadDeposits() {
+      document.getElementById('depositsBody').innerHTML = '<tr><td colspan="6"><div class="spinner"></div></td></tr>';
+      try {
+        // Use admin balance as proxy since deposits endpoint requires user auth
+        const r = await api('admin-health');
+        const h = r.data || r;
+        document.getElementById('depositsBody').innerHTML = `
+          <tr><td colspan="6" class="empty-state">
+            Deposit monitoring active. ${h.pending_deposits || 0} pending deposits detected.
+            <br><small style="color:var(--text-muted)">Deposits are automatically credited after confirmation threshold.</small>
+          </td></tr>`;
+      } catch (e) { toast('Failed to load deposits', 'error'); }
+    }
+
+    // ──────── Withdrawals ────────
+    let allWithdrawals = [];
+    async function loadWithdrawals() {
+      document.getElementById('withdrawalsBody').innerHTML = '<tr><td colspan="7"><div class="spinner"></div></td></tr>';
+      try {
+        const r = await api('admin-pending-withdrawals');
+        allWithdrawals = Array.isArray(r.data) ? r.data : (Array.isArray(r) ? r : []);
+        renderWithdrawals(allWithdrawals);
+      } catch (e) { toast('Failed to load withdrawals', 'error'); }
+    }
+    function filterWithdrawals(status, btn) {
+      btn.parentElement.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (status === 'all') renderWithdrawals(allWithdrawals);
+      else renderWithdrawals(allWithdrawals.filter(w => w.status === status));
+    }
+    function renderWithdrawals(list) {
+      if (!list.length) {
+        document.getElementById('withdrawalsBody').innerHTML = '<tr><td colspan="7" class="empty-state">No withdrawals</td></tr>';
+        return;
+      }
+      const rows = list.map(w => `
+        <tr>
+          <td class="mono" style="font-size:11px;">${(w.id || '').slice(0,8)}…</td>
+          <td class="addr" title="${w.user_id}">${shortAddr(w.user_id)}</td>
+          <td class="mono">${w.amount_vdx || '0'} VDX</td>
+          <td class="addr" title="${w.destination_address}">${shortAddr(w.destination_address)}</td>
+          <td><span class="pill ${pillClass(w.status)}">${w.status}</span></td>
+          <td>${relTime(w.created_at)}</td>
+          <td>${w.status === 'pending_approval' ? `<button class="btn primary" onclick="approveWithdrawal('${w.id}')">Approve</button>` : '—'}</td>
+        </tr>
+      `).join('');
+      document.getElementById('withdrawalsBody').innerHTML = rows;
+    }
+    async function approveWithdrawal(id) {
+      if (!confirm('Approve this withdrawal?')) return;
+      try {
+        await api('admin-sign-withdrawal', { method: 'POST', body: { withdrawal_id: id } });
+        toast('Withdrawal approved', 'success');
+        loadWithdrawals();
+      } catch (e) { toast('Approval failed', 'error'); }
+    }
+
+    // ──────── Escrow ────────
+    let allEscrow = [];
+    async function loadEscrow() {
+      document.getElementById('escrowBody').innerHTML = '<tr><td colspan="7"><div class="spinner"></div></td></tr>';
+      try {
+        const r = await api('admin-escrow-locks', { params: { limit: 100 } });
+        allEscrow = r.data || [];
+        renderEscrow(allEscrow);
+      } catch (e) { toast('Failed to load escrow locks', 'error'); }
+    }
+    function filterEscrow(status, btn) {
+      btn.parentElement.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (status === 'all') renderEscrow(allEscrow);
+      else renderEscrow(allEscrow.filter(e => e.status === status));
+    }
+    function renderEscrow(list) {
+      if (!list.length) {
+        document.getElementById('escrowBody').innerHTML = '<tr><td colspan="7" class="empty-state">No escrow locks</td></tr>';
+        return;
+      }
+      const rows = list.map(e => `
+        <tr>
+          <td class="mono" style="font-size:11px;">${(e.id || '').slice(0,8)}…</td>
+          <td class="mono" style="font-size:11px;">${(e.trade_id || '').slice(0,8)}…</td>
+          <td class="addr" title="${e.user_id}">${shortAddr(e.user_id)}</td>
+          <td class="mono">${e.amount_vdx || '0'}</td>
+          <td><span class="pill ${pillClass(e.status)}">${e.status}</span></td>
+          <td>${relTime(e.locked_at || e.created_at)}</td>
+          <td>${e.resolved_at ? relTime(e.resolved_at) : '—'}</td>
+        </tr>
+      `).join('');
+      document.getElementById('escrowBody').innerHTML = rows;
+    }
+
+    // ──────── Risk Alerts ────────
+    async function loadRiskAlerts() {
+      document.getElementById('riskBody').innerHTML = '<tr><td colspan="6"><div class="spinner"></div></td></tr>';
+      try {
+        const r = await api('admin-risk-alerts', { params: { limit: 50 } });
+        const data = r.data || [];
+        if (!data.length) {
+          document.getElementById('riskBody').innerHTML = '<tr><td colspan="6" class="empty-state">No active risk alerts 🎉</td></tr>';
+          return;
+        }
+        const rows = data.map(a => `
+          <tr>
+            <td class="addr" title="${a.user_id}">${shortAddr(a.user_id)}</td>
+            <td>${a.screening_type || '—'}</td>
+            <td class="mono">${a.amount_vdx || a.amount || '—'}</td>
+            <td><span class="pill ${a.risk_level === 'high' || a.risk_level === 'prohibited' ? 'danger' : 'warning'}">${a.risk_level}</span></td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${a.risk_reason || '—'}</td>
+            <td>${relTime(a.created_at)}</td>
+          </tr>
+        `).join('');
+        document.getElementById('riskBody').innerHTML = rows;
+      } catch (e) { toast('Failed to load risk alerts', 'error'); }
+    }
+
+    // ──────── Audit Log ────────
+    async function loadAuditLog() {
+      document.getElementById('auditBody').innerHTML = '<tr><td colspan="5"><div class="spinner"></div></td></tr>';
+      try {
+        const filter = document.getElementById('auditFilter').value.trim();
+        const params = { limit: 50 };
+        if (filter) params.event = filter;
+        const r = await api('admin-audit-log', { params });
+        const data = r.data || [];
+        if (!data.length) {
+          document.getElementById('auditBody').innerHTML = '<tr><td colspan="5" class="empty-state">No audit entries</td></tr>';
+          return;
+        }
+        const rows = data.map(a => `
+          <tr>
+            <td class="addr" title="${a.actor_id}">${shortAddr(a.actor_id)}</td>
+            <td><span class="pill ${a.action?.includes('escrow') ? 'purple' : a.action?.includes('withdraw') ? 'warning' : 'blue'}">${a.action || '—'}</span></td>
+            <td style="font-size:11px;">${a.resource_type || '—'}</td>
+            <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis">${JSON.stringify(a.metadata || {}).slice(0, 100)}</td>
+            <td>${relTime(a.created_at)}</td>
+          </tr>
+        `).join('');
+        document.getElementById('auditBody').innerHTML = rows;
+      } catch (e) { toast('Failed to load audit log', 'error'); }
+    }
+
+    // ──────── Treasury ────────
+    async function loadTreasury() {
+      document.getElementById('treasuryReport').innerHTML = '<div class="spinner"></div>';
+      try {
+        const r = await api('admin-reconciliation');
+        const d = r.data || r;
+        const statsHtml = `
+          <div class="stat-card primary"><div class="label">Total Available</div><div class="value">${d.total_available || '—'}</div><div class="sub">VDX across all wallets</div></div>
+          <div class="stat-card warning"><div class="label">Total Pending</div><div class="value">${d.total_pending || '—'}</div><div class="sub">Pending credits</div></div>
+          <div class="stat-card blue"><div class="label">Total Locked</div><div class="value">${d.total_locked || '—'}</div><div class="sub">In escrow</div></div>
+          <div class="stat-card"><div class="label">Hot Wallet</div><div class="value">${d.hot_wallet_balance || '—'}</div><div class="sub">On-chain reserve</div></div>
+        `;
+        document.getElementById('treasuryStats').innerHTML = statsHtml;
+        document.getElementById('treasuryReport').innerHTML = `
+          <pre style="font-family:'Space Grotesk',monospace;font-size:12px;color:var(--text-muted);line-height:1.6;white-space:pre-wrap;">${JSON.stringify(d, null, 2)}</pre>
+        `;
+        toast('Reconciliation complete', 'success');
+      } catch (e) { toast('Reconciliation failed', 'error'); }
+    }
+
+    // ──────── Init ────────
+    document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    checkSession();
+  </script>
+</body>
+</html>

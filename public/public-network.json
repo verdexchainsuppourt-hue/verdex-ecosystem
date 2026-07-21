@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "network": "mainnet",
+  "status": "verified",
+  "updatedAt": "2026-07-20T12:00:00.000Z",
+  "chain": {
+    "name": "Verdex Mainnet",
+    "proposedChainId": 72010,
+    "chainIdHex": "0x1192a",
+    "symbol": "VDX",
+    "decimals": 18,
+    "consensus": "Hyperledger Besu QBFT",
+    "testnetRetired": true,
+    "legacyTestnetChainId": 7201,
+    "contracts": {
+      "vdx": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "p2pEscrow": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+    }
+  },
+  "endpoints": {
+    "website": "https://verdexswap.site",
+    "apiNetwork": "https://verdexswap.site/api/network",
+    "apiRpcBridge": "https://verdexswap.site/api/rpc",
+    "explorer": "https://verdexswap.site/explorer",
+    "p2p": "https://verdexswap.site/p2p",
+    "kyc": "https://verdexswap.site/api/kyc",
+    "dashboard": "https://verdexswap.site/dashboard",
+    "updates": "https://verdexswap.site/updates",
+    "proposedHttpRpc": "http://127.0.0.1:8545",
+    "rpcLive": true
+  },
+  "apps": {
+    "android": {
+      "version": "1.15.1-build65.apk"
+    },
+    "windows": {
+      "version": "4.0.2",
+      "minVersion": "3.3.0"
+    }
+  },
+  "features": {
+    "kycAml": true,
+    "p2pMarketplaceApi": true,
+    "explorer": true,
+    "miningApps": true,
+    "onChainEscrow": true,
+    "publicRpc": true,
+    "contractRegistry": true
+  },
+  "validatorsProposed": [
+    "0xcc90d8222b93859a1ec371a3acd21ae2f35ed383",
+    "0x34cb2a1c8888ad2ea5873399ccd77752f19d145f",
+    "0x8f3feca25502cc82fd4ed85a6f9052060bce9393",
+    "0x615c249379a42094bfdbde29e0c0d8e821e5a1b5"
+  ],
+  "notes": [
+    "Website, KYC/AML, P2P coordination APIs, explorer shell, and miner updates are live.",
+    "On-chain VDX transfers and escrow activate only after Besu genesis, RPC, and contract deploy verification.",
+    "Android APK 1.10.9: P2P 'null initiated' fix, full trade lifecycle, security hardening.",
+    "VDX token deployed: 1B VDX minted to genesis vault. P2P escrow deployed with 3 arbiters + 2 attestors."
+  ]
+}

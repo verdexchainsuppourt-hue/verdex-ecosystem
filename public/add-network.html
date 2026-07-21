@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Verdex PRC20 Testnet to MetaMask | Chain ID 7201</title>
+  <meta name="description" content="Add Verdex PRC20 Testnet (Chain ID 7201) to MetaMask in one click. RPC URL, Chain ID, Symbol, and Block Explorer for the Verdex Network.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --green: #22c55e;
+      --green-light: #4ade80;
+      --green-glow: rgba(34,197,94,0.15);
+      --bg: #020d04;
+      --surface: #0a160c;
+      --border: rgba(34,197,94,0.15);
+      --text: #e2e8e4;
+      --muted: #6b7c6e;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      background-image: radial-gradient(ellipse at 50% 0%, rgba(34,197,94,0.08) 0%, transparent 70%);
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px;
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(34,197,94,0.06);
+    }
+    .logo { width: 80px; margin-bottom: 24px; }
+    h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #4ade80, #22c55e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+    p { color: var(--muted); line-height: 1.7; margin-bottom: 32px; }
+    .network-details {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+      text-align: left;
+    }
+    .network-details h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      color: var(--green-light);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(34,197,94,0.06);
+      font-size: 0.95rem;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { color: var(--muted); }
+    .detail-value {
+      color: var(--green-light);
+      font-family: 'Space Grotesk', monospace;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .detail-value:hover { color: #fff; }
+    .btn-metamask {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #000;
+      font-weight: 700;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.1rem;
+      padding: 18px 40px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      width: 100%;
+      justify-content: center;
+      transition: all 0.3s ease;
+      margin-bottom: 16px;
+      letter-spacing: 0.5px;
+    }
+    .btn-metamask:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(34,197,94,0.4);
+    }
+    .btn-metamask:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn-manual {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      color: var(--green-light);
+      border: 1px solid var(--border);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.9rem;
+      padding: 12px 24px;
+      border-radius: 10px;
+      cursor: pointer;
+      width: 100%;
+      justify-content: center;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+    .btn-manual:hover { border-color: var(--green); background: var(--green-glow); }
+    .status-msg {
+      margin-top: 16px;
+      font-size: 0.9rem;
+      min-height: 24px;
+      color: var(--green-light);
+    }
+    .manual-steps {
+      display: none;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 16px;
+      text-align: left;
+    }
+    .manual-steps.open { display: block; }
+    .manual-steps ol { padding-left: 20px; color: var(--muted); font-size: 0.9rem; line-height: 2; }
+    .manual-steps code {
+      background: rgba(34,197,94,0.1);
+      color: var(--green-light);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-top: 32px;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--green-light); }
+    .badge-row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+    .badge {
+      background: rgba(34,197,94,0.1);
+      border: 1px solid var(--border);
+      color: var(--green-light);
+      font-size: 0.75rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+  </style>
+  <link rel="stylesheet" href="css/premium.css?v=4.0.0">
+</head>
+<body>
+  <div class="aurora" aria-hidden="true">
+    <div class="aurora-blob b1"></div>
+    <div class="aurora-blob b2"></div>
+    <div class="aurora-blob b3"></div>
+  </div>
+  <div class="grain-overlay" aria-hidden="true"></div>
+  <div class="card">
+    <img src="assets/verdex-token.png?v=3.1.2" class="logo" alt="Verdex">
+    <h1>Add Verdex to MetaMask</h1>
+    <p>Connect to the <strong style="color:#4ade80">Verdex PRC20 Testnet</strong> in one click. Start mining VP, exploring blocks, and testing PRC20 smart contracts.</p>
+
+    <div class="badge-row">
+      <span class="badge">⚡ EVM Compatible</span>
+      <span class="badge">🔗 Chain ID: 7201</span>
+      <span class="badge">🟢 Testnet Live</span>
+    </div>
+
+    <div class="network-details">
+      <h3>Network Details</h3>
+      <div class="detail-row">
+        <span class="detail-label">Network Name</span>
+        <span class="detail-value" onclick="copyText('Verdex PRC20 Testnet')">Verdex PRC20 Testnet</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">RPC URL</span>
+        <span class="detail-value" onclick="copyText('https://rpc.verdexswap.site/rpc')">rpc.verdexswap.site/rpc</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Chain ID</span>
+        <span class="detail-value" onclick="copyText('7201')">7201</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Symbol</span>
+        <span class="detail-value" onclick="copyText('VDX')">VDX</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Block Explorer</span>
+        <span class="detail-value" onclick="copyText('https://verdexswap.site/explorer')">verdexswap.site/explorer</span>
+      </div>
+    </div>
+
+    <button class="btn-metamask" id="addBtn" onclick="addToMetaMask()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M21.32 3L13.23 9.11l1.54-3.68L21.32 3zm-18.65 0l8.06 6.13-1.46-3.7L2.67 3zM18.19 15.97l-2.15 3.29 4.61 1.27 1.32-4.49-3.78-.07zm-14.5.07l1.32 4.49 4.59-1.27-2.13-3.29-3.78.07zm-.82-5.51l-1.09 5.07 3.59-.19-2.5-4.88zm16.26 0l-2.52 4.88 3.61.19-1.09-5.07zM8.39 13.95l-2.44-.98.87-3.74 1.57 4.72zm7.22 0l1.57-4.72.89 3.74-2.46.98z"/></svg>
+      Add to MetaMask (1 Click)
+    </button>
+
+    <div class="status-msg" id="statusMsg"></div>
+
+    <button class="btn-manual" onclick="toggleManual()">📋 Manual Setup Instructions</button>
+    <div class="manual-steps" id="manualSteps">
+      <ol>
+        <li>Open MetaMask → Click the network selector at the top</li>
+        <li>Click <strong>"Add a network"</strong> → <strong>"Add a network manually"</strong></li>
+        <li>Network Name: <code>Verdex PRC20 Testnet</code></li>
+        <li>RPC URL: <code>https://verdex-ecosystem-production.up.railway.app</code></li>
+        <li>Chain ID: <code>7201</code></li>
+        <li>Currency Symbol: <code>VDX</code></li>
+        <li>Block Explorer: <code>https://verdexswap.site/explorer</code></li>
+        <li>Click <strong>Save</strong> ✅</li>
+      </ol>
+    </div>
+
+    <a href="index.html" class="back-link">← Back to Verdex Website</a>
+  </div>
+
+  <script>
+    async function addToMetaMask() {
+      const btn = document.getElementById('addBtn');
+      const msg = document.getElementById('statusMsg');
+
+      if (!window.ethereum) {
+        msg.style.color = '#f87171';
+        msg.textContent = '❌ MetaMask not found. Install it at metamask.io first.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Connecting...';
+      msg.style.color = '#4ade80';
+      msg.textContent = 'Waiting for MetaMask approval...';
+
+      try {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: '0x1C21',
+            chainName: 'Verdex PRC20 Testnet',
+            nativeCurrency: { name: 'Verdex', symbol: 'VDX', decimals: 18 },
+            rpcUrls: ['https://rpc.verdexswap.site/rpc'],
+            blockExplorerUrls: ['https://verdexswap.site/explorer']
+          }]
+        });
+        btn.textContent = '✅ Verdex Added to MetaMask!';
+        btn.style.background = 'linear-gradient(135deg, #16a34a, #15803d)';
+        msg.textContent = '🎉 Success! Switch to Verdex PRC20 Testnet in MetaMask now.';
+      } catch (err) {
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M21.32 3L13.23 9.11l1.54-3.68L21.32 3zm-18.65 0l8.06 6.13-1.46-3.7L2.67 3zM18.19 15.97l-2.15 3.29 4.61 1.27 1.32-4.49-3.78-.07zm-14.5.07l1.32 4.49 4.59-1.27-2.13-3.29-3.78.07zm-.82-5.51l-1.09 5.07 3.59-.19-2.5-4.88zm16.26 0l-2.52 4.88 3.61.19-1.09-5.07zM8.39 13.95l-2.44-.98.87-3.74 1.57 4.72zm7.22 0l1.57-4.72.89 3.74-2.46.98z"/></svg> Add to MetaMask (1 Click)';
+        msg.style.color = '#f87171';
+        msg.textContent = err.code === 4001 ? '⚠️ Rejected. Please try again.' : '❌ Error: ' + err.message;
+      }
+    }
+
+    function toggleManual() {
+      document.getElementById('manualSteps').classList.toggle('open');
+    }
+
+    function copyText(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        const msg = document.getElementById('statusMsg');
+        msg.style.color = '#4ade80';
+        msg.textContent = '📋 Copied: ' + text;
+        setTimeout(() => msg.textContent = '', 2000);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verdex Mainnet — Network status</title>
+  <meta name="description" content="Verdex Mainnet status: product surface live, chain verification pending validators and contracts.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/premium.css?v=4.0.0">
+  <style>
+    body{min-height:100vh;background:#06130d;color:#ecfdf5;font-family:Inter,system-ui,sans-serif;padding:24px}
+    .shell{max-width:920px;margin:40px auto}
+    .card{border:1px solid rgba(74,222,128,.3);border-radius:20px;background:rgba(10,30,20,.9);padding:36px;box-shadow:0 24px 80px rgba(0,0,0,.36)}
+    .eyebrow{color:#86efac;letter-spacing:.12em;font-size:12px;font-weight:800}
+    h1{font-family:Syne,Inter,sans-serif;font-size:clamp(28px,4vw,40px);margin:12px 0}
+    p{line-height:1.65;color:#bbf7d0}
+    .muted{color:#86efac;font-size:14px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:22px 0}
+    .stat{background:rgba(0,0,0,.25);border:1px solid rgba(74,222,128,.18);border-radius:14px;padding:14px}
+    .stat b{display:block;font-size:18px;color:#4ade80;margin-top:6px}
+    .stat span{font-size:11px;color:#86efac;text-transform:uppercase;letter-spacing:.08em}
+    .links{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+    .links a{display:inline-block;border:1px solid #4ade80;border-radius:10px;padding:12px 18px;text-decoration:none;font-weight:800}
+    .links a.primary{color:#07140d;background:#4ade80}
+    .links a.ghost{color:#bbf7d0}
+    .ok{color:#4ade80}.warn{color:#fbbf24}.bad{color:#f87171}
+    ul{margin:12px 0 0 18px;color:#bbf7d0;line-height:1.7}
+    code{font-size:12px;color:#86efac}
+  </style>
+</head>
+<body>
+  <div class="aurora" aria-hidden="true">
+    <div class="aurora-blob b1"></div>
+    <div class="aurora-blob b2"></div>
+    <div class="aurora-blob b3"></div>
+  </div>
+  <div class="grain-overlay" aria-hidden="true"></div>
+  <div class="shell">
+    <main class="card">
+      <p class="eyebrow">VERDEX MAINNET</p>
+      <h1>Product live · Chain verification in progress</h1>
+      <p>
+        Website, KYC/AML, P2P coordination, explorer shell, miner downloads, and update feeds are online.
+        On-chain VDX settlement activates only after Hyperledger Besu QBFT genesis, public RPC, and contract runtime hashes pass release verification.
+      </p>
+      <p class="muted">Proposed chain ID <strong>72010</strong> · Testnet <code>7201</code> permanently retired · Asset <strong>VDX</strong></p>
+
+      <div class="grid">
+        <div class="stat"><span>Website</span><b class="ok" id="stWeb">Live</b></div>
+        <div class="stat"><span>KYC / AML API</span><b class="ok" id="stKyc">Live</b></div>
+        <div class="stat"><span>P2P API</span><b class="ok" id="stP2p">Live</b></div>
+        <div class="stat"><span>Explorer</span><b class="ok" id="stExp">Live</b></div>
+        <div class="stat"><span>Public RPC</span><b class="warn" id="stRpc">Pending</b></div>
+        <div class="stat"><span>Contracts</span><b class="warn" id="stCtr">Pending</b></div>
+      </div>
+
+      <div id="netDetail" class="muted" style="margin-top:8px">Checking /api/network…</div>
+
+      <h2 style="margin-top:28px;font-size:16px;color:#4ade80">Release checklist</h2>
+      <ul>
+        <li>Four independent Besu validators + signed genesis (chain ID 72010)</li>
+        <li>Edge RPC at <code>https://rpc.verdexswap.site</code> with TLS + rate limits</li>
+        <li>Deploy <code>VerdexMainnetVDX</code> + <code>VerdexP2PEscrow</code>; pin runtime SHA-256</li>
+        <li>Set Vercel: <code>VERDEX_MAINNET_ENABLED=true</code>, <code>VERDEX_MAINNET_RELEASE_APPROVED=true</code>, chain/RPC/contract env</li>
+        <li>Confirm <code>GET /api/network</code> returns <code>success: true</code></li>
+      </ul>
+
+      <div class="links">
+        <a class="primary" href="/">Open home</a>
+        <a class="ghost" href="/dashboard">Dashboard</a>
+        <a class="ghost" href="/p2p">P2P marketplace</a>
+        <a class="ghost" href="/explorer">Explorer</a>
+        <a class="ghost" href="/api/network">Network JSON</a>
+        <a class="ghost" href="/public-network.json">Public registry</a>
+        <a class="ghost" href="/whitepaper">Whitepaper</a>
+      </div>
+    </main>
+  </div>
+  <script>
+    (async () => {
+      try {
+        const r = await fetch('/api/network', { headers: { accept: 'application/json' } });
+        const j = await r.json();
+        const el = document.getElementById('netDetail');
+        if (j.success && j.network && j.network.chainId) {
+          document.getElementById('stRpc').textContent = 'Verified';
+          document.getElementById('stRpc').className = 'ok';
+          document.getElementById('stCtr').textContent = 'Verified';
+          document.getElementById('stCtr').className = 'ok';
+          el.innerHTML = 'Verified mainnet chain <strong>' + j.network.chainId + '</strong> · RPC bridge active · contracts pinned.';
+        } else {
+          el.innerHTML = 'Chain not verified yet (<code>' + (j.code || 'MAINNET_NOT_READY') + '</code>). Product APIs remain available; wallet add-network stays blocked until verification.';
+        }
+        if (j.productStatus) {
+          if (j.productStatus.kyc) document.getElementById('stKyc').textContent = 'Live';
+          if (j.productStatus.p2p) document.getElementById('stP2p').textContent = 'API ready';
+        }
+      } catch (e) {
+        document.getElementById('netDetail').textContent = 'Could not reach /api/network';
+      }
+    })();
+  </script>
+</body>
+</html>

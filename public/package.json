@@ -1,0 +1,30 @@
+{
+  "name": "verdex-website",
+  "version": "3.0.0",
+  "description": "Verdex Mainnet product: KYC/AML, P2P, explorer, miners. Chain verification gated. No testnet fallback.",
+  "private": true,
+  "mainnetStatus": "product_live_chain_pending_validators; proposedChainId 72010; testnet 7201 retired",
+  "scripts": {
+    "dev": "echo 'Static site + Vercel serverless. Deploy with: npm run deploy'",
+    "deploy": "vercel --prod",
+    "supabase:setup": "node scripts/supabase-auto-setup.js",
+    "p2p:enable": "node scripts/enable-p2p.js",
+    "contracts:install": "npm install --prefix contracts",
+    "contracts:test": "npm test --prefix contracts",
+    "contracts:compile": "npm run compile --prefix contracts",
+    "mainnet:generate-besu-config": "node mainnet/besu/create-qbft-release-config.js",
+    "test:p2p": "node --test api/_p2p/handler.test.js",
+    "test:wallet": "node --test api/_wallet/crypto.test.js",
+    "test:auth": "node --test api/_auth/auth.test.js",
+    "test:kyc": "node --test api/_kyc/ai-verify.test.js",
+    "test:all": "node --test api/_p2p/handler.test.js && node --test api/_wallet/crypto.test.js && node --test api/_auth/auth.test.js && node --test api/_kyc/ai-verify.test.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "bcryptjs": "^2.4.3",
+    "elliptic": "^6.5.4",
+    "js-sha3": "^0.9.3",
+    "resend": "^4.1.0",
+    "vercel": "^55.0.0"
+  }
+}
