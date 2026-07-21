@@ -40,8 +40,17 @@ module.exports = async (req, res) => {
     if (!user) return apiError(res, 401, 'UNAUTHORIZED', 'Authentication required');
     if (!requireAuthRate(req, res, user.id, 40, 60000)) return;
 
-    const caseId = req.query.id || req.query.case_id;
-    if (!caseId) return apiError(res, 400, 'CASE_ID_REQUIRED', 'case id is required');
+    let caseId = req.query.id || req.query.case_id || body.case_id;
+    if (!caseId) {
+      const { data: activeCase } = await getSupabase()
+        .from('verdex_kyc_cases')
+        .select('id')
+        .eq('subject_user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (activeCase) caseId = activeCase.id;
+    }
 
     const body = parseBody(req);
     const traceId = getTraceId(req);
