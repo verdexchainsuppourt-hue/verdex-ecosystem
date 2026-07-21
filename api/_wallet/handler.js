@@ -1797,6 +1797,148 @@ async function convertVpToVdx(req, res) {
   } catch (err) {
     return handleError(res, err, 'convert-vp-to-vdx');
   }
+async function getBalance(req, res) {
+  try {
+    const user = await verifyUser(req);
+    if (!user) return apiError(res, 401, 'UNAUTHORIZED', 'Authentication required');
+    const supabase = getSupabase();
+
+    let { data: wallet } = await supabase
+      .from('verdex_custodial_wallets')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (!wallet || !wallet.deposit_address) {
+      const depositAddress = '0x' + crypto.randomBytes(20).toString('hex');
+      const { data: created } = await supabase.from('verdex_custodial_wallets').upsert({
+        user_id: user.id,
+        derivation_index: Math.floor(Math.random() * 1000000),
+        deposit_address: depositAddress
+      }).select().maybeSingle().catch(() => ({ data: null }));
+      wallet = created || { deposit_address: depositAddress };
+    }
+
+    const { data: bal } = await supabase
+      .from('verdex_custodial_balances')
+      .select('*')
+      .eq('wallet_id', wallet.id)
+      .maybeSingle().catch(() => ({ data: null }));
+
+    const availableVdx = bal ? fromAtomic(bal.available_atomic) : '0';
+    const pendingVdx = bal ? fromAtomic(bal.pending_atomic) : '0';
+    const lockedVdx = bal ? fromAtomic(bal.locked_atomic) : '0';
+
+    return jsonResponse(res, 200, {
+      success: true,
+      deposit_address: wallet.deposit_address,
+      vdx_address: wallet.deposit_address,
+      available_vdx: availableVdx,
+      pending_vdx: pendingVdx,
+      locked_vdx: lockedVdx,
+      data: {
+        deposit_address: wallet.deposit_address,
+        available_vdx: availableVdx,
+        pending_vdx: pendingVdx,
+        locked_vdx: lockedVdx
+      }
+    });
+  } catch (err) {
+    return handleError(res, err, 'getBalance');
+  }
+}
+
+async function getDepositAddress(req, res) {
+  try {
+    const user = await verifyUser(req);
+    if (!user) return apiError(res, 401, 'UNAUTHORIZED', 'Authentication required');
+    const supabase = getSupabase();
+
+    let { data: wallet } = await supabase
+      .from('verdex_custodial_wallets')
+      .select('deposit_address')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (!wallet || !wallet.deposit_address) {
+      const depositAddress = '0x' + crypto.randomBytes(20).toString('hex');
+      await supabase.from('verdex_custodial_wallets').upsert({
+        user_id: user.id,
+        derivation_index: Math.floor(Math.random() * 1000000),
+        deposit_address: depositAddress
+      }).catch(() => {});
+      wallet = { deposit_address: depositAddress };
+    }
+
+    return jsonResponse(res, 200, {
+      success: true,
+      deposit_address: wallet.deposit_address,
+      vdx_address: wallet.deposit_address,
+      data: {
+        deposit_address: wallet.deposit_address
+      }
+    });
+  } catch (err) {
+    return handleError(res, err, 'getDepositAddress');
+  }
+}
+
+async function getTokens(req, res) {
+  return jsonResponse(res, 200, {
+    success: true,
+    data: [
+      { id: 'vdx', symbol: 'VDX', name: 'Verdex Token', decimals: 18, network: 'Verdex Mainnet', chainId: 72010 },
+      { id: 'usdt-trc20', symbol: 'USDT', name: 'Tether USD (TRC-20)', decimals: 6, network: 'Tron' },
+      { id: 'usdt-erc20', symbol: 'USDT', name: 'Tether USD (ERC-20)', decimals: 6, network: 'Ethereum' },
+      { id: 'usdt-bep20', symbol: 'USDT', name: 'Tether USD (BEP-20)', decimals: 18, network: 'BNB Chain' }
+    ]
+  });
+}
+
+async function lookupUser(req, res) {
+  try {
+    const query = String(req.query.q || req.query.query || '').trim();
+    if (!query) return apiError(res, 400, 'QUERY_REQUIRED', 'Lookup query required');
+    const supabase = getSupabase();
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, username, full_name, avatar_url')
+      .or(`id.eq.${query},username.ilike.${query}`)
+      .maybeSingle();
+
+    if (!profile) {
+      return apiError(res, 404, 'USER_NOT_FOUND', 'User not found');
+    }
+
+    return jsonResponse(res, 200, {
+      success: true,
+      data: profile
+    });
+  } catch (err) {
+    return handleError(res, err, 'lookupUser');
+  }
+}
+
+async function getVpBalance(req, res) {
+  try {
+    const user = await verifyUser(req);
+    if (!user) return apiError(res, 401, 'UNAUTHORIZED', 'Authentication required');
+    const supabase = getSupabase();
+
+    const { data: wallet } = await supabase
+      .from('wallets')
+      .select('vp_balance_cached')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    return jsonResponse(res, 200, {
+      success: true,
+      vp_balance: wallet?.vp_balance_cached || 0
+    });
+  } catch (err) {
+    return handleError(res, err, 'getVpBalance');
+  }
 }
 
 // ===========================================================================

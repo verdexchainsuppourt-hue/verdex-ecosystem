@@ -13,6 +13,7 @@ module.exports = async (req, res) => {
     if (action === 'web-mine') return await require('./_mining/web-mine')(req, res);
     if (action === 'pool-status') return await require('./_mining/pool-status')(req, res);
     if (action === 'payout') return await require('./_mining/payout')(req, res);
+    if (action === 'referral' || action === 'referral-stats') return await require('./_mining/referral')(req, res);
     
     return res.status(404).json({ error: 'Mining action not found' });
   } catch (err) {
