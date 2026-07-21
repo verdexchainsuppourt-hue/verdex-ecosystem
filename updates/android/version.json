@@ -1,6 +1,6 @@
 {
-  "version": "1.23.0",
-  "versionCode": 75,
+  "version": "1.24.0",
+  "versionCode": 76,
   "channel": "apk",
   "updateMode": "in_app_apk",
   "minVersion": "1.0.0",
@@ -9,14 +9,13 @@
   "updateType": "full",
   "network": "mainnet",
   "chainId": 72010,
-  "apkUrl": "https://verdexswap.site/assets/downloads/Verdex-Android-1.23.0-build75.apk",
-  "sha256": "66e11a040204f05640dc81f920d644cb2c0b80aeb2afafc84aabc8e66412a55a",
+  "apkUrl": "https://verdexswap.site/assets/downloads/Verdex-Android-1.24.0-build76.apk",
+  "sha256": "601497c93fc570e0cb298038707051df54f4c86bd6e00060424aea3285372d4c",
   "changelog": [
-    "NEW: P2P Listing Edit & Delete functionality directly on user ad cards with modal bottom sheets",
-    "FIXED: P2P backend edit-order, delete-order, and pause-order handlers fully integrated",
-    "FIXED: Live database migrations verified across all 11 core Supabase tables",
-    "NEW: Real mining challenge, heartbeat, referral, and VP -> VDX token conversion",
-    "FIXED: Vault deposit address copy button & QR code rendering"
+    "FIXED: Vault deposit address & QR code now guaranteed for ALL chains (Verdex, Ethereum, BNB Smart Chain, Tron)",
+    "FIXED: Point preservation logic — VP points never drop or reset during cloud sync",
+    "NEW: Offline background mining — points continue to accrue smoothly even when the app is closed",
+    "NEW: P2P Listing Edit & Delete modal bottom sheets for effortless order management"
   ],
-  "releasedAt": "2026-07-21T23:25:00.000Z"
+  "releasedAt": "2026-07-21T23:39:00.000Z"
 }
