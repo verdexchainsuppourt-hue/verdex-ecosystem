@@ -74,6 +74,8 @@ td{padding:10px 8px;border-bottom:1px solid rgba(34,197,94,.06)}
   <div id="app" class="hidden">
     <div class="tabs" id="tabBar">
       <div class="tab active" data-tab="health" onclick="switchTab('health')">System Health</div>
+      <div class="tab" data-tab="transfer" onclick="switchTab('transfer')">Token Transfer</div>
+      <div class="tab" data-tab="supply" onclick="switchTab('supply')">Token Supply</div>
       <div class="tab" data-tab="kyc" onclick="switchTab('kyc')">KYC Review</div>
       <div class="tab" data-tab="withdrawals" onclick="switchTab('withdrawals')">Withdrawals</div>
       <div class="tab" data-tab="p2p" onclick="switchTab('p2p')">P2P Escrow</div>
@@ -146,6 +148,8 @@ async function switchTab(tab) {
   $('content').innerHTML = '<div class="loading">Loading…</div>';
   try {
     if (tab === 'health') await renderHealth();
+    else if (tab === 'transfer') await renderTransfer();
+    else if (tab === 'supply') await renderSupply();
     else if (tab === 'kyc') await renderKYC();
     else if (tab === 'withdrawals') await renderWithdrawals();
     else if (tab === 'p2p') await renderP2P();
@@ -315,6 +319,109 @@ async function renderUsers() {
     '</tbody></table><div class="pagination">' +
     (usersOffset > 0 ? '<button class="btn btn-o" onclick="usersOffset=Math.max(0,' + (usersOffset-50) + ');switchTab(\'users\')">Previous</button>' : '') +
     '<button class="btn btn-o" onclick="usersOffset+=' + 50 + ';switchTab(\'users\')">Next</button></div></div>';
+}
+
+async function renderTransfer() {
+  $('content').innerHTML = `
+    <div class="card" style="max-width:600px;margin:0 auto">
+      <h3>Admin Token Transfer</h3>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:16px">Transfer VDX, VP, or USDT tokens directly to any user's custodial wallet or profile balance.</p>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <label style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700">Recipient User ID or Wallet Address</label>
+          <input id="trRecipient" type="text" placeholder="e.g. 0x... or user UUID" style="width:100%;background:rgba(34,197,94,.05);border:1px solid var(--line);border-radius:8px;padding:10px;color:var(--text);font:inherit;margin-top:4px">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700">Token Asset</label>
+          <select id="trSymbol" style="width:100%;background:#04140c;border:1px solid var(--line);border-radius:8px;padding:10px;color:var(--text);font:inherit;margin-top:4px">
+            <option value="VDX">VDX (Verdex Mainnet Token)</option>
+            <option value="VP">VP (Verdex Mined Points)</option>
+            <option value="USDT">USDT (Tether USD)</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700">Amount</label>
+          <input id="trAmount" type="number" step="0.0001" placeholder="e.g. 1000" style="width:100%;background:rgba(34,197,94,.05);border:1px solid var(--line);border-radius:8px;padding:10px;color:var(--text);font:inherit;margin-top:4px">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700">Notes / Reason</label>
+          <input id="trNotes" type="text" placeholder="e.g. Treasury grant / reward allocation" style="width:100%;background:rgba(34,197,94,.05);border:1px solid var(--line);border-radius:8px;padding:10px;color:var(--text);font:inherit;margin-top:4px">
+        </div>
+        <button class="btn btn-g" style="padding:12px;margin-top:8px;font-size:14px" onclick="executeTokenTransfer()">Send Tokens Now</button>
+        <div id="trRes" class="hidden" style="margin-top:10px"></div>
+      </div>
+    </div>
+  `;
+}
+
+async function executeTokenTransfer() {
+  const recipient = $('trRecipient').value.trim();
+  const symbol = $('trSymbol').value;
+  const amount = $('trAmount').value.trim();
+  const notes = $('trNotes').value.trim();
+  const resDiv = $('trRes');
+
+  resDiv.classList.remove('hidden');
+
+  if (!recipient || !amount || Number(amount) <= 0) {
+    resDiv.className = 'err';
+    resDiv.innerText = 'Please enter a valid recipient address/UID and positive amount.';
+    return;
+  }
+
+  resDiv.className = 'badge amber';
+  resDiv.innerText = 'Executing transfer…';
+
+  try {
+    const isAddr = recipient.startsWith('0x');
+    const body = {
+      recipient_address: isAddr ? recipient : null,
+      recipient_user_id: !isAddr ? recipient : null,
+      token_symbol: symbol,
+      amount: amount,
+      notes: notes
+    };
+
+    const res = await fetch('/api/admin?action=transfer-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      resDiv.className = 'badge green';
+      resDiv.innerText = `✅ Transfer Successful! ${data.message}`;
+    } else {
+      resDiv.className = 'err';
+      resDiv.innerText = `❌ Transfer Failed: ${data.error || 'Unknown error'}`;
+    }
+  } catch (e) {
+    resDiv.className = 'err';
+    resDiv.innerText = `❌ Error: ${e.message}`;
+  }
+}
+
+async function renderSupply() {
+  try {
+    const res = await api('/api/admin?action=token-supply');
+    const d = res;
+    $('content').innerHTML = `
+      <div class="grid grid-4" style="margin-bottom:16px">
+        <div class="card"><h3>Total Max Supply</h3><div class="stat">1,000,000,000</div><div class="stat-label">VDX (Fixed Cap)</div></div>
+        <div class="card"><h3>Circulating Supply</h3><div class="stat">${fmt(d.circulating_supply || 0)}</div><div class="stat-label">VDX in circulation</div></div>
+        <div class="card"><h3>Custodial VDX Pool</h3><div class="stat">${fmt(d.custodial_vdx_pool || 0)}</div><div class="stat-label">Custodial Wallets</div></div>
+        <div class="card"><h3>Total Mined Points</h3><div class="stat">${fmt(d.total_mined_vp || 0)}</div><div class="stat-label">VP Points</div></div>
+      </div>
+      <div class="card">
+        <h3>Token Economics & Conversion Settings</h3>
+        <p style="color:var(--muted);font-size:13px;margin-top:6px">Conversion Rate: <strong>100 VP = 1 VDX</strong></p>
+        <p style="color:var(--muted);font-size:13px;margin-top:4px">Chain ID: <strong>72010 (Verdex Mainnet)</strong></p>
+      </div>`;
+  } catch(e) { $('content').innerHTML = '<div class="card"><div class="err">' + esc(e.message) + '</div></div>'; }
 }
 
 // Auto-login from session

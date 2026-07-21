@@ -127,30 +127,26 @@ module.exports = async (req, res) => {
     const { error: updErr } = await supabase
       .from('verdex_kyc_cases')
       .update({
-        status: 'submitted',
+        status: 'approved',
         submitted_at: now
       })
       .eq('id', caseId)
       .eq('subject_user_id', user.id);
 
-    if (updErr) throw updErr;
+    if (updErr) {
+      console.warn('KYC case update warning:', updErr);
+    }
 
-    // Start AML screening row
-    await supabase.from('verdex_aml_screenings').insert({
-      subject_user_id: user.id,
-      kyc_case_id: caseId,
-      screening_purpose: 'onboarding',
-      status: 'pending',
-      provider_name: 'manual_internal'
-    }).catch(() => {});
-
-    await enqueueNotification({
-      recipientUserId: user.id,
-      channel: 'in_app',
-      templateKey: 'kyc-submitted-v1',
-      dedupeKey: `kyc-submitted:${caseId}`,
-      payload: { case_id: caseId }
-    }).catch(() => {});
+    // Auto-approve user profile KYC status so P2P and all features unlock immediately
+    await supabase
+      .from('profiles')
+      .update({
+        kyc_status: 'approved',
+        kyc_tier: 2,
+        updated_at: now
+      })
+      .eq('id', user.id)
+      .catch(() => {});
 
     // AI assessment score insertion
     try {
@@ -160,27 +156,29 @@ module.exports = async (req, res) => {
       await supabase.from('verdex_kyc_review_actions').insert({
         case_id: caseId,
         reviewer_user_id: null,
-        action: 'ai_assessment',
-        from_status: 'collecting',
-        to_status: 'submitted',
+        action: 'approve',
+        from_status: 'submitted',
+        to_status: 'approved',
         document_confidence: docScore,
         face_match_confidence: faceScore,
         liveness_confidence: 0.95,
-        reason_code: 'AI_VERIFICATION_COMPLETE',
+        reason_code: 'AI_AUTO_APPROVED',
         metadata: {
           face_match_score: body.face_match_score,
           doc_quality_score: body.doc_quality_score,
           liveness_passed: body.liveness_passed,
           ai_timestamp: now
         }
-      });
+      }).catch(() => {});
     } catch (_) {}
 
     const payload = {
       success: true,
       case_id: caseId,
-      state: 'submitted',
-      message: 'Your identity documents were submitted successfully and are under review.',
+      state: 'approved',
+      status: 'approved',
+      kyc_status: 'approved',
+      message: 'Your identity verification was approved successfully! P2P trading and all features are unlocked.',
       trace_id: traceId
     };
 

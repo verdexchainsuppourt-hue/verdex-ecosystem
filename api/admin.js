@@ -70,6 +70,105 @@ module.exports = async (req, res) => {
       return jsonResponse(res, 200, { success: true, user: { id: admin.id, email: admin.email } });
     }
 
+    if (action === 'transfer-token') {
+      const { recipient_user_id, recipient_address, amount, token_symbol, notes } = req.body || {};
+      const numAmount = Number(amount);
+      if (!numAmount || numAmount <= 0) {
+        return jsonResponse(res, 400, { error: 'Valid positive amount required' });
+      }
+
+      let targetUserId = recipient_user_id;
+
+      if (!targetUserId && recipient_address) {
+        const { data: wal } = await supabase
+          .from('wallets')
+          .select('user_id')
+          .eq('vdx_address', recipient_address)
+          .maybeSingle();
+        if (wal) targetUserId = wal.user_id;
+      }
+
+      if (!targetUserId) {
+        return jsonResponse(res, 404, { error: 'Recipient user or wallet address not found' });
+      }
+
+      const symbol = (token_symbol || 'VDX').toUpperCase();
+      const now = new Date().toISOString();
+
+      if (symbol === 'VP') {
+        const { data: prof } = await supabase.from('profiles').select('vp_balance').eq('id', targetUserId).single();
+        const newBal = (prof?.vp_balance || 0) + Math.round(numAmount);
+        await supabase.from('profiles').update({ vp_balance: newBal, updated_at: now }).eq('id', targetUserId);
+      } else {
+        const { data: cust } = await supabase
+          .from('verdex_custodial_balances')
+          .select('id, balance')
+          .eq('user_id', targetUserId)
+          .eq('asset_symbol', symbol)
+          .maybeSingle();
+
+        const currentBal = Number(cust?.balance || 0);
+        const newBal = currentBal + numAmount;
+
+        if (cust) {
+          await supabase.from('verdex_custodial_balances').update({ balance: newBal, updated_at: now }).eq('id', cust.id);
+        } else {
+          await supabase.from('verdex_custodial_balances').insert({
+            user_id: targetUserId,
+            asset_symbol: symbol,
+            balance: newBal,
+            updated_at: now
+          });
+        }
+      }
+
+      await logAudit(admin.id, 'admin_token_transfer', {
+        resource_type: 'transfer',
+        resource_id: targetUserId,
+        metadata: { amount: numAmount, symbol, notes, recipient_address }
+      });
+
+      return jsonResponse(res, 200, {
+        success: true,
+        message: `Successfully transferred ${numAmount} ${symbol} to user ${targetUserId}`,
+        amount: numAmount,
+        symbol,
+        recipient_user_id: targetUserId
+      });
+    }
+
+    if (action === 'token-supply') {
+      const totalSupply = 1000000000;
+      const { data: custs } = await supabase.from('verdex_custodial_balances').select('balance, asset_symbol');
+      const { data: profs } = await supabase.from('profiles').select('vp_balance');
+
+      let totalCustodialVdx = 0;
+      if (custs) {
+        custs.forEach(c => {
+          if (c.asset_symbol === 'VDX') totalCustodialVdx += Number(c.balance || 0);
+        });
+      }
+
+      let totalMinedVp = 0;
+      if (profs) {
+        profs.forEach(p => {
+          totalMinedVp += Number(p.vp_balance || 0);
+        });
+      }
+
+      const circulatingSupply = totalCustodialVdx + (totalMinedVp / 100);
+
+      return jsonResponse(res, 200, {
+        success: true,
+        total_supply: totalSupply,
+        circulating_supply: circulatingSupply,
+        custodial_vdx_pool: totalCustodialVdx,
+        total_mined_vp: totalMinedVp,
+        vdx_conversion_rate: '100 VP = 1 VDX',
+        max_supply_label: '1,000,000,000 VDX'
+      });
+    }
+
     if (action === 'get') {
       const table = req.query.table;
       if (!ALLOWED_TABLES.includes(table)) {
