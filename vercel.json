@@ -38,6 +38,14 @@
   ],
   "rewrites": [
     {
+      "source": "/updates/android/version.json",
+      "destination": "/api/updates"
+    },
+    {
+      "source": "/updates/version.json",
+      "destination": "/api/updates"
+    },
+    {
       "source": "/api/l1",
       "destination": "/api/chain"
     },
