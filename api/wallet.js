@@ -24,8 +24,39 @@ module.exports = async (req, res) => {
     return require('./_wallet/handler')(req, res);
   }
 
-  setCORS(res);
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  // Handle profile / app-prefs update without requiring vdx_address
+  if (req.query.action === 'profile') {
+    try {
+      const user = await verifyUser(req);
+      if (!user) return jsonResponse(res, 401, { error: 'Not authenticated' });
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const supabase = getSupabase();
+
+      const userMetadataUpdates = {};
+      if (body.full_name) userMetadataUpdates.full_name = body.full_name;
+      if (body.username) userMetadataUpdates.username = body.username;
+      if (body.avatar_url) userMetadataUpdates.avatar_url = body.avatar_url;
+      if (body.app_prefs) userMetadataUpdates.app_prefs = body.app_prefs;
+
+      if (Object.keys(userMetadataUpdates).length > 0) {
+        await supabase.auth.admin.updateUserById(user.id, {
+          user_metadata: { ...(user.user_metadata || {}), ...userMetadataUpdates }
+        }).catch(() => {});
+
+        const profileUpdates = {};
+        if (body.full_name) profileUpdates.full_name = body.full_name;
+        if (body.username) profileUpdates.username = body.username;
+        if (body.avatar_url) profileUpdates.avatar_url = body.avatar_url;
+        if (Object.keys(profileUpdates).length > 0) {
+          await supabase.from('profiles').update(profileUpdates).eq('id', user.id).catch(() => {});
+        }
+      }
+
+      return jsonResponse(res, 200, { success: true, message: 'Profile updated successfully.' });
+    } catch (err) {
+      return handleError(res, err, 'wallet/profile');
+    }
+  }
 
   // Legacy self-custody wallet address sync (backward compatible).
   if (req.method === 'POST' || req.method === 'PUT') {

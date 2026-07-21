@@ -1027,12 +1027,20 @@ async function openTrade(req, res) {
       const buyerUserId = order.side === 'sell_vdx' ? user.id : order.creator_user_id;
       const sellerUserId = order.side === 'sell_vdx' ? order.creator_user_id : user.id;
 
-      const [buyerWalletRes, sellerWalletRes] = await Promise.all([
-        supabase.from('verdex_custodial_wallets').select('deposit_address').eq('user_id', buyerUserId).maybeSingle(),
-        supabase.from('verdex_custodial_wallets').select('deposit_address').eq('user_id', sellerUserId).maybeSingle()
-      ]);
-      const buyerAddress = buyerWalletRes.data && buyerWalletRes.data.deposit_address;
-      const sellerAddress = sellerWalletRes.data && sellerWalletRes.data.deposit_address;
+      async function getWalletAddr(uid) {
+        try {
+          const { data } = await supabase.from('verdex_custodial_wallets').select('deposit_address').eq('user_id', uid).maybeSingle();
+          if (data && data.deposit_address) return data.deposit_address;
+        } catch (_) {}
+        try {
+          const { data } = await supabase.from('wallets').select('vdx_address, deposit_address').eq('user_id', uid).maybeSingle();
+          if (data) return data.vdx_address || data.deposit_address;
+        } catch (_) {}
+        return null;
+      }
+
+      const buyerAddress = await getWalletAddr(buyerUserId);
+      const sellerAddress = await getWalletAddr(sellerUserId);
       if (!isValidEvmAddress(buyerAddress)) {
         return apiError(res, 400, 'BUYER_WALLET_MISSING', 'Buyer has no registered Verdex wallet', { traceId: tid });
       }

@@ -76,6 +76,8 @@ td{padding:10px 8px;border-bottom:1px solid rgba(34,197,94,.06)}
       <div class="tab active" data-tab="health" onclick="switchTab('health')">System Health</div>
       <div class="tab" data-tab="kyc" onclick="switchTab('kyc')">KYC Review</div>
       <div class="tab" data-tab="withdrawals" onclick="switchTab('withdrawals')">Withdrawals</div>
+      <div class="tab" data-tab="p2p" onclick="switchTab('p2p')">P2P Escrow</div>
+      <div class="tab" data-tab="wallets" onclick="switchTab('wallets')">Wallets</div>
       <div class="tab" data-tab="treasury" onclick="switchTab('treasury')">Treasury</div>
       <div class="tab" data-tab="validators" onclick="switchTab('validators')">Validators</div>
       <div class="tab" data-tab="users" onclick="switchTab('users')">Users</div>
@@ -146,6 +148,8 @@ async function switchTab(tab) {
     if (tab === 'health') await renderHealth();
     else if (tab === 'kyc') await renderKYC();
     else if (tab === 'withdrawals') await renderWithdrawals();
+    else if (tab === 'p2p') await renderP2P();
+    else if (tab === 'wallets') await renderWallets();
     else if (tab === 'treasury') await renderTreasury();
     else if (tab === 'validators') await renderValidators();
     else if (tab === 'users') await renderUsers();
@@ -266,6 +270,39 @@ async function renderValidators() {
       <div class="card"><h3>Active Validators</h3><table><thead><tr><th>Address</th><th>Status</th></tr></thead><tbody>` +
       d.validators.map(v => `<tr><td class="mono">${v.address}</td><td><span class="badge green">${v.status}</span></td></tr>`).join('') +
       '</tbody></table></div>';
+  } catch(e) { $('content').innerHTML = '<div class="card"><div class="err">' + esc(e.message) + '</div></div>'; }
+}
+
+async function renderP2P() {
+  try {
+    const { data: orders } = await sb.from('verdex_p2p_orders').select('*').order('created_at', { ascending: false }).limit(20);
+    const { data: trades } = await sb.from('verdex_p2p_trades').select('*').order('created_at', { ascending: false }).limit(20);
+    $('content').innerHTML = `
+      <div class="card" style="margin-bottom:16px">
+        <h3>Active P2P Orders (${(orders||[]).length})</h3>
+        <table><thead><tr><th>ID</th><th>Type</th><th>Price</th><th>Amount</th><th>Status</th></tr></thead><tbody>` +
+        (orders||[]).map(o => `<tr><td class="mono">${o.id.substring(0,8)}…</td><td><span class="badge ${o.side==='sell_vdx'?'amber':'green'}">${o.side}</span></td><td>$${o.price_fiat}</td><td>${o.amount_vdx} VDX</td><td><span class="badge green">${o.status}</span></td></tr>`).join('') +
+        `</tbody></table>
+      </div>
+      <div class="card">
+        <h3>P2P Escrow Trades (${(trades||[]).length})</h3>
+        <table><thead><tr><th>Trade ID</th><th>Fiat</th><th>Status</th><th>Escrow</th></tr></thead><tbody>` +
+        (trades||[]).map(t => `<tr><td class="mono">${t.id.substring(0,8)}…</td><td>$${t.fiat_amount}</td><td><span class="badge blue">${t.status}</span></td><td><span class="badge green">${t.escrow_status||'locked'}</span></td></tr>`).join('') +
+        `</tbody></table>
+      </div>`;
+  } catch(e) { $('content').innerHTML = '<div class="card"><div class="err">' + esc(e.message) + '</div></div>'; }
+}
+
+async function renderWallets() {
+  try {
+    const { data: list } = await sb.from('wallets').select('*').order('created_at', { ascending: false }).limit(30);
+    $('content').innerHTML = `
+      <div class="card">
+        <h3>Registered Custodial & Self-Custody Wallets (${(list||[]).length})</h3>
+        <table><thead><tr><th>User ID</th><th>VDX Address</th><th>Created</th></tr></thead><tbody>` +
+        (list||[]).map(w => `<tr><td class="mono">${w.user_id?.substring(0,8)}…</td><td class="mono">${w.vdx_address||w.deposit_address||'—'}</td><td>${w.created_at?.substring(0,10)}</td></tr>`).join('') +
+        `</tbody></table>
+      </div>`;
   } catch(e) { $('content').innerHTML = '<div class="card"><div class="err">' + esc(e.message) + '</div></div>'; }
 }
 
