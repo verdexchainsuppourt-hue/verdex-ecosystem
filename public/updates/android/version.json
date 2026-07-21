@@ -10,7 +10,7 @@
   "network": "mainnet",
   "chainId": 72010,
   "apkUrl": "https://verdexswap.site/assets/downloads/Verdex-Android-1.25.0-build77.apk",
-  "sha256": "771497c93fc570e0cb298038707051df54f4c86bd6e00060424aea3285372d77",
+  "sha256": "f39b6630a5406c9adf2d6ca3b5393ce3df1a5d49e331fbd0fd568eed4e8da0b7",
   "changelog": [
     "FIXED: P2P Order Creation error (createOrder backend route fully restored)",
     "FIXED: VP to VDX token conversion (convertVpToVdx backend route fully restored)",
@@ -18,5 +18,5 @@
     "NEW: Master Admin Panel Passcode protection (ch.199456) with strict IP rate limiting",
     "NEW: Master Admin Panel Dispute Resolution (release to buyer / refund to seller) and User Ban/Unban management"
   ],
-  "releasedAt": "2026-07-22T00:10:00.000Z"
+  "releasedAt": "2026-07-22T00:43:00.000Z"
 }
