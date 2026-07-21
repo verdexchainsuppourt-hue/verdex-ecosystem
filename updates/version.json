@@ -6,7 +6,7 @@
   "releaseDate": "2026-07-21",
   "network": "mainnet",
   "proposedChainId": 72010,
-  "notes": "Mainnet product shift · KYC/AML + P2P APIs · Explorer shell · Android 1.22.0 build 74.",
+  "notes": "Mainnet product shift · KYC/AML + P2P APIs · Explorer shell · Android 1.23.0 build 75.",
   "downloads": {
     "windows": {
       "url": "https://verdexswap.site/updates/Verdex-Miner-Setup-4.0.2.exe",
@@ -14,8 +14,8 @@
       "size": 87066846
     },
     "android": {
-      "url": "https://verdexswap.site/assets/downloads/Verdex-Android-1.22.0-build74.apk",
-      "fileName": "Verdex-Android-1.22.0-build74.apk"
+      "url": "https://verdexswap.site/assets/downloads/Verdex-Android-1.23.0-build75.apk",
+      "fileName": "Verdex-Android-1.23.0-build75.apk"
     }
   },
   "feedUrl": "https://verdexswap.site/updates",

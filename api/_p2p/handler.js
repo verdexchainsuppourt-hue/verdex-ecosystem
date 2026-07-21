@@ -1931,6 +1931,120 @@ async function unblockUser(req, res) {
   return jsonResponse(res, 200, { success: true, message: 'User unblocked' });
 }
 
+async function editOrder(req, res) {
+  const user = await verifyUser(req);
+  if (!user) return apiError(res, 401, 'UNAUTHORIZED', 'Authentication required');
+  if (!checkRateLimit(`p2p:edit:${user.id}`, 20, 60000).allowed) {
+    return apiError(res, 429, 'RATE_LIMITED', 'Too many requests');
+  }
+
+  const body = parseBody(req);
+  const { order_id, price_fiat, fiat_unit_price, min_fiat, min_fiat_amount, max_fiat, max_fiat_amount, payment_methods, terms, notes, status } = body;
+
+  if (!validateUuid(order_id)) return apiError(res, 400, 'INVALID_PARAMS', 'order_id required');
+
+  const supabase = getSupabase();
+  const { data: order, error: fetchErr } = await supabase
+    .from('verdex_p2p_orders')
+    .select('*')
+    .eq('id', order_id)
+    .maybeSingle();
+
+  if (fetchErr || !order) return apiError(res, 404, 'ORDER_NOT_FOUND', 'Order not found');
+  if (order.creator_user_id !== user.id) {
+    return apiError(res, 403, 'FORBIDDEN', 'You do not own this order');
+  }
+
+  const updates = { updated_at: new Date().toISOString() };
+  const priceVal = price_fiat ?? fiat_unit_price;
+  const minVal = min_fiat ?? min_fiat_amount;
+  const maxVal = max_fiat ?? max_fiat_amount;
+
+  if (priceVal !== undefined && Number(priceVal) > 0) updates.price_fiat = Number(priceVal);
+  if (minVal !== undefined && Number(minVal) >= 0) updates.min_fiat = Number(minVal);
+  if (maxVal !== undefined && Number(maxVal) > 0) updates.max_fiat = Number(maxVal);
+  if (Array.isArray(payment_methods)) updates.payment_methods = payment_methods;
+  if (terms !== undefined) updates.terms = terms;
+  if (notes !== undefined) updates.notes = notes;
+  if (status !== undefined) updates.status = status;
+
+  const { data: updated, error: updateErr } = await supabase
+    .from('verdex_p2p_orders')
+    .update(updates)
+    .eq('id', order_id)
+    .select()
+    .single();
+
+  if (updateErr) throw updateErr;
+
+  return jsonResponse(res, 200, {
+    success: true,
+    message: 'Order updated successfully',
+    order: updated
+  });
+}
+
+async function deleteOrder(req, res) {
+  const user = await verifyUser(req);
+  if (!user) return apiError(res, 401, 'UNAUTHORIZED', 'Authentication required');
+  if (!checkRateLimit(`p2p:delete:${user.id}`, 20, 60000).allowed) {
+    return apiError(res, 429, 'RATE_LIMITED', 'Too many requests');
+  }
+
+  const body = parseBody(req);
+  const { order_id } = body;
+  if (!validateUuid(order_id)) return apiError(res, 400, 'INVALID_PARAMS', 'order_id required');
+
+  const supabase = getSupabase();
+  const { data: order } = await supabase
+    .from('verdex_p2p_orders')
+    .select('*')
+    .eq('id', order_id)
+    .maybeSingle();
+
+  if (!order) return apiError(res, 404, 'ORDER_NOT_FOUND', 'Order not found');
+  if (order.creator_user_id !== user.id) {
+    return apiError(res, 403, 'FORBIDDEN', 'You do not own this order');
+  }
+
+  const { error } = await supabase
+    .from('verdex_p2p_orders')
+    .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+    .eq('id', order_id);
+
+  if (error) throw error;
+
+  return jsonResponse(res, 200, {
+    success: true,
+    message: 'Order deleted successfully'
+  });
+}
+
+async function pauseOrder(req, res) {
+  const user = await verifyUser(req);
+  if (!user) return apiError(res, 401, 'UNAUTHORIZED', 'Authentication required');
+  const body = parseBody(req);
+  const { order_id, pause } = body;
+  if (!validateUuid(order_id)) return apiError(res, 400, 'INVALID_PARAMS', 'order_id required');
+
+  const supabase = getSupabase();
+  const newStatus = pause === false ? 'active' : 'paused';
+
+  const { error } = await supabase
+    .from('verdex_p2p_orders')
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .eq('id', order_id)
+    .eq('creator_user_id', user.id);
+
+  if (error) throw error;
+
+  return jsonResponse(res, 200, {
+    success: true,
+    status: newStatus,
+    message: `Order ${newStatus}`
+  });
+}
+
 // ===========================================================================
 // Router
 // ===========================================================================

@@ -1,6 +1,6 @@
 {
-  "version": "1.22.0",
-  "versionCode": 74,
+  "version": "1.23.0",
+  "versionCode": 75,
   "channel": "apk",
   "updateMode": "in_app_apk",
   "minVersion": "1.0.0",
@@ -9,16 +9,14 @@
   "updateType": "full",
   "network": "mainnet",
   "chainId": 72010,
-  "apkUrl": "https://verdexswap.site/assets/downloads/Verdex-Android-1.22.0-build74.apk",
-  "sha256": "367bffa1a811b1f5cbedb900a9f0538945fc7053bb60fcead393d9b160d217ba",
+  "apkUrl": "https://verdexswap.site/assets/downloads/Verdex-Android-1.23.0-build75.apk",
+  "sha256": "66e11a040204f05640dc81f920d644cb2c0b80aeb2afafc84aabc8e66412a55a",
   "changelog": [
-    "NEW: Full platform overhaul release (Build 74)",
-    "FIXED: KYC submission case_id auto-resolution and direct profile image processing",
-    "FIXED: Profile picture upload invalid address error resolved",
-    "NEW: User UID display badge under profile with instant tap-to-copy",
-    "FIXED: Vault deposit address copy button & QR code rendering",
-    "FIXED: P2P trade creation custodial wallet lookup fallback",
-    "NEW: Master Web Admin Panel with P2P Orders, Trades, Wallets, KYC & Health modules"
+    "NEW: P2P Listing Edit & Delete functionality directly on user ad cards with modal bottom sheets",
+    "FIXED: P2P backend edit-order, delete-order, and pause-order handlers fully integrated",
+    "FIXED: Live database migrations verified across all 11 core Supabase tables",
+    "NEW: Real mining challenge, heartbeat, referral, and VP -> VDX token conversion",
+    "FIXED: Vault deposit address copy button & QR code rendering"
   ],
-  "releasedAt": "2026-07-21T22:55:00.000Z"
+  "releasedAt": "2026-07-21T23:25:00.000Z"
 }
