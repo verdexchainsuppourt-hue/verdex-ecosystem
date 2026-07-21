@@ -122,6 +122,50 @@ module.exports = async (req, res) => {
       return jsonResponse(res, 200, { success: true, message: `User ${user_id} has been unbanned and restored.` });
     }
 
+    if (action === 'ban-wallet') {
+      const { wallet_address, reason } = req.body || {};
+      if (!wallet_address) return jsonResponse(res, 400, { error: 'wallet_address required' });
+
+      const normAddr = wallet_address.trim().toLowerCase();
+      const { data: wal } = await supabase
+        .from('wallets')
+        .select('user_id')
+        .ilike('vdx_address', normAddr)
+        .maybeSingle();
+
+      if (wal && wal.user_id) {
+        await supabase.from('profiles').update({
+          is_banned: true,
+          ban_reason: reason || `Wallet ${normAddr} banned by admin`
+        }).eq('id', wal.user_id);
+      }
+
+      await logAudit(admin.id, 'wallet_banned', { resource_type: 'wallet', resource_id: normAddr, metadata: { reason } });
+      return jsonResponse(res, 200, { success: true, message: `Wallet ${normAddr} and associated profile have been banned.` });
+    }
+
+    if (action === 'unban-wallet') {
+      const { wallet_address } = req.body || {};
+      if (!wallet_address) return jsonResponse(res, 400, { error: 'wallet_address required' });
+
+      const normAddr = wallet_address.trim().toLowerCase();
+      const { data: wal } = await supabase
+        .from('wallets')
+        .select('user_id')
+        .ilike('vdx_address', normAddr)
+        .maybeSingle();
+
+      if (wal && wal.user_id) {
+        await supabase.from('profiles').update({
+          is_banned: false,
+          ban_reason: null
+        }).eq('id', wal.user_id);
+      }
+
+      await logAudit(admin.id, 'wallet_unbanned', { resource_type: 'wallet', resource_id: normAddr });
+      return jsonResponse(res, 200, { success: true, message: `Wallet ${normAddr} and associated profile have been unbanned.` });
+    }
+
     if (action === 'resolve-dispute') {
       const { trade_id, resolution, reason } = req.body || {};
       if (!trade_id || !resolution) return jsonResponse(res, 400, { error: 'trade_id and resolution required' });
