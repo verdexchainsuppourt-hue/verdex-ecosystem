@@ -1,28 +1,22 @@
 {
-  "version": "4.0.2",
-  "mandatory": true,
-  "minVersion": "3.3.0",
-  "productName": "Verdex Miner",
-  "releaseDate": "2026-07-21",
+  "version": "1.25.0",
+  "versionCode": 77,
+  "channel": "apk",
+  "updateMode": "in_app_apk",
+  "minVersion": "1.0.0",
+  "minVersionCode": 1,
+  "mandatory": false,
+  "updateType": "full",
   "network": "mainnet",
-  "proposedChainId": 72010,
-  "notes": "Mainnet product shift · KYC/AML + P2P APIs · Explorer shell · Android 1.24.0 build 76.",
-  "downloads": {
-    "windows": {
-      "url": "https://verdexswap.site/updates/Verdex-Miner-Setup-4.0.2.exe",
-      "fileName": "Verdex-Miner-Setup-4.0.2.exe",
-      "size": 87066846
-    },
-    "android": {
-      "url": "https://verdexswap.site/assets/downloads/Verdex-Android-1.24.0-build76.apk",
-      "fileName": "Verdex-Android-1.24.0-build76.apk"
-    }
-  },
-  "feedUrl": "https://verdexswap.site/updates",
-  "links": {
-    "explorer": "https://verdexswap.site/explorer",
-    "p2p": "https://verdexswap.site/p2p",
-    "network": "https://verdexswap.site/api/network",
-    "registry": "https://verdexswap.site/public-network.json"
-  }
+  "chainId": 72010,
+  "apkUrl": "https://verdexswap.site/assets/downloads/Verdex-Android-1.25.0-build77.apk",
+  "sha256": "771497c93fc570e0cb298038707051df54f4c86bd6e00060424aea3285372d77",
+  "changelog": [
+    "FIXED: P2P Order Creation error (createOrder backend route fully restored)",
+    "FIXED: VP to VDX token conversion (convertVpToVdx backend route fully restored)",
+    "FIXED: Mainnet Chain Explorer offline errors — real-time blocks, stats, and validator metrics now 100% active",
+    "NEW: Master Admin Panel Passcode protection (ch.199456) with strict IP rate limiting",
+    "NEW: Master Admin Panel Dispute Resolution (release to buyer / refund to seller) and User Ban/Unban management"
+  ],
+  "releasedAt": "2026-07-22T00:10:00.000Z"
 }

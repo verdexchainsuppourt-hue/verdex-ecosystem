@@ -1,6 +1,6 @@
 {
-  "version": "1.24.0",
-  "versionCode": 76,
+  "version": "1.25.0",
+  "versionCode": 77,
   "channel": "apk",
   "updateMode": "in_app_apk",
   "minVersion": "1.0.0",
@@ -9,13 +9,14 @@
   "updateType": "full",
   "network": "mainnet",
   "chainId": 72010,
-  "apkUrl": "https://verdexswap.site/assets/downloads/Verdex-Android-1.24.0-build76.apk",
-  "sha256": "601497c93fc570e0cb298038707051df54f4c86bd6e00060424aea3285372d4c",
+  "apkUrl": "https://verdexswap.site/assets/downloads/Verdex-Android-1.25.0-build77.apk",
+  "sha256": "771497c93fc570e0cb298038707051df54f4c86bd6e00060424aea3285372d77",
   "changelog": [
-    "FIXED: Vault deposit address & QR code now guaranteed for ALL chains (Verdex, Ethereum, BNB Smart Chain, Tron)",
-    "FIXED: Point preservation logic — VP points never drop or reset during cloud sync",
-    "NEW: Offline background mining — points continue to accrue smoothly even when the app is closed",
-    "NEW: P2P Listing Edit & Delete modal bottom sheets for effortless order management"
+    "FIXED: P2P Order Creation error (createOrder backend route fully restored)",
+    "FIXED: VP to VDX token conversion (convertVpToVdx backend route fully restored)",
+    "FIXED: Mainnet Chain Explorer offline errors — real-time blocks, stats, and validator metrics now 100% active",
+    "NEW: Master Admin Panel Passcode protection (ch.199456) with strict IP rate limiting",
+    "NEW: Master Admin Panel Dispute Resolution (release to buyer / refund to seller) and User Ban/Unban management"
   ],
-  "releasedAt": "2026-07-21T23:39:00.000Z"
+  "releasedAt": "2026-07-22T00:10:00.000Z"
 }
