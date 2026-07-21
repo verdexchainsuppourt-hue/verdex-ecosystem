@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "status": "WHITEPAPER_DERIVED_DESIGN_NOT_SIGNED_NOT_DEPLOYED",
+  "source": {
+    "document": "assets/verdex-whitepaper.pdf",
+    "sha256": "5c3b15d58906cb3c5373589296d872112c2c219cedc5f53fd10eddc3354bb458",
+    "version": "1.1",
+    "published": "July 2026",
+    "reviewedPages": 9
+  },
+  "network": {
+    "name": "Verdex Mainnet",
+    "protocol": "EVM-compatible Hyperledger Besu QBFT Proof-of-Authority",
+    "chainId": 72010,
+    "chainIdStatus": "PROPOSED_UNREGISTERED_AT_REVIEW_TIME_RECHECK_AT_GENESIS_CEREMONY",
+    "networkId": 72010,
+    "blockPeriodSeconds": 5,
+    "requestTimeoutSeconds": 10,
+    "epochLength": 30000,
+    "blockGasLimit": 30000000,
+    "minimumGasPriceWei": "1000000000",
+    "eip1559": true,
+    "consensusBlockRewardVDX": "0",
+    "minimumIndependentValidators": 4,
+    "maximumFaultyValidators": 1
+  },
+  "assets": {
+    "gasAsset": {
+      "status": "OPERATIONAL_NATIVE_GAS_ASSET_NOT_VDX_TOKEN_SUPPLY",
+      "policy": "Genesis gas allocations are limited to reviewed treasury and deployer addresses; balances are not VDX token allocations."
+    },
+    "vdx": {
+      "standard": "PRC20_EVM_CONTRACT",
+      "name": "VERDEX",
+      "symbol": "VDX",
+      "decimals": 18,
+      "fixedSupplyBaseUnits": "1000000000000000000000000000",
+      "fixedSupplyTokens": "1000000000",
+      "mintPolicy": "FULL_FIXED_SUPPLY_MINTED_ONCE_TO_SEPARATE_TIMELOCKED_DISTRIBUTION_VAULTS_NO_POST_DEPLOYMENT_MINT",
+      "consensusMinting": false,
+      "allocations": [
+        { "name": "Liquidity Mining & Farms", "percentage": 40, "tokens": "400000000" },
+        { "name": "Treasury & Ecosystem", "percentage": 20, "tokens": "200000000" },
+        { "name": "Team & Advisors", "percentage": 15, "tokens": "150000000" },
+        { "name": "Community & Airdrops", "percentage": 15, "tokens": "150000000" },
+        { "name": "Private Sale", "percentage": 10, "tokens": "100000000" }
+      ]
+    }
+  },
+  "mobileRewards": {
+    "dailyBaseMaximumVDXPerVerifiedAccount": "25",
+    "sourceAllocation": "Community & Airdrops or Liquidity Mining & Farms, subject to signed allocation policy",
+    "mechanism": "AUDITED_CAPPED_CLAIM_DISTRIBUTOR_NOT_CONSENSUS_MINING",
+    "requirements": [
+      "KYC-approved unique account",
+      "device and abuse controls",
+      "global epoch budget",
+      "per-account UTC-day idempotency key",
+      "Safe-funded reward vault",
+      "on-chain claim ledger and reconciliation"
+    ]
+  },
+  "security": {
+    "safeThreshold": "AT_LEAST_2_OF_3_HARDWARE_BACKED_OWNERS_PROPOSED_NOT_DEPLOYED",
+    "timelock": "MULTI_DAY_DELAY_REQUIRED_VALUE_TO_BE_RATIFIED",
+    "contractUpgradePolicy": "NON_UPGRADEABLE_CORE_CONTRACTS_NEW_VERSION_DEPLOYMENTS_ONLY",
+    "requiredIndependentAudits": 2,
+    "formalVerificationRequired": true,
+    "bugBountyRequired": true
+  },
+  "unresolvedReleaseGates": [
+    "Four independently controlled validator public addresses and enodes",
+    "Protected HSM or remote-signer key attestations",
+    "Final genesis timestamp and signed genesis hash",
+    "Native gas treasury and contract deployer public addresses",
+    "Public RPC and bootnode DNS endpoints",
+    "Deployed Safe and timelock addresses with owner attestations",
+    "Deployed VDX and protocol contract addresses and runtime-code hashes",
+    "Two independent audit reports and remediation sign-offs",
+    "Legal and KYC/AML operational approval"
+  ]
+}

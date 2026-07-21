@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-line;
+  }
+  html {
+    @apply scroll-smooth;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-abyss text-ink font-body;
+    background-image:
+      radial-gradient(ellipse 60% 40% at 20% -5%, rgba(36, 229, 150, 0.06), transparent),
+      radial-gradient(ellipse 50% 35% at 85% 105%, rgba(34, 211, 238, 0.04), transparent);
+    background-attachment: fixed;
+  }
+  ::selection {
+    @apply bg-emerald/30 text-ink;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #020706;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #0f3d28, #24e596, #0f3d28);
+    border-radius: 100px;
+    border: 2px solid #020706;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-emerald/60 ring-offset-2 ring-offset-abyss rounded-md;
+  }
+}
+
+@layer components {
+  /* Frosted glass panel */
+  .glass {
+    @apply bg-panel border border-line backdrop-blur-xl;
+  }
+
+  /* Premium gradient text */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(115deg, #b8ffe0 0%, #57ffb3 30%, #24e596 55%, #22d3ee 100%);
+  }
+
+  /* Subtle blockchain grid backdrop */
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(87, 255, 179, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(87, 255, 179, 0.035) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, black 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, black 30%, transparent 75%);
+  }
+
+  /* Fine glowing top-border used on cards */
+  .edge-glow {
+    position: relative;
+  }
+  .edge-glow::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 12%;
+    right: 12%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(87, 255, 179, 0.55), transparent);
+    pointer-events: none;
+  }
+
+  /* Number/mono values */
+  .mono {
+    @apply font-mono tabular-nums;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

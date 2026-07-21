@@ -735,12 +735,12 @@ a {
   object-fit: contain;
   filter: drop-shadow(0 0 80px rgba(34, 197, 94, 0.4)) drop-shadow(0 0 160px rgba(34, 197, 94, 0.15));
   z-index: 2;
-  animation: float 6s ease-in-out infinite;
+  animation: float 8s ease-in-out infinite;
 }
 
 @keyframes float {
-  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
-  50% { transform: translate(-50%, -50%) translateY(-20px); }
+  0%, 100% { transform: translate(-50%, -50%) scale(1); filter: drop-shadow(0 0 80px rgba(34, 197, 94, 0.4)) drop-shadow(0 0 160px rgba(34, 197, 94, 0.15)); }
+  50% { transform: translate(-50%, -50%) scale(1.025); filter: drop-shadow(0 0 100px rgba(34, 197, 94, 0.55)) drop-shadow(0 0 200px rgba(34, 197, 94, 0.25)); }
 }
 
 .orbit-ring {

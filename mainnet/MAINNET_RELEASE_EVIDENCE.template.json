@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "release": {
+    "releaseId": "REPLACE_WITH_IMMUTABLE_RELEASE_ID",
+    "protocolVersion": "REPLACE_WITH_REVIEWED_PROTOCOL_VERSION",
+    "sourceCommit": "REPLACE_WITH_REVIEWED_GIT_COMMIT",
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  "chain": {
+    "chainId": 0,
+    "genesisHash": "REPLACE_WITH_SIGNED_GENESIS_HASH",
+    "rpcEndpoints": [
+      "https://REPLACE_VALIDATOR_A_RPC.example",
+      "https://REPLACE_VALIDATOR_B_RPC.example",
+      "https://REPLACE_VALIDATOR_C_RPC.example",
+      "https://REPLACE_VALIDATOR_D_RPC.example"
+    ],
+    "signedGenesis": {
+      "artifactUrl": "https://REPLACE_PUBLIC_SIGNED_GENESIS_ARTIFACT.example/genesis.json",
+      "artifactSha256": "REPLACE_WITH_SHA256",
+      "authority": "REPLACE_WITH_OFFLINE_GENESIS_CEREMONY_AUTHORITY",
+      "signedAt": "2026-01-01T00:00:00.000Z",
+      "attestation": {
+        "algorithm": "ed25519",
+        "publicKeySpkiBase64": "REPLACE_WITH_CONFIGURED_GENESIS_TRUST_ROOT",
+        "signatureBase64": "REPLACE_WITH_OFFLINE_SIGNATURE"
+      }
+    }
+  },
+  "validators": [
+    {
+      "operatorId": "REPLACE_VALIDATOR_A_OPERATOR",
+      "validatorAddress": "REPLACE_VALIDATOR_A_PUBLIC_ADDRESS",
+      "rpcEndpoint": "https://REPLACE_VALIDATOR_A_RPC.example",
+      "signedAt": "2026-01-01T00:00:00.000Z",
+      "attestation": {
+        "algorithm": "ed25519",
+        "publicKeySpkiBase64": "REPLACE_WITH_PRE_REGISTERED_VALIDATOR_A_PUBLIC_KEY",
+        "signatureBase64": "REPLACE_WITH_VALIDATOR_A_OFFLINE_SIGNATURE"
+      }
+    },
+    {
+      "operatorId": "REPLACE_VALIDATOR_B_OPERATOR",
+      "validatorAddress": "REPLACE_VALIDATOR_B_PUBLIC_ADDRESS",
+      "rpcEndpoint": "https://REPLACE_VALIDATOR_B_RPC.example",
+      "signedAt": "2026-01-01T00:00:00.000Z",
+      "attestation": {
+        "algorithm": "ed25519",
+        "publicKeySpkiBase64": "REPLACE_WITH_PRE_REGISTERED_VALIDATOR_B_PUBLIC_KEY",
+        "signatureBase64": "REPLACE_WITH_VALIDATOR_B_OFFLINE_SIGNATURE"
+      }
+    },
+    {
+      "operatorId": "REPLACE_VALIDATOR_C_OPERATOR",
+      "validatorAddress": "REPLACE_VALIDATOR_C_PUBLIC_ADDRESS",
+      "rpcEndpoint": "https://REPLACE_VALIDATOR_C_RPC.example",
+      "signedAt": "2026-01-01T00:00:00.000Z",
+      "attestation": {
+        "algorithm": "ed25519",
+        "publicKeySpkiBase64": "REPLACE_WITH_PRE_REGISTERED_VALIDATOR_C_PUBLIC_KEY",
+        "signatureBase64": "REPLACE_WITH_VALIDATOR_C_OFFLINE_SIGNATURE"
+      }
+    },
+    {
+      "operatorId": "REPLACE_VALIDATOR_D_OPERATOR",
+      "validatorAddress": "REPLACE_VALIDATOR_D_PUBLIC_ADDRESS",
+      "rpcEndpoint": "https://REPLACE_VALIDATOR_D_RPC.example",
+      "signedAt": "2026-01-01T00:00:00.000Z",
+      "attestation": {
+        "algorithm": "ed25519",
+        "publicKeySpkiBase64": "REPLACE_WITH_PRE_REGISTERED_VALIDATOR_D_PUBLIC_KEY",
+        "signatureBase64": "REPLACE_WITH_VALIDATOR_D_OFFLINE_SIGNATURE"
+      }
+    }
+  ],
+  "governance": {
+    "safeAddress": "REPLACE_WITH_DEPLOYED_SAFE_ADDRESS",
+    "owners": [
+      "REPLACE_WITH_SAFE_OWNER_1",
+      "REPLACE_WITH_SAFE_OWNER_2",
+      "REPLACE_WITH_SAFE_OWNER_3"
+    ],
+    "threshold": 2
+  },
+  "contracts": {
+    "assetModel": "prc20",
+    "vdx": {
+      "address": "REPLACE_WITH_DEPLOYED_VDX_ADDRESS",
+      "runtimeCodeSha256": "REPLACE_WITH_VDX_RUNTIME_CODE_SHA256",
+      "symbol": "VDX",
+      "decimals": 18
+    },
+    "p2pEscrow": {
+      "address": "REPLACE_WITH_DEPLOYED_ESCROW_ADDRESS",
+      "runtimeCodeSha256": "REPLACE_WITH_ESCROW_RUNTIME_CODE_SHA256"
+    }
+  },
+  "audit": {
+    "reportUrl": "https://REPLACE_INDEPENDENT_AUDITOR.example/reports/verdex-mainnet.pdf",
+    "reportSha256": "REPLACE_WITH_AUDIT_REPORT_SHA256",
+    "issuedAt": "2026-01-01T00:00:00.000Z",
+    "scope": {
+      "vdxRuntimeCodeSha256": "REPLACE_WITH_VDX_RUNTIME_CODE_SHA256",
+      "p2pEscrowRuntimeCodeSha256": "REPLACE_WITH_ESCROW_RUNTIME_CODE_SHA256",
+      "nodeClientRelease": "REPLACE_WITH_REVIEWED_NODE_CLIENT_RELEASE",
+      "nodeClientSourceCommit": "REPLACE_WITH_REVIEWED_NODE_CLIENT_COMMIT",
+      "consensusEngine": "REPLACE_WITH_REVIEWED_CONSENSUS_ENGINE"
+    },
+    "remediation": {
+      "status": "closed",
+      "reportSha256": "REPLACE_WITH_AUDIT_REPORT_SHA256",
+      "signedAt": "2026-01-01T00:00:00.000Z",
+      "scope": {
+        "vdxRuntimeCodeSha256": "REPLACE_WITH_VDX_RUNTIME_CODE_SHA256",
+        "p2pEscrowRuntimeCodeSha256": "REPLACE_WITH_ESCROW_RUNTIME_CODE_SHA256",
+        "nodeClientRelease": "REPLACE_WITH_REVIEWED_NODE_CLIENT_RELEASE",
+        "nodeClientSourceCommit": "REPLACE_WITH_REVIEWED_NODE_CLIENT_COMMIT",
+        "consensusEngine": "REPLACE_WITH_REVIEWED_CONSENSUS_ENGINE"
+      },
+      "attestation": {
+        "algorithm": "ed25519",
+        "publicKeySpkiBase64": "REPLACE_WITH_CONFIGURED_AUDITOR_TRUST_ROOT",
+        "signatureBase64": "REPLACE_WITH_AUDITOR_SIGNATURE"
+      }
+    }
+  },
+  "legalKycApproval": {
+    "approvalDocumentUrl": "https://REPLACE_REDACTED_LEGAL_APPROVAL.example/verdex-p2p-kyc-approval.pdf",
+    "approvalDocumentSha256": "REPLACE_WITH_APPROVAL_DOCUMENT_SHA256",
+    "approval": {
+      "approvalId": "REPLACE_WITH_LEGAL_APPROVAL_ID",
+      "approverOrganisation": "REPLACE_WITH_LAW_FIRM_OR_COMPLIANCE_ENTITY",
+      "approvedAt": "2026-01-01T00:00:00.000Z",
+      "expiresAt": "2027-01-01T00:00:00.000Z",
+      "p2pApproved": true,
+      "manualKycAmlApproved": true,
+      "jurisdictions": ["REPLACE_WITH_ISO3166_COUNTRY"]
+    },
+    "attestation": {
+      "algorithm": "ed25519",
+      "publicKeySpkiBase64": "REPLACE_WITH_CONFIGURED_COMPLIANCE_TRUST_ROOT",
+      "signatureBase64": "REPLACE_WITH_COMPLIANCE_SIGNATURE"
+    }
+  }
+}

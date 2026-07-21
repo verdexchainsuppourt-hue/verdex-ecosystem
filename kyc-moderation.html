@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verdex KYC/AML Moderation</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="/js/auth.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#010301;--surface:#0a1a0a;--surface2:#0f2410;
+  --primary:#22c55e;--primary-light:#4ade80;
+  --text:#f0fdf4;--muted:#86a389;--dim:#4a6d4d;
+  --border:rgba(34,197,94,.15);--danger:#ef4444;--warning:#f59e0b;--info:#3b82f6;
+  --radius:12px
+}
+body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.top{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:var(--surface)}
+.brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px}
+.brand span{color:var(--primary-light)}
+.brand small{font-size:10px;background:var(--primary);color:#000;padding:2px 8px;border-radius:4px;margin-left:8px}
+.wrap{display:grid;grid-template-columns:1fr 1.1fr;gap:16px;padding:16px 24px;max-width:1400px;margin:0 auto}
+@media(max-width:960px){.wrap{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.card h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 8px;color:var(--muted);font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:10px 8px;border-bottom:1px solid rgba(34,197,94,.06);cursor:pointer}
+tr:hover td{background:rgba(34,197,94,.04)}
+tr.active td{background:rgba(34,197,94,.1)}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-yellow{background:rgba(245,158,11,.15);color:var(--warning)}
+.badge-green{background:rgba(34,197,94,.15);color:var(--primary-light)}
+.badge-red{background:rgba(239,68,68,.15);color:var(--danger)}
+.badge-blue{background:rgba(59,130,246,.15);color:var(--info)}
+.badge-gray{background:rgba(134,163,137,.15);color:var(--muted)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:inherit}
+.btn-primary{background:var(--primary);color:#000}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-danger{background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.3)}
+.btn-warn{background:rgba(245,158,11,.15);color:var(--warning);border:1px solid rgba(245,158,11,.3)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+input,select,textarea{width:100%;background:rgba(34,197,94,.05);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;font-family:inherit}
+textarea{min-height:72px;resize:vertical}
+.scores{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.score{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.score b{display:block;font-size:18px;color:var(--primary-light)}
+.score span{font-size:11px;color:var(--muted)}
+.muted{color:var(--muted);font-size:13px}
+.err{color:var(--danger);font-size:13px;margin-top:8px}
+.ok{color:var(--primary-light);font-size:13px;margin-top:8px}
+.login{max-width:420px;margin:80px auto;padding:24px}
+.ev-list{list-style:none;margin:8px 0}
+.ev-list li{padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">VERDEX <span>KYC/AML</span><small>MODERATION</small></div>
+  <div id="who" class="muted">Not signed in</div>
+</div>
+
+<div id="loginView" class="login card">
+  <h2>Staff sign-in</h2>
+  <p class="muted" style="margin:8px 0 16px">Use a moderator or administrator account. Evidence access is audited.</p>
+  <label>Email</label>
+  <input id="email" type="email" autocomplete="username">
+  <label>Password</label>
+  <input id="password" type="password" autocomplete="current-password">
+  <div class="row">
+    <button class="btn btn-primary" id="btnLogin">Sign in</button>
+  </div>
+  <div id="loginErr" class="err hidden"></div>
+</div>
+
+<div id="appView" class="hidden">
+  <div class="wrap">
+    <div class="card">
+      <h2>Review queue</h2>
+      <div class="row" style="margin-bottom:12px">
+        <select id="filterStatus" style="max-width:180px">
+          <option value="">All queue</option>
+          <option value="submitted">submitted</option>
+          <option value="in_review">in_review</option>
+          <option value="needs_resubmission">needs_resubmission</option>
+        </select>
+        <button class="btn btn-outline" id="btnRefresh">Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Case</th>
+              <th>Country</th>
+              <th>Status</th>
+              <th>Doc</th>
+              <th>Live</th>
+              <th>Face</th>
+              <th>SLA</th>
+            </tr>
+          </thead>
+          <tbody id="queueBody">
+            <tr><td colspan="7" class="muted">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Case detail</h2>
+      <div id="detailEmpty" class="muted">Select a case from the queue.</div>
+      <div id="detail" class="hidden">
+        <div id="detailMeta" class="muted"></div>
+        <div class="scores">
+          <div class="score"><b id="scDoc">—</b><span>Document</span></div>
+          <div class="score"><b id="scLive">—</b><span>Liveness</span></div>
+          <div class="score"><b id="scFace">—</b><span>Face match</span></div>
+        </div>
+        <h2 style="margin-top:8px">Evidence</h2>
+        <ul class="ev-list" id="evList"></ul>
+        <div class="row">
+          <button class="btn btn-outline" id="btnClaim">Claim case</button>
+        </div>
+
+        <h2 style="margin-top:16px">Decision</h2>
+        <label>Document confidence (0–1)</label>
+        <input id="inDoc" type="number" min="0" max="1" step="0.01" value="0.95">
+        <label>Liveness confidence (0–1)</label>
+        <input id="inLive" type="number" min="0" max="1" step="0.01" value="0.95">
+        <label>Face match confidence (0–1)</label>
+        <input id="inFace" type="number" min="0" max="1" step="0.01" value="0.92">
+        <label>Reason code</label>
+        <input id="inReason" placeholder="e.g. documents_clear_face_match_ok">
+        <label><input type="checkbox" id="inAml" checked style="width:auto;margin-right:8px"> AML clear (sanctions/PEP/manual check done)</label>
+        <label><input type="checkbox" id="inSecond" style="width:auto;margin-right:8px"> Second approval (required if scores are low)</label>
+        <div class="row">
+          <button class="btn btn-primary" id="btnApprove">Approve + enable P2P</button>
+          <button class="btn btn-warn" id="btnResub">Request resubmission</button>
+          <button class="btn btn-danger" id="btnReject">Reject</button>
+          <button class="btn btn-outline" id="btnAml">AML hold</button>
+        </div>
+        <div id="detailMsg" class="ok hidden"></div>
+        <div id="detailErr" class="err hidden"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const SUPABASE_URL = window.VERDEX_SUPABASE_URL
+    || (window.__VERDEX_AUTH && window.__VERDEX_AUTH.url)
+    || 'https://unbzescopxtmtbrgqlhh.supabase.co';
+  const SUPABASE_ANON = window.VERDEX_SUPABASE_ANON
+    || (window.__VERDEX_AUTH && window.__VERDEX_AUTH.anon)
+    || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVuYnplc2NvcHh0bXRicmdxbGhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1Njc1MjcsImV4cCI6MjA5OTE0MzUyN30.jHm7uIV_fBWIP-EFl3d2AY5P42X3tcIIbEGwNfSYiPM';
+  let accessToken = null;
+  let selectedCaseId = null;
+  let sb = null;
+
+  function $(id) { return document.getElementById(id); }
+  function show(el, on) { el.classList.toggle('hidden', !on); }
+  function badge(status) {
+    const map = {
+      submitted: 'badge-yellow',
+      in_review: 'badge-blue',
+      needs_resubmission: 'badge-warn',
+      approved: 'badge-green',
+      rejected: 'badge-red'
+    };
+    const cls = map[status] || 'badge-gray';
+    return '<span class="badge ' + cls + '">' + status + '</span>';
+  }
+  function fmtScore(v) {
+    if (v == null || v === '') return '—';
+    return Number(v).toFixed(2);
+  }
+  function uuid() {
+    if (crypto.randomUUID) return crypto.randomUUID();
+    return 'idemp-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+  }
+
+  async function api(path, opts) {
+    opts = opts || {};
+    const headers = Object.assign({
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + accessToken,
+      'X-Trace-Id': uuid()
+    }, opts.headers || {});
+    if (opts.method && opts.method !== 'GET') {
+      headers['X-Idempotency-Key'] = opts.idempotencyKey || uuid();
+    }
+    const res = await fetch(path, {
+      method: opts.method || 'GET',
+      headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    });
+    const data = await res.json().catch(function () { return {}; });
+    if (!res.ok) {
+      const msg = (data.error && data.error.message) || data.error || ('HTTP ' + res.status);
+      throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+    }
+    return data;
+  }
+
+  async function ensureSession() {
+    if (window.verdexAuth && typeof window.verdexAuth.getSession === 'function') {
+      const session = await window.verdexAuth.getSession();
+      if (session && session.access_token) {
+        accessToken = session.access_token;
+        return session;
+      }
+    }
+    if (sb) {
+      const { data } = await sb.auth.getSession();
+      if (data && data.session) {
+        accessToken = data.session.access_token;
+        return data.session;
+      }
+    }
+    return null;
+  }
+
+  async function boot() {
+    try {
+      if (window.supabase && SUPABASE_URL && SUPABASE_ANON) {
+        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+      }
+    } catch (_) {}
+
+    const session = await ensureSession();
+    if (session) {
+      enterApp(session);
+    } else {
+      show($('loginView'), true);
+      show($('appView'), false);
+    }
+  }
+
+  function enterApp(session) {
+    show($('loginView'), false);
+    show($('appView'), true);
+    const email = (session.user && session.user.email) || 'staff';
+    $('who').textContent = email;
+    loadQueue();
+  }
+
+  $('btnLogin').onclick = async function () {
+    show($('loginErr'), false);
+    try {
+      if (!sb) throw new Error('Supabase client not configured on this page');
+      const email = $('email').value.trim();
+      const password = $('password').value;
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      accessToken = data.session.access_token;
+      enterApp(data.session);
+    } catch (e) {
+      $('loginErr').textContent = e.message || String(e);
+      show($('loginErr'), true);
+    }
+  };
+
+  $('btnRefresh').onclick = function () { loadQueue(); };
+  $('filterStatus').onchange = function () { loadQueue(); };
+
+  async function loadQueue() {
+    try {
+      const status = $('filterStatus').value;
+      const q = status ? ('&status=' + encodeURIComponent(status)) : '';
+      const data = await api('/api/kyc?action=admin-queue' + q);
+      const body = $('queueBody');
+      if (!data.items || !data.items.length) {
+        body.innerHTML = '<tr><td colspan="7" class="muted">Queue empty</td></tr>';
+        return;
+      }
+      body.innerHTML = data.items.map(function (it) {
+        return '<tr data-id="' + it.case_id + '">' +
+          '<td>' + String(it.case_id).slice(0, 8) + '…</td>' +
+          '<td>' + (it.country_code || '—') + '</td>' +
+          '<td>' + badge(it.status) + '</td>' +
+          '<td>' + fmtScore(it.scores && it.scores.document) + '</td>' +
+          '<td>' + fmtScore(it.scores && it.scores.liveness) + '</td>' +
+          '<td>' + fmtScore(it.scores && it.scores.face_match) + '</td>' +
+          '<td>' + (it.sla_minutes != null ? it.sla_minutes + 'm' : '—') + '</td>' +
+          '</tr>';
+      }).join('');
+      Array.prototype.forEach.call(body.querySelectorAll('tr[data-id]'), function (tr) {
+        tr.onclick = function () {
+          Array.prototype.forEach.call(body.querySelectorAll('tr'), function (r) { r.classList.remove('active'); });
+          tr.classList.add('active');
+          openCase(tr.getAttribute('data-id'));
+        };
+      });
+    } catch (e) {
+      $('queueBody').innerHTML = '<tr><td colspan="7" class="err">' + (e.message || e) + '</td></tr>';
+    }
+  }
+
+  async function openCase(id) {
+    selectedCaseId = id;
+    show($('detailEmpty'), false);
+    show($('detail'), true);
+    show($('detailMsg'), false);
+    show($('detailErr'), false);
+    try {
+      const data = await api('/api/kyc?action=admin-case&id=' + encodeURIComponent(id) + '&sub=detail');
+      const c = data.case;
+      $('detailMeta').innerHTML =
+        '<div><strong>Case</strong> ' + c.id + '</div>' +
+        '<div><strong>Subject</strong> ' + c.subject_user_id + '</div>' +
+        '<div><strong>Status</strong> ' + badge(c.status) + ' · <strong>Country</strong> ' + c.country_code +
+        ' · <strong>Risk</strong> ' + c.risk_tier + '</div>' +
+        '<div><strong>Submitted</strong> ' + (c.submitted_at || '—') + '</div>';
+
+      const last = (data.review_actions || []).slice().reverse()[0] || {};
+      $('scDoc').textContent = fmtScore(last.document_confidence);
+      $('scLive').textContent = fmtScore(last.liveness_confidence);
+      $('scFace').textContent = fmtScore(last.face_match_confidence);
+
+      const ev = data.evidence || [];
+      $('evList').innerHTML = ev.length ? ev.map(function (e) {
+        return '<li><span>' + e.kind + ' · ' + e.content_type +
+          (e.liveness_completed ? ' · live✓' : '') +
+          '</span><button class="btn btn-outline" data-ev="' + e.id + '">View (60s)</button></li>';
+      }).join('') : '<li class="muted">No evidence metadata</li>';
+
+      Array.prototype.forEach.call($('evList').querySelectorAll('button[data-ev]'), function (btn) {
+        btn.onclick = async function (evnt) {
+          evnt.stopPropagation();
+          try {
+            const r = await api('/api/kyc?action=admin-case&id=' + encodeURIComponent(id) + '&sub=evidence-url', {
+              method: 'POST',
+              body: { evidence_id: btn.getAttribute('data-ev') }
+            });
+            window.open(r.url, '_blank', 'noopener,noreferrer');
+          } catch (err) {
+            alert(err.message || err);
+          }
+        };
+      });
+    } catch (e) {
+      $('detailErr').textContent = e.message || String(e);
+      show($('detailErr'), true);
+    }
+  }
+
+  async function decide(decision) {
+    if (!selectedCaseId) return;
+    show($('detailMsg'), false);
+    show($('detailErr'), false);
+    try {
+      const body = {
+        decision: decision,
+        reason_code: $('inReason').value.trim() || decision,
+        document_confidence: Number($('inDoc').value),
+        liveness_confidence: Number($('inLive').value),
+        face_match_confidence: Number($('inFace').value),
+        aml_clear: $('inAml').checked,
+        second_approval: $('inSecond').checked
+      };
+      const data = await api(
+        '/api/kyc?action=admin-case&id=' + encodeURIComponent(selectedCaseId) + '&sub=decision',
+        { method: 'POST', body: body }
+      );
+      $('detailMsg').textContent = data.message || ('Decision recorded: ' + (data.status || decision));
+      show($('detailMsg'), true);
+      loadQueue();
+      openCase(selectedCaseId);
+    } catch (e) {
+      $('detailErr').textContent = e.message || String(e);
+      show($('detailErr'), true);
+    }
+  }
+
+  $('btnClaim').onclick = async function () {
+    if (!selectedCaseId) return;
+    try {
+      await api('/api/kyc?action=admin-case&id=' + encodeURIComponent(selectedCaseId) + '&sub=claim', { method: 'POST', body: {} });
+      openCase(selectedCaseId);
+      loadQueue();
+    } catch (e) {
+      alert(e.message || e);
+    }
+  };
+  $('btnApprove').onclick = function () { decide('approve'); };
+  $('btnReject').onclick = function () { decide('reject'); };
+  $('btnResub').onclick = function () { decide('request_resubmission'); };
+  $('btnAml').onclick = function () { decide('aml_hold'); };
+
+  boot();
+})();
+</script>
+</body>
+</html>

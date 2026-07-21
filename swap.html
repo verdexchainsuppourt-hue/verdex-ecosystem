@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verdex Swap — AMM Aggregator | 0.25% Fee</title>
+  <meta name="description" content="Verdex Swap AMM aggregator: multi-hop routing on Chain 7201. Constant product x×y=k. Fees: 0.17% LPs, 0.05% treasury, 0.03% VDX burn.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://verdexswap.site/swap.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Verdex Swap — AMM Aggregator">
+  <meta property="og:description" content="Smart routing · 0.25% fees · self-custody on Verdex L1 (7201).">
+  <meta property="og:url" content="https://verdexswap.site/swap.html">
+  <meta property="og:image" content="https://verdexswap.site/assets/verdex-token.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Verdex Swap — AMM Aggregator">
+  <meta name="twitter:description" content="Multi-hop AMM with 0.25% fee split. Mine VP · Trade on Verdex.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=4.0.0">
+  <link rel="stylesheet" href="css/premium.css?v=4.0.0">
+  <script src="js/network-config.js?v=4.0.0"></script>
+  <style>
+    .swap-page { min-height: 100vh; padding: 140px 20px 90px; position: relative; z-index: 1; }
+
+    .status-banner {
+      max-width: 480px; margin: 0 auto 22px;
+      padding: 13px 18px; border-radius: 14px;
+      background: rgba(34, 197, 94, 0.07);
+      border: 1px solid rgba(74, 222, 128, 0.25);
+      color: #a7f3d0; font-size: 13px; line-height: 1.5;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04);
+      animation: swapRise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .status-banner code { color: #4ade80; }
+
+    .swap-shell {
+      max-width: 480px; margin: 0 auto;
+      background: linear-gradient(165deg, rgba(16, 26, 20, 0.9), rgba(6, 12, 9, 0.92));
+      border: 1px solid rgba(74, 222, 128, 0.18);
+      border-radius: 24px;
+      padding: 30px;
+      box-shadow: 0 32px 90px rgba(0,0,0,0.55), 0 0 60px rgba(34,197,94,0.06), inset 0 1px 0 rgba(255,255,255,0.05);
+      backdrop-filter: blur(24px);
+      position: relative;
+      overflow: hidden;
+      animation: swapRise 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+    }
+    .swap-shell::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 10%; right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(134, 239, 172, 0.6), transparent);
+    }
+    @keyframes swapRise {
+      from { opacity: 0; transform: translateY(34px) scale(0.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .swap-shell h1 {
+      font-family: Syne, sans-serif;
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+      background: linear-gradient(120deg, #86efac, #4ade80, #22c55e);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .swap-sub { color: rgba(240,253,244,0.5); font-size: 0.88rem; margin-bottom: 24px; line-height: 1.55; }
+    .swap-sub code { color: #4ade80; font-family: 'JetBrains Mono', monospace; font-size: 0.8em; }
+
+    .swap-field {
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(134, 239, 172, 0.09);
+      border-radius: 16px;
+      padding: 15px 17px;
+      margin-bottom: 12px;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+    }
+    .swap-field:focus-within {
+      border-color: rgba(74, 222, 128, 0.45);
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12), 0 0 24px rgba(34,197,94,0.08);
+      background: rgba(0,0,0,0.45);
+    }
+    .swap-field label {
+      display: block; font-size: 10.5px; text-transform: uppercase;
+      letter-spacing: 1.5px; color: rgba(240,253,244,0.4); margin-bottom: 8px; font-weight: 600;
+    }
+    .swap-row { display: flex; gap: 10px; align-items: center; }
+    .swap-row input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: #f0fdf4; font-size: 1.4rem; font-weight: 600; font-family: Inter, sans-serif;
+      min-width: 0;
+    }
+    .swap-row input::placeholder { color: rgba(240,253,244,0.25); }
+    .swap-row select {
+      background: rgba(34,197,94,0.1); border: 1px solid rgba(74,222,128,0.3);
+      color: #4ade80; border-radius: 999px; padding: 8px 14px; font-weight: 700;
+      font-size: 13px; cursor: pointer; outline: none;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    }
+    .swap-row select:hover { background: rgba(34,197,94,0.2); border-color: #4ade80; transform: translateY(-1px); }
+    .swap-row select option { background: #06120b; color: #4ade80; }
+
+    .swap-arrow {
+      width: 42px; height: 42px; margin: -3px auto 9px;
+      border-radius: 13px; border: 1px solid rgba(74,222,128,0.25);
+      background: rgba(34,197,94,0.08); color: #4ade80;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 18px;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+    .swap-arrow:hover { background: #4ade80; color: #04140c; transform: rotate(180deg) scale(1.06); box-shadow: 0 0 24px rgba(74,222,128,0.4); }
+
+    .fee-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+      margin: 18px 0 20px;
+    }
+    .fee-pill {
+      text-align: center; padding: 11px 6px; border-radius: 12px;
+      background: rgba(0,0,0,0.3); border: 1px solid rgba(134,239,172,0.08);
+      font-size: 11px; color: rgba(240,253,244,0.5);
+      transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .fee-pill:hover { border-color: rgba(74,222,128,0.35); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+    .fee-pill strong {
+      display: block; font-size: 14px; margin-bottom: 2px;
+      background: linear-gradient(180deg, #bbf7d0, #4ade80);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .swap-btn {
+      width: 100%; border: none; border-radius: 14px; padding: 15px;
+      font-weight: 800; font-size: 14px; letter-spacing: 0.8px; text-transform: uppercase;
+      font-family: 'Space Grotesk', Inter, sans-serif;
+      background: linear-gradient(135deg, #4ade80, #22c55e 50%, #15803d); color: #04140c;
+      cursor: pointer; box-shadow: 0 8px 28px rgba(34,197,94,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+      position: relative; overflow: hidden;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .swap-btn::after {
+      content: '';
+      position: absolute; top: 0; left: -80%;
+      width: 45%; height: 100%;
+      background: linear-gradient(105deg, transparent, rgba(255,255,255,0.4), transparent);
+      transform: skewX(-22deg);
+      transition: left 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .swap-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(34,197,94,0.45); }
+    .swap-btn:hover:not(:disabled)::after { left: 130%; }
+    .swap-btn:active:not(:disabled) { transform: scale(0.98); }
+    .swap-btn:disabled { opacity: 0.55; cursor: not-allowed; filter: grayscale(0.3); }
+
+    .swap-meta {
+      margin-top: 20px; font-size: 12px; color: rgba(240,253,244,0.42);
+      font-family: 'JetBrains Mono', monospace; line-height: 1.8;
+      border-top: 1px solid rgba(134,239,172,0.08); padding-top: 16px;
+    }
+    .swap-meta a { color: #4ade80; transition: color 0.2s ease, text-shadow 0.2s ease; }
+    .swap-meta a:hover { color: #86efac; text-shadow: 0 0 12px rgba(74,222,128,0.5); }
+
+    .route-box {
+      margin-top: 12px; padding: 11px 14px; border-radius: 12px;
+      background: rgba(34,197,94,0.05); border: 1px dashed rgba(74,222,128,0.22);
+      font-size: 12px; color: rgba(240,253,244,0.62);
+      font-family: 'JetBrains Mono', monospace;
+      transition: border-color 0.3s ease;
+    }
+    .route-box:hover { border-color: rgba(74,222,128,0.45); }
+
+    .navbar .logo span {
+      background: linear-gradient(135deg, #f0fdf4, #86efac);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Verdex Swap",
+    "url": "https://verdexswap.site/swap.html",
+    "description": "Verdex AMM aggregator with multi-hop routing and 0.25% protocol fee.",
+    "applicationCategory": "FinanceApplication",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+</head>
+<body>
+  <!-- Ambient Aurora Background -->
+  <div class="aurora" aria-hidden="true">
+    <div class="aurora-blob b1"></div>
+    <div class="aurora-blob b2"></div>
+    <div class="aurora-blob b3"></div>
+  </div>
+  <div class="grain-overlay" aria-hidden="true"></div>
+  <div class="green-corner-tl"></div>
+  <div class="green-corner-br"></div>
+  <div class="grid-overlay"></div>
+
+  <nav class="navbar" id="navbar" style="position:fixed;top:0;left:0;right:0;z-index:50;">
+    <div class="container nav-container">
+      <a href="index.html" class="logo">
+        <img src="assets/verdex-token.png?v=3.1.2" class="logo-icon logo-filter" alt="Verdex">
+        <span>Verdex</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="swap.html" class="active" style="color:#4ade80;">Swap</a></li>
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><a href="explorer/">Explorer</a></li>
+        <li><a href="whitepaper.html">Whitepaper</a></li>
+      </ul>
+      <button class="btn btn-primary nav-cta" id="btnConnect" type="button">Connect Wallet</button>
+    </div>
+  </nav>
+
+  <main class="swap-page">
+    <div class="status-banner" id="statusBanner">
+      <strong>Live on Verdex Testnet.</strong> VerdexAMM
+      <code id="ammAddrShort">0x01d2…b48e</code> · pools WVDX / USDT / ALP · fee 0.25%.
+    </div>
+
+    <div class="swap-shell">
+      <h1>Verdex Swap</h1>
+      <p class="swap-sub">AMM aggregator · multi-hop routing · constant product <code>x × y = k</code> · Chain ID <span id="chainIdLabel">7201</span></p>
+
+      <div class="swap-field">
+        <label>You pay</label>
+        <div class="swap-row">
+          <input type="number" id="amountIn" placeholder="0.0" min="0" step="any" value="1">
+          <select id="tokenIn">
+            <option value="ALP">ALP</option>
+            <option value="WVDX">WVDX</option>
+            <option value="USDT">USDT</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="swap-arrow" id="flipTokens" title="Flip">⇅</div>
+
+      <div class="swap-field">
+        <label>You receive (est.)</label>
+        <div class="swap-row">
+          <input type="text" id="amountOut" placeholder="—" readonly>
+          <select id="tokenOut">
+            <option value="USDT">USDT</option>
+            <option value="WVDX">WVDX</option>
+            <option value="ALP">ALP</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="fee-grid">
+        <div class="fee-pill"><strong>0.17%</strong>LPs</div>
+        <div class="fee-pill"><strong>0.05%</strong>Treasury</div>
+        <div class="fee-pill"><strong>0.03%</strong>Burn</div>
+      </div>
+
+      <div class="swap-field" style="margin-bottom:16px;">
+        <label>Slippage tolerance</label>
+        <div class="swap-row">
+          <input type="number" id="slippage" value="0.5" min="0.1" max="50" step="0.1" style="font-size:1rem;">
+          <span style="color:#00ff88;font-weight:700;">%</span>
+        </div>
+      </div>
+
+      <button class="swap-btn" id="btnSwap" type="button">Refresh Quote</button>
+      <p style="text-align:center;margin-top:10px;font-size:12px;color:rgba(255,255,255,0.4);">
+        Quotes are live on-chain. Wallet-signed swaps coming next.
+      </p>
+
+      <div class="route-box" id="routeBox">
+        Route: <span id="routeText">querying VerdexAMM…</span>
+      </div>
+
+      <div class="swap-meta">
+        Fee total: <span id="feeTotal">0.25%</span><br>
+        Contract: <span id="ammFull" style="word-break:break-all;">—</span><br>
+        Formula: amountOut = (amountIn × 9975 × rOut) / (rIn × 10000 + amountIn × 9975)<br>
+        Docs: <a href="verdex-developer-docs.html">Developer docs</a> ·
+        <a href="whitepaper.html">Whitepaper</a> ·
+        <a href="explorer/">Explorer</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const net = window.VERDEX_NETWORK || { chainId: 7201, ammFees: { totalBps: 25 } };
+      const amm = (net.contracts && (net.contracts.VerdexAMM || net.contracts.VerdexAggregator)) || '0x01d23206724793af4d26104946094333282db48e';
+      const rpcBase = net.liveRpcBase || 'https://verdex-ecosystem-production.up.railway.app';
+      document.getElementById('chainIdLabel').textContent = net.chainId || 7201;
+      document.getElementById('ammFull').textContent = amm;
+      document.getElementById('ammAddrShort').textContent = amm.slice(0, 6) + '…' + amm.slice(-4);
+      if (net.ammFees) {
+        document.getElementById('feeTotal').textContent = (net.ammFees.totalBps / 100) + '%';
+      }
+
+      function toWei(n) {
+        // simple 18-decimal conversion for UI floats
+        const s = String(n);
+        if (!s || isNaN(Number(s))) return '0';
+        const [w, f = ''] = s.split('.');
+        const frac = (f + '000000000000000000').slice(0, 18);
+        return BigInt(w || '0') * 10n ** 18n + BigInt(frac || '0');
+      }
+      function fromWei(bi) {
+        const s = bi.toString().padStart(19, '0');
+        const whole = s.slice(0, -18) || '0';
+        const frac = s.slice(-18).replace(/0+$/, '');
+        return frac ? whole + '.' + frac : whole;
+      }
+
+      async function ethCall(method, args) {
+        const body = {
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'eth_call',
+          params: [{
+            to: amm,
+            data: JSON.stringify({ method, args })
+          }, 'latest']
+        };
+        const res = await fetch(rpcBase + '/rpc', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const j = await res.json();
+        if (j.error) throw new Error(j.error.message || 'rpc error');
+        if (j.result === '0x' || j.result == null) throw new Error('empty result');
+        try { return JSON.parse(j.result); } catch { return j.result; }
+      }
+
+      let quoteTimer = null;
+      async function preview() {
+        const a = document.getElementById('tokenIn').value;
+        const b = document.getElementById('tokenOut').value;
+        const amt = document.getElementById('amountIn').value;
+        if (!amt || Number(amt) <= 0 || a === b) {
+          document.getElementById('amountOut').value = '—';
+          document.getElementById('routeText').textContent = a === b ? 'Select different tokens' : 'Enter amount';
+          return;
+        }
+        document.getElementById('routeText').textContent = 'Fetching best route on-chain…';
+        try {
+          const wei = toWei(amt).toString();
+          const route = await ethCall('findBestRoute', [a, b, wei]);
+          const out = route && (route.amountOut || (route.result && route.result.amountOut));
+          const path = route && (route.path || (route.result && route.result.path)) || [a, b];
+          if (!out) throw new Error('no route');
+          document.getElementById('amountOut').value = fromWei(BigInt(out));
+          document.getElementById('routeText').textContent =
+            path.join(' → ') + ' · out ' + fromWei(BigInt(out)) + ' ' + b + ' (0.25% fee applied)';
+        } catch (e) {
+          // fallback local estimate
+          const est = Number(amt) * 0.9975;
+          document.getElementById('amountOut').value = est.toFixed(6);
+          document.getElementById('routeText').textContent =
+            a + ' → ' + b + ' · offline estimate (RPC: ' + (e.message || 'error') + ')';
+        }
+      }
+
+      function schedulePreview() {
+        clearTimeout(quoteTimer);
+        quoteTimer = setTimeout(preview, 280);
+      }
+
+      document.getElementById('amountIn').addEventListener('input', schedulePreview);
+      document.getElementById('tokenIn').addEventListener('change', schedulePreview);
+      document.getElementById('tokenOut').addEventListener('change', schedulePreview);
+      document.getElementById('flipTokens').addEventListener('click', function () {
+        const i = document.getElementById('tokenIn');
+        const o = document.getElementById('tokenOut');
+        const tmp = i.value; i.value = o.value; o.value = tmp;
+        schedulePreview();
+      });
+
+      document.getElementById('btnSwap').addEventListener('click', function () {
+        preview();
+      });
+
+      document.getElementById('btnConnect').addEventListener('click', async function () {
+        if (typeof window.addVerdexToWallet === 'function') {
+          try {
+            await window.addVerdexToWallet();
+            this.textContent = 'Verdex Connected';
+          } catch (e) {
+            alert(e.message || 'Wallet connection failed');
+          }
+        } else if (window.ethereum) {
+          try {
+            await window.ethereum.request({ method: 'eth_requestAccounts' });
+            this.textContent = 'Wallet Connected';
+          } catch (e) {
+            alert(e.message || 'Rejected');
+          }
+        } else {
+          alert('Install MetaMask or another EIP-1193 wallet.');
+        }
+      });
+
+      preview();
+    })();
+  </script>
+</body>
+</html>

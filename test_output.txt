@@ -1,0 +1,21 @@
+
+        <html>
+          <head>
+            <title>Verdex PRC20 Testnet RPC</title>
+            <style>
+              body { background-color: #0d1117; color: #c9d1d9; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; text-align: center; padding-top: 100px; }
+              h1 { color: #58a6ff; }
+              .box { border: 1px solid #30363d; padding: 40px; border-radius: 10px; display: inline-block; background-color: #161b22; }
+            </style>
+          </head>
+          <body>
+            <div class="box">
+              <h1>🚀 Verdex PRC20 Testnet RPC is Live</h1>
+              <p>Chain ID: <b>7201</b></p>
+              <p>Network: <b>Verdex Testnet</b></p>
+              <p>Symbol: <b>VDX</b></p>
+              <p>To use this network, add <b>https://verdex-ecosystem-production.up.railway.app/rpc</b> to MetaMask.</p>
+            </div>
+          </body>
+        </html>
+      

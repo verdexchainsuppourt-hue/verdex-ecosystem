@@ -1,0 +1,12 @@
+
+Nthandle v5.0 - Handle viewer
+Copyright (C) 1997-2022 Mark Russinovich
+Sysinternals - www.sysinternals.com
+
+Discord.exe        pid: 25332  type: File           3F4: C:\Users\kidst\AppData\Local\Discord\app-1.0.9245\resources\app.asar
+Discord.exe        pid: 25332  type: File           3F8: C:\Users\kidst\AppData\Local\Discord\app-1.0.9245\resources\app.asar
+Code.exe           pid: 30128  type: File          17D4: C:\Users\kidst\Videos\verdex-website\verdex-desktop-app\dist\win-unpacked\resources\app.asar
+OpenCode.exe       pid: 29056  type: File           3EC: C:\Users\kidst\AppData\Local\Programs\@opencode-aidesktop\resources\app.asar
+OpenCode.exe       pid: 29056  type: File           3F0: C:\Users\kidst\AppData\Local\Programs\@opencode-aidesktop\resources\app.asar
+OpenCode.exe       pid: 14204  type: File           4D4: C:\Users\kidst\AppData\Local\Programs\@opencode-aidesktop\resources\app.asar
+OpenCode.exe       pid: 14204  type: File           510: C:\Users\kidst\AppData\Local\Programs\@opencode-aidesktop\resources\app.asar

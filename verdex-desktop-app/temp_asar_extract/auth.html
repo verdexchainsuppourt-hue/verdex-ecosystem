@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verdex Miner — Sign In</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <style>
+    :root {
+      --primary: #00ff88;
+      --primary-glow: rgba(0, 255, 136, 0.4);
+      --primary-dim: rgba(0, 255, 136, 0.08);
+      --bg: #050a05;
+      --surface: rgba(12, 20, 12, 0.7);
+      --text: #ffffff;
+      --text-muted: #7a9a7e;
+      --border: rgba(0, 255, 136, 0.12);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      position: relative;
+    }
+
+    /* Custom titlebar */
+    .auth-titlebar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 38px;
+      -webkit-app-region: drag;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 12px;
+    }
+    .auth-titlebar .auth-icon {
+      width: 18px;
+      height: 18px;
+      filter: drop-shadow(0 0 10px rgba(0,255,136,0.5));
+      margin-right: 10px;
+    }
+    .auth-titlebar-btns {
+      -webkit-app-region: no-drag;
+      display: flex;
+      gap: 4px;
+    }
+    .auth-titlebar-btns button {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.3);
+      font-size: 12px;
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .auth-titlebar-btns button:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .auth-titlebar-btns button.close:hover { background: #ff3b30; color: #fff; }
+
+    /* Left panel — Globe visual */
+    .auth-visual {
+      flex: 1.1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .auth-visual::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 50%, rgba(0, 255, 136, 0.08) 0%, transparent 70%);
+      z-index: 1;
+    }
+
+    .globe-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.85;
+      filter: saturate(1.3) brightness(1.1);
+    }
+
+    .visual-overlay {
+      position: absolute;
+      top: 40px;
+      left: 40px;
+      z-index: 5;
+    }
+
+    .visual-overlay h2 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+
+    .visual-overlay h2 span {
+      color: var(--primary);
+      text-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    .visual-overlay p {
+      font-size: 13px;
+      color: var(--text-muted);
+      max-width: 320px;
+      line-height: 1.5;
+    }
+
+    /* Right panel — Auth form */
+    .auth-panel {
+      width: 420px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 48px 40px;
+      background: rgba(8, 12, 8, 0.95);
+      border-left: 1px solid var(--border);
+      position: relative;
+      z-index: 10;
+    }
+
+    .auth-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -1px;
+      width: 1px;
+      height: 100%;
+      background: linear-gradient(180deg, transparent 0%, var(--primary) 50%, transparent 100%);
+      opacity: 0.3;
+    }
+
+    .auth-logo {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.5));
+    }
+
+    .auth-brand {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      background: linear-gradient(135deg, #fff 0%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .auth-brand-sub {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 4px;
+      color: var(--primary);
+      text-transform: uppercase;
+      margin-bottom: 40px;
+      opacity: 0.7;
+    }
+
+    .auth-divider {
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary), transparent);
+      margin-bottom: 32px;
+    }
+
+    .auth-heading {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .auth-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.5;
+      margin-bottom: 32px;
+      max-width: 280px;
+    }
+
+    /* Google button */
+    .btn-google {
+      width: 100%;
+      max-width: 300px;
+      background: #ffffff;
+      color: #1a1a1a;
+      border: none;
+      padding: 14px 24px;
+      border-radius: 10px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-google::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      background: linear-gradient(135deg, var(--primary), #00cc6a, var(--primary));
+      border-radius: 12px;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .btn-google:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0, 255, 136, 0.15);
+    }
+
+    .btn-google:hover::before { opacity: 1; }
+
+    .btn-google:active { transform: translateY(0); }
+
+    .btn-google.loading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .google-icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Status message */
+    .auth-status {
+      margin-top: 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      min-height: 20px;
+      transition: all 0.3s;
+    }
+
+    .auth-status.error { color: #ff4444; }
+    .auth-status.success { color: var(--primary); }
+
+    /* Phase badge */
+    .mining-phase-badge {
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--primary-dim);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 11px;
+      color: var(--primary);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .phase-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--primary);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--primary);
+      animation: pulseDot 1.5s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Footer text */
+    .auth-footer {
+      position: absolute;
+      bottom: 24px;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.15);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Scanline effect */
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 255, 136, 0.008) 2px,
+        rgba(0, 255, 136, 0.008) 4px
+      );
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    .close-dialog-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(8px); z-index: 200;
+      display: none; align-items: center; justify-content: center;
+    }
+    .close-dialog-backdrop.show { display: flex; }
+    .close-dialog {
+      width: 340px; background: rgba(8,12,8,0.98);
+      border: 1px solid rgba(0,255,136,0.18); border-radius: 14px;
+      padding: 24px; text-align: center;
+    }
+    .close-dialog h3 { font-size: 16px; margin-bottom: 8px; }
+    .close-dialog p { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.5; }
+    .close-dialog-actions { display: flex; flex-direction: column; gap: 8px; }
+    .close-dialog-actions button {
+      border: none; border-radius: 8px; padding: 11px; font-family: inherit;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .btn-tray { background: var(--primary); color: #000; }
+    .btn-quit { background: rgba(255,59,48,0.15); color: #ff6b6b; }
+    .btn-cancel { background: transparent; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.08); }
+  </style>
+</head>
+<body>
+  <!-- Titlebar -->
+  <div class="auth-titlebar">
+    <div style="display:flex;align-items:center;gap:4px;">
+      <img class="auth-icon" src="assets/verdex-logo-email.png" alt="Verdex Icon">
+    </div>
+    <div class="auth-titlebar-btns">
+      <button id="authMinBtn">─</button>
+      <button class="close" id="authCloseBtn">✕</button>
+    </div>
+  </div>
+
+  <!-- Scanline overlay -->
+  <div class="scanlines"></div>
+
+  <!-- Left: Globe Visual -->
+  <div class="auth-visual">
+    <img class="globe-img" src="assets/verdex-globe.png" alt="Verdex Network">
+    <div class="visual-overlay">
+      <h2>Mine <span>VDX</span> with<br>Your Hardware</h2>
+      <p>Contribute CPU & GPU compute power to the Verdex DePIN network. Earn points, grow your rewards.</p>
+    </div>
+  </div>
+
+  <!-- Right: Auth Panel -->
+  <div class="auth-panel">
+    <svg class="auth-logo" viewBox="0 0 100 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M50 0L95 80L50 55L5 80L50 0Z" fill="#4ade80"/>
+      <path d="M50 0L95 80L50 55L50 0Z" fill="#22c55e"/>
+      <path d="M50 105L95 80L50 160L5 80L50 105Z" fill="#4ade80"/>
+      <path d="M50 105L95 80L50 160L50 105Z" fill="#22c55e"/>
+    </svg>
+
+    <div class="auth-brand">VERDEX</div>
+    <div class="auth-brand-sub">DePIN Miner v3.0</div>
+
+    <div class="auth-divider"></div>
+
+    <div class="auth-heading">Welcome, Miner</div>
+    <p class="auth-desc">Sign in with your Google account to start mining VDX. New accounts are created automatically.</p>
+
+    <button class="btn-google" id="btnGoogleAuth">
+      <svg class="google-icon" viewBox="0 0 24 24">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 001 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <div class="auth-status" id="authStatus">Powered by Supabase Auth</div>
+
+    <div class="mining-phase-badge">
+      <div class="phase-dot"></div>
+      Mining Phase 2 — Testnet Active
+    </div>
+
+    <div class="auth-footer">Verdex © 2026 — All Rights Reserved</div>
+  </div>
+
+  <div class="close-dialog-backdrop" id="closeDialog">
+    <div class="close-dialog">
+      <img class="auth-icon" src="assets/verdex-logo-email.png" alt="Verdex Icon" style="margin-bottom:14px;">
+      <h3>Close Verdex Miner?</h3>
+      <p>Minimize to keep running in the background, or quit completely.</p>
+      <div class="close-dialog-actions">
+        <button class="btn-tray" id="btnMinimizeTray">Minimize to Background</button>
+        <button class="btn-quit" id="btnQuitApp">Quit Verdex</button>
+        <button class="btn-cancel" id="btnCancelClose">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+
+    
+    const SUPABASE_URL = String.fromCharCode(104,116,116,112,115,58,47,47,117,110,98,122,101,115,99,111,112,120,116,109,116,98,114,103,113,108,104,104,46,115,117,112,97,98,97,115,101,46,99,111);
+    const SUPABASE_ANON_KEY = String.fromCharCode(101,121,74,104,98,71,99,105,79,105,74,73,85,122,73,49,78,105,73,115,73,110,82,53,99,67,73,54,73,107,112,88,86,67,74,57,46,101,121,74,112,99,51,77,105,79,105,74,122,100,88,66,104,89,109,70,122,90,83,73,115,73,110,74,108,90,105,73,54,73,110,86,117,89,110,112,108,99,50,78,118,99,72,104,48,98,88,82,105,99,109,100,120,98,71,104,111,73,105,119,105,99,109,57,115,90,83,73,54,73,109,70,117,98,50,52,105,76,67,74,112,89,88,81,105,79,106,69,51,79,68,77,49,78,106,99,49,77,106,99,115,73,109,86,52,99,67,73,54,77,106,65,53,79,84,69,48,77,122,85,121,78,51,48,46,106,72,109,55,117,73,86,95,102,66,87,73,80,45,69,70,108,51,100,50,65,89,53,80,52,50,88,51,116,99,73,73,98,69,71,119,78,102,83,89,105,80,77);
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    });
+
+    const statusEl = document.getElementById(String.fromCharCode(97,117,116,104,83,116,97,116,117,115));
+    const btnGoogle = document.getElementById(String.fromCharCode(98,116,110,71,111,111,103,108,101,65,117,116,104));
+
+    
+    document.getElementById(String.fromCharCode(97,117,116,104,77,105,110,66,116,110)).addEventListener(String.fromCharCode(99,108,105,99,107), () => {
+      if (window.electronAPI) window.electronAPI.minimize();
+    });
+    document.getElementById(String.fromCharCode(97,117,116,104,67,108,111,115,101,66,116,110)).addEventListener(String.fromCharCode(99,108,105,99,107), () => {
+      document.getElementById(String.fromCharCode(99,108,111,115,101,68,105,97,108,111,103)).classList.add('show');
+    });
+
+    document.getElementById(String.fromCharCode(98,116,110,77,105,110,105,109,105,122,101,84,114,97,121)).addEventListener(String.fromCharCode(99,108,105,99,107), () => {
+      document.getElementById(String.fromCharCode(99,108,111,115,101,68,105,97,108,111,103)).classList.remove('show');
+      if (window.electronAPI) window.electronAPI.hideToTray();
+    });
+    document.getElementById(String.fromCharCode(98,116,110,81,117,105,116,65,112,112)).addEventListener(String.fromCharCode(99,108,105,99,107), () => {
+      if (window.electronAPI) window.electronAPI.quitApp();
+    });
+    document.getElementById(String.fromCharCode(98,116,110,67,97,110,99,101,108,67,108,111,115,101)).addEventListener(String.fromCharCode(99,108,105,99,107), () => {
+      document.getElementById(String.fromCharCode(99,108,111,115,101,68,105,97,108,111,103)).classList.remove('show');
+    });
+
+    if (window.electronAPI && window.electronAPI.onShowCloseDialog) {
+      window.electronAPI.onShowCloseDialog(() => {
+        document.getElementById(String.fromCharCode(99,108,111,115,101,68,105,97,108,111,103)).classList.add('show');
+      });
+    }
+
+    
+    async function checkSession() {
+      try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session && session.user) {
+          statusEl.textContent = String.fromCharCode(83,101,115,115,105,111,110,32,102,111,117,110,100,33,32,76,111,97,100,105,110,103,32,100,97,115,104,98,111,97,114,100,46,46,46);
+          statusEl.className = String.fromCharCode(97,117,116,104,45,115,116,97,116,117,115,32,115,117,99,99,101,115,115);
+          
+          const userData = {
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.user_metadata?.full_name || session.user.email,
+            avatar: session.user.user_metadata?.avatar_url || '',
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+            user_metadata: session.user.user_metadata
+          };
+
+          setTimeout(() => {
+            if (window.electronAPI) {
+              window.electronAPI.authSuccess(userData);
+            }
+          }, 800);
+          return true;
+        }
+      } catch (e) {
+        console.error(String.fromCharCode(83,101,115,115,105,111,110,32,99,104,101,99,107,32,101,114,114,111,114,58), e);
+      }
+      return false;
+    }
+
+    
+    btnGoogle.addEventListener(String.fromCharCode(99,108,105,99,107), () => {
+      btnGoogle.classList.add(String.fromCharCode(108,111,97,100,105,110,103));
+      btnGoogle.innerHTML = String.fromCharCode(60,115,112,97,110,32,115,116,121,108,101,61,34,97,110,105,109,97,116,105,111,110,58,32,112,117,108,115,101,68,111,116,32,49,115,32,105,110,102,105,110,105,116,101,59,34,62,9679,60,47,115,112,97,110,62,32,67,111,110,110,101,99,116,105,110,103,46,46,46);
+      statusEl.textContent = String.fromCharCode(79,112,101,110,105,110,103,32,71,111,111,103,108,101,32,83,105,103,110,45,73,110,46,46,46);
+
+      if (window.electronAPI && window.electronAPI.openExternal) {
+        window.electronAPI.openExternal(String.fromCharCode(104,116,116,112,115,58,47,47,118,101,114,100,101,120,115,119,97,112,46,115,105,116,101,47,97,117,116,104,45,100,101,115,107,116,111,112,46,104,116,109,108,63,112,111,114,116,61,56,52,50,48));
+        statusEl.textContent = String.fromCharCode(80,108,101,97,115,101,32,99,111,109,112,108,101,116,101,32,115,105,103,110,45,105,110,32,105,110,32,121,111,117,114,32,115,121,115,116,101,109,32,98,114,111,119,115,101,114,46,46,46);
+      } else {
+        statusEl.textContent = String.fromCharCode(69,108,101,99,116,114,111,110,32,65,80,73,32,110,111,116,32,102,111,117,110,100,46,32,80,108,101,97,115,101,32,114,117,110,32,105,110,115,105,100,101,32,116,104,101,32,69,108,101,99,116,114,111,110,32,97,112,112,46);
+        statusEl.className = String.fromCharCode(97,117,116,104,45,115,116,97,116,117,115,32,101,114,114,111,114);
+        resetButton();
+      }
+    });
+
+    
+    if (window.electronAPI && window.electronAPI.onOAuthSuccess) {
+      window.electronAPI.onOAuthSuccess(async (tokens) => {
+        statusEl.textContent = String.fromCharCode(67,114,101,100,101,110,116,105,97,108,115,32,114,101,99,101,105,118,101,100,33,32,83,121,110,99,105,110,103,32,115,101,115,115,105,111,110,46,46,46);
+        statusEl.className = String.fromCharCode(97,117,116,104,45,115,116,97,116,117,115,32,115,117,99,99,101,115,115);
+        
+        try {
+          const { data, error } = await supabaseClient.auth.setSession({
+            access_token: tokens.access_token,
+            refresh_token: tokens.refresh_token
+          });
+          if (error) throw error;
+        } catch (err) {
+          statusEl.textContent = String.fromCharCode(83,101,115,115,105,111,110,32,115,121,110,99,32,102,97,105,108,101,100,58,32) + err.message;
+          statusEl.className = String.fromCharCode(97,117,116,104,45,115,116,97,116,117,115,32,101,114,114,111,114);
+          resetButton();
+        }
+      });
+    }
+
+    function resetButton() {
+      btnGoogle.classList.remove(String.fromCharCode(108,111,97,100,105,110,103));
+      btnGoogle.innerHTML = `
+        <svg class=String.fromCharCode(103,111,111,103,108,101,45,105,99,111,110) viewBox=String.fromCharCode(48,32,48,32,50,52,32,50,52)>
+          <path d=String.fromCharCode(77,50,50,46,53,54,32,49,50,46,50,53,99,48,45,46,55,56,45,46,48,55,45,49,46,53,51,45,46,50,45,50,46,50,53,72,49,50,118,52,46,50,54,104,53,46,57,50,97,53,46,48,54,32,53,46,48,54,32,48,32,48,49,45,50,46,50,32,51,46,51,50,118,50,46,55,55,104,51,46,53,55,99,50,46,48,56,45,49,46,57,50,32,51,46,50,56,45,52,46,55,52,32,51,46,50,56,45,56,46,49,122) fill=String.fromCharCode(35,52,50,56,53,70,52)/>
+          <path d=String.fromCharCode(77,49,50,32,50,51,99,50,46,57,55,32,48,32,53,46,52,54,45,46,57,56,32,55,46,50,56,45,50,46,54,54,108,45,51,46,53,55,45,50,46,55,55,99,45,46,57,56,46,54,54,45,50,46,50,51,32,49,46,48,54,45,51,46,55,49,32,49,46,48,54,45,50,46,56,54,32,48,45,53,46,50,57,45,49,46,57,51,45,54,46,49,54,45,52,46,53,51,72,50,46,49,56,118,50,46,56,52,67,51,46,57,57,32,50,48,46,53,51,32,55,46,55,32,50,51,32,49,50,32,50,51,122) fill=String.fromCharCode(35,51,52,65,56,53,51)/>
+          <path d=String.fromCharCode(77,53,46,56,52,32,49,52,46,48,57,99,45,46,50,50,45,46,54,54,45,46,51,53,45,49,46,51,54,45,46,51,53,45,50,46,48,57,115,46,49,51,45,49,46,52,51,46,51,53,45,50,46,48,57,86,55,46,48,55,72,50,46,49,56,65,49,48,46,57,54,32,49,48,46,57,54,32,48,32,48,48,49,32,49,50,99,48,32,49,46,55,55,46,52,50,32,51,46,52,53,32,49,46,49,56,32,52,46,57,51,108,51,46,54,54,45,50,46,56,52,122) fill=String.fromCharCode(35,70,66,66,67,48,53)/>
+          <path d=String.fromCharCode(77,49,50,32,53,46,51,56,99,49,46,54,50,32,48,32,51,46,48,54,46,53,54,32,52,46,50,49,32,49,46,54,52,108,51,46,49,53,45,51,46,49,53,67,49,55,46,52,53,32,50,46,48,57,32,49,52,46,57,55,32,49,32,49,50,32,49,32,55,46,55,32,49,32,51,46,57,57,32,51,46,52,55,32,50,46,49,56,32,55,46,48,55,108,51,46,54,54,32,50,46,56,52,99,46,56,55,45,50,46,54,32,51,46,51,45,52,46,53,51,32,54,46,49,54,45,52,46,53,51,122) fill=String.fromCharCode(35,69,65,52,51,51,53)/>
+        </svg>
+        Continue with Google
+      `;
+    }
+
+    
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+      if (event === String.fromCharCode(83,73,71,78,69,68,95,73,78) && session) {
+        statusEl.textContent = String.fromCharCode(65,117,116,104,101,110,116,105,99,97,116,101,100,33,32,76,111,97,100,105,110,103,32,109,105,110,101,114,46,46,46);
+        statusEl.className = String.fromCharCode(97,117,116,104,45,115,116,97,116,117,115,32,115,117,99,99,101,115,115);
+        
+        const userData = {
+          id: session.user.id,
+          email: session.user.email,
+          name: session.user.user_metadata?.full_name || session.user.email,
+          avatar: session.user.user_metadata?.avatar_url || '',
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+          user_metadata: session.user.user_metadata
+        };
+
+        setTimeout(() => {
+          if (window.electronAPI) {
+            window.electronAPI.authSuccess(userData);
+          }
+        }, 500);
+      }
+    });
+
+    
+    checkSession();
+  
+</script>
+</body>
+</html>

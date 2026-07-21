@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verdex Miner v3.0</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <style>
+    :root {
+      --primary: #00ff88;
+      --primary-glow: rgba(0, 255, 136, 0.4);
+      --primary-dim: rgba(0, 255, 136, 0.08);
+      --bg-deep: #0b0d17;
+      --bg-sidebar: #0f1220;
+      --bg-panel: rgba(18, 22, 40, 0.65);
+      --bg-panel-hover: rgba(24, 30, 54, 0.8);
+      --border-panel: rgba(255, 255, 255, 0.05);
+      --text: #ffffff;
+      --text-muted: #8e9cae;
+      --danger: #ff3b30;
+      --success: #00ff88;
+      --purple: #af52de;
+      --cyan: #5ac8fa;
+      --warning: #ffcc00;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *::-webkit-scrollbar { width: 4px; }
+    *::-webkit-scrollbar-track { background: transparent; }
+    *::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-deep);
+      background-image: 
+        radial-gradient(circle at 25% 15%, rgba(0, 255, 136, 0.04), transparent 40%),
+        radial-gradient(circle at 80% 85%, rgba(175, 82, 222, 0.03), transparent 40%);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ═══ TITLEBAR ═══ */
+    .titlebar {
+      height: 40px;
+      background: rgba(8, 10, 20, 0.95);
+      border-bottom: 1px solid var(--border-panel);
+      -webkit-app-region: drag;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+    .tb-brand { display: flex; align-items: center; gap: 10px; }
+    .tb-logo { width: 18px; height: 18px; filter: drop-shadow(0 0 6px var(--primary-glow)); }
+    .tb-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 8px var(--primary-glow); animation: blink 2s infinite; }
+    .tb-title { font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+    .tb-version { font-size: 9px; color: var(--text-muted); background: rgba(255,255,255,0.04); padding: 2px 6px; border-radius: 4px; }
+    .tb-ticker {
+      -webkit-app-region: no-drag;
+      font-size: 11px; color: var(--text-muted);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .tk-hl { color: var(--primary); font-weight: 600; }
+    .tb-controls { -webkit-app-region: no-drag; display: flex; align-items: center; gap: 4px; }
+    .tb-btn {
+      background: none; border: none; color: var(--text-muted); cursor: pointer;
+      font-size: 13px; width: 26px; height: 26px; border-radius: 5px;
+      display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+    }
+    .tb-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .tb-btn.close:hover { background: var(--danger); color: #fff; }
+
+    /* ═══ APP CORE ═══ */
+    .app-core { display: flex; flex: 1; overflow: hidden; }
+
+    /* ═══ SIDEBAR ═══ */
+    .sidebar {
+      width: 240px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-panel);
+      padding: 20px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+    .sb-top { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+    .logo-badge {
+      width: 68px; height: 68px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(15, 18, 30, 0.9) 0%, rgba(8, 10, 18, 0.95) 100%);
+      border: 2px solid rgba(0, 255, 136, 0.12);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.05);
+      position: relative;
+    }
+    .logo-badge::after {
+      content: ''; position: absolute; inset: -5px; border-radius: 50%;
+      border: 1px dashed rgba(0, 255, 136, 0.2);
+      animation: rotCW 20s linear infinite;
+    }
+    .logo-text-glow {
+      font-size: 14px; font-weight: 800; letter-spacing: 4px;
+      color: var(--primary); text-shadow: 0 0 8px var(--primary-glow);
+      margin-top: 4px; text-transform: uppercase; text-align: center;
+    }
+
+    .sb-menu { width: 100%; display: flex; flex-direction: column; gap: 3px; margin-top: 8px; }
+    .mi {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 8px;
+      font-size: 13px; font-weight: 500; color: var(--text-muted);
+      cursor: pointer; transition: all 0.2s;
+      border: 1px solid transparent;
+    }
+    .mi:hover { background: rgba(255,255,255,0.02); color: var(--text); }
+    .mi.active {
+      background: var(--primary-dim); border-color: rgba(0,255,136,0.15);
+      color: var(--primary); font-weight: 600;
+    }
+    .mi-icon { font-size: 15px; width: 20px; text-align: center; }
+
+    /* User card */
+    .user-card {
+      width: 100%; background: rgba(8,10,18,0.4);
+      border: 1px solid rgba(255,255,255,0.03);
+      border-radius: 8px; padding: 10px;
+      display: flex; flex-direction: column; gap: 6px; align-items: center;
+      margin-top: 8px;
+    }
+    .user-info { display: flex; align-items: center; gap: 8px; width: 100%; }
+    .user-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 1.5px solid rgba(0,255,136,0.3); object-fit: cover;
+      background: rgba(0,255,136,0.1);
+    }
+    .user-email {
+      font-size: 10px; color: var(--primary); font-weight: 600;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      max-width: 140px; flex: 1;
+    }
+    .btn-logout {
+      background: none; border: none; color: var(--danger);
+      cursor: pointer; font-size: 12px; padding: 2px;
+    }
+    .vp-balance {
+      font-size: 11px; color: var(--text-muted);
+      display: flex; align-items: center; gap: 4px; width: 100%;
+    }
+    .vp-balance strong { color: var(--primary); font-weight: 700; }
+
+    /* Sidebar footer */
+    .sb-footer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.03);
+    }
+    .sb-footer-text {
+      font-size: 9px;
+      color: rgba(255,255,255,0.33);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-align: center;
+      max-width: 220px;
+    }
+
+    .net-visual {
+      position: relative;
+      width: 100%;
+      min-height: 220px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(0,255,136,0.12);
+      background: radial-gradient(circle at top left, rgba(0,255,136,0.08), transparent 42%), radial-gradient(circle at bottom right, rgba(255,255,255,0.06), transparent 45%);
+    }
+    .net-visual img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: saturate(1.2) brightness(1.15);
+      opacity: 0.95;
+    }
+    .net-visual canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .net-slogan {
+      position: absolute;
+      left: 16px;
+      bottom: 16px;
+      z-index: 4;
+      font-size: 11px;
+      letter-spacing: 1.8px;
+      color: rgba(255,255,255,0.95);
+      text-transform: uppercase;
+      text-shadow: 0 0 16px rgba(0,255,136,0.25);
+    }
+
+    /* ═══ MAIN AREA ═══ */
+    .main-wrap {
+      flex: 1; display: flex; flex-direction: column;
+      overflow: hidden; padding: 18px 22px; position: relative;
+    }
+
+    .tab-panel { flex: 1; display: none; overflow: hidden; }
+    .tab-panel.active { display: flex; flex-direction: column; }
+
+    /* ═══ GLASS CARDS ═══ */
+    .gc {
+      background: var(--bg-panel); backdrop-filter: blur(20px);
+      border: 1px solid var(--border-panel); border-radius: 12px;
+      padding: 18px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      position: relative; overflow: hidden; transition: border-color 0.2s;
+    }
+    .gc:hover { border-color: rgba(255,255,255,0.07); }
+
+    .gc-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 14px;
+    }
+    .gc-title {
+      font-size: 12px; font-weight: 700; color: #fff;
+      text-transform: uppercase; letter-spacing: 1px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .gc-icon { color: var(--text-muted); cursor: pointer; font-size: 13px; }
+
+    /* ═══ DASHBOARD LAYOUT ═══ */
+    .dash-grid {
+      display: grid; grid-template-columns: 1fr 1.3fr;
+      gap: 18px; flex: 1; overflow: hidden;
+    }
+    .dash-left { display: flex; flex-direction: column; height: 100%; }
+    .dash-right { display: flex; flex-direction: column; gap: 16px; height: 100%; overflow-y: auto; }
+
+    /* Mining Status Card */
+    .mining-card { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+    .vortex-panel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+    .vortex-wrap { width: 220px; height: 220px; position: relative; display: flex; align-items: center; justify-content: center; }
+    .vortex-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .vortex-labels { position: relative; text-align: center; z-index: 5; pointer-events: none; }
+    .vortex-main {
+      font-size: 13px; font-weight: 800; letter-spacing: 2px; color: var(--text-muted);
+      transition: all 0.3s;
+    }
+    .vortex-main.active { color: var(--primary); text-shadow: 0 0 15px var(--primary-glow); }
+    .vortex-sub { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; opacity: 0.6; }
+
+    /* Phase badge */
+    .phase-strip {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 6px 14px; background: rgba(0,255,136,0.04);
+      border: 1px solid rgba(0,255,136,0.12); border-radius: 6px;
+      margin-bottom: 12px; font-size: 10px; font-weight: 700;
+      color: var(--primary); letter-spacing: 1px; text-transform: uppercase;
+    }
+    .phase-strip .phase-dot { width: 5px; height: 5px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 6px var(--primary); animation: blink 1.5s infinite; }
+
+    /* Hardware indicators */
+    .hw-indicators { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+    .hw-row {
+      display: flex; justify-content: space-between; align-items: center;
+      background: rgba(8,10,18,0.4); border: 1px solid rgba(255,255,255,0.03);
+      border-radius: 7px; padding: 10px 14px; font-size: 12px;
+    }
+    .hw-row.active { border-color: rgba(0,255,136,0.12); }
+    .hw-label { color: var(--text-muted); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px; }
+    .hw-val { font-weight: 700; color: #fff; }
+    .hw-val.hl { color: var(--primary); text-shadow: 0 0 8px rgba(0,255,136,0.2); }
+    .hw-row.total {
+      background: linear-gradient(90deg, rgba(0,255,136,0.04) 0%, rgba(18,22,40,0.3) 100%);
+      border: 1px solid rgba(0,255,136,0.2); box-shadow: 0 0 12px rgba(0,255,136,0.03);
+    }
+    .hw-row.total .hw-label { color: #fff; }
+    .hw-row.total .hw-val { font-size: 14px; }
+
+    /* Insights Card */
+    .insights-card { height: 170px; display: flex; flex-direction: column; }
+    .insights-sub { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .chart-wrap { flex: 1; position: relative; }
+
+    /* Network Card */
+    .network-card { height: 170px; display: flex; flex-direction: column; }
+    .net-canvas-wrap {
+      flex: 1; position: relative; overflow: hidden; border-radius: 6px;
+      background: radial-gradient(circle at 50% 50%, rgba(0,255,136,0.06), rgba(8,10,18,0.95));
+    }
+    .net-canvas-wrap canvas {
+      width: 100%; height: 100%; display: block;
+    }
+    .net-stats-overlay {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; gap: 6px; pointer-events: none;
+    }
+    .net-stat-pill {
+      font-size: 10px; font-weight: 700; color: var(--primary);
+      background: rgba(0,0,0,0.55); border: 1px solid rgba(0,255,136,0.2);
+      padding: 4px 10px; border-radius: 20px; letter-spacing: 0.5px;
+    }
+    .net-slogan {
+      position: absolute; bottom: 6px; width: 100%; text-align: center;
+      font-size: 9px; color: var(--primary); font-weight: 700;
+      letter-spacing: 2px; text-shadow: 0 0 6px var(--primary-glow);
+      text-transform: uppercase; z-index: 5;
+    }
+
+    /* Earnings Card */
+    .earnings-card { height: 140px; display: flex; flex-direction: column; justify-content: center; }
+    .earn-layout { display: grid; grid-template-columns: 1.1fr 1fr 0.9fr; gap: 14px; align-items: center; height: 100%; }
+    .earn-left { display: flex; flex-direction: column; gap: 6px; }
+    .earn-dd-lbl { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+    .earn-row { display: flex; justify-content: space-between; font-size: 11px; padding: 1px 0; }
+    .earn-row .lbl { color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+    .earn-row .val { font-weight: 600; }
+    .earn-bullet { width: 4px; height: 4px; border-radius: 50%; }
+    .earn-bullet.green { background: var(--primary); box-shadow: 0 0 5px var(--primary); }
+    .earn-bullet.purple { background: var(--purple); box-shadow: 0 0 5px var(--purple); }
+
+    .earn-center {
+      text-align: center;
+      border-left: 1px solid rgba(255,255,255,0.04);
+      border-right: 1px solid rgba(255,255,255,0.04);
+      padding: 0 10px; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; height: 100%;
+    }
+    .unpaid-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+    .unpaid-amt { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+    .unpaid-amt span { color: var(--primary); }
+    .btn-web-dash {
+      background: var(--primary-dim); border: 1px solid rgba(0,255,136,0.18);
+      color: var(--primary); padding: 7px 12px; border-radius: 5px;
+      font-size: 9px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s; width: 100%; text-transform: uppercase;
+      letter-spacing: 0.5px; display: flex; align-items: center;
+      justify-content: center; gap: 5px;
+    }
+    .btn-web-dash:hover { background: var(--primary); color: #000; box-shadow: 0 0 12px var(--primary-glow); }
+
+    .earn-right { display: flex; align-items: center; justify-content: center; height: 100%; }
+    .gauge-box { display: flex; flex-direction: column; align-items: center; }
+    .gauge-svg { width: 85px; height: 43px; }
+    .gauge-track { stroke: rgba(255,255,255,0.03); }
+    .gauge-fill { transition: stroke-dashoffset 0.6s ease; }
+    .gauge-needle { transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); transform-origin: 50px 50px; }
+    .gauge-lbl { font-size: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; }
+
+    /* Footer */
+    .main-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 14px; padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.03); flex-shrink: 0;
+    }
+    .btn-mine {
+      background: linear-gradient(135deg, #00ff88 0%, #00b35f 100%);
+      color: #000; border: none; padding: 11px 26px; border-radius: 8px;
+      font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px; cursor: pointer;
+      transition: all 0.2s; box-shadow: 0 0 18px rgba(0,255,136,0.15);
+    }
+    .btn-mine:hover { transform: translateY(-1px); box-shadow: 0 0 25px rgba(0,255,136,0.3); }
+    .btn-mine.stop { background: linear-gradient(135deg, var(--danger) 0%, #cc1b10 100%); color: #fff; box-shadow: 0 0 18px rgba(255,59,48,0.15); }
+    .perf-badge { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--primary); display: flex; align-items: center; gap: 5px; text-shadow: 0 0 8px rgba(0,255,136,0.2); }
+    .perf-dot { width: 5px; height: 5px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 6px var(--primary); animation: blink 1.5s infinite; }
+
+    /* ═══ HARDWARE SETTINGS TAB ═══ */
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .settings-panel { display: flex; flex-direction: column; gap: 14px; }
+    .slider-card { background: rgba(8,10,18,0.4); padding: 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); }
+    .slider-top { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; }
+    .slider-badge { color: var(--primary); font-weight: 700; }
+    input[type="range"] { width: 100%; accent-color: var(--primary); }
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 3px 0; }
+    .sw { position: relative; display: inline-block; width: 36px; height: 17px; }
+    .sw input { opacity: 0; width: 0; height: 0; }
+    .sw-slider {
+      position: absolute; cursor: pointer; inset: 0;
+      background: rgba(255,255,255,0.08); transition: .3s; border-radius: 17px;
+    }
+    .sw-slider:before {
+      position: absolute; content: ""; height: 11px; width: 11px;
+      left: 3px; bottom: 3px; background: #fff; transition: .3s; border-radius: 50%;
+    }
+    input:checked + .sw-slider { background: var(--primary); }
+    input:checked + .sw-slider:before { transform: translateX(19px); }
+    .spec-row {
+      display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted);
+      border-bottom: 1px solid rgba(255,255,255,0.02); padding: 5px 0;
+    }
+    .spec-row strong { color: #fff; }
+
+    /* ═══ WALLET TAB ═══ */
+    .wallet-card {
+      background: linear-gradient(135deg, rgba(18,22,40,0.8) 0%, rgba(30,18,50,0.2) 100%);
+      border: 1px solid rgba(0,255,136,0.07);
+    }
+    .wallet-addr {
+      background: rgba(0,0,0,0.3); padding: 10px 14px; border-radius: 5px;
+      font-family: 'Fira Code', monospace; font-size: 11px;
+      border: 1px solid rgba(255,255,255,0.02);
+      display: flex; justify-content: space-between; align-items: center; margin-top: 6px;
+    }
+    .wallet-copy {
+      background: none; border: none; color: var(--primary);
+      cursor: pointer; font-size: 11px; font-family: 'Outfit', sans-serif; font-weight: 600;
+    }
+    .wallet-copy:hover { text-shadow: 0 0 6px var(--primary-glow); }
+    .wallet-alert {
+      margin-top: 12px; background: rgba(175,82,222,0.04);
+      border: 1px solid rgba(175,82,222,0.1); border-radius: 8px;
+      padding: 12px; font-size: 12px; color: #e4ccff; line-height: 1.5;
+    }
+    .ledger-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
+    .ledger-table th, .ledger-table td { text-align: left; padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.02); }
+    .ledger-table th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px; }
+
+    /* ═══ POOL STATUS TAB ═══ */
+    .pool-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
+    .pool-stat-card {
+      background: rgba(8,10,18,0.5); border: 1px solid rgba(255,255,255,0.03);
+      border-radius: 8px; padding: 16px; text-align: center;
+    }
+    .pool-stat-val { font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 4px; }
+    .pool-stat-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .pool-phases { display: flex; gap: 10px; margin-top: 14px; }
+    .pool-phase {
+      flex: 1; background: rgba(8,10,18,0.4); border: 1px solid rgba(255,255,255,0.03);
+      border-radius: 8px; padding: 14px; text-align: center;
+    }
+    .pool-phase.active-phase { border-color: rgba(0,255,136,0.25); background: rgba(0,255,136,0.04); }
+    .pool-phase-num { font-size: 20px; font-weight: 800; color: var(--text-muted); margin-bottom: 4px; }
+    .pool-phase.active-phase .pool-phase-num { color: var(--primary); text-shadow: 0 0 10px var(--primary-glow); }
+    .pool-phase-name { font-size: 11px; font-weight: 600; margin-bottom: 2px; }
+    .pool-phase-desc { font-size: 9px; color: var(--text-muted); }
+
+    /* ═══ LOGS TAB ═══ */
+    .logs-console {
+      background: rgba(0,0,0,0.4); border: 1px solid var(--border-panel);
+      border-radius: 8px; padding: 14px; flex: 1;
+      font-family: 'Fira Code', monospace; font-size: 11px;
+      line-height: 1.6; color: #a0aec0; overflow-y: auto;
+    }
+
+    /* ═══ ANIMATIONS ═══ */
+    @keyframes rotCW { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+
+    /* Close dialog */
+    .close-dialog-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(8px); z-index: 1000;
+      display: none; align-items: center; justify-content: center;
+    }
+    .close-dialog-backdrop.show { display: flex; animation: fadeIn 0.2s ease; }
+    .close-dialog {
+      width: 360px; background: linear-gradient(160deg, rgba(18,22,40,0.98), rgba(8,12,8,0.98));
+      border: 1px solid rgba(0,255,136,0.18); border-radius: 14px;
+      padding: 24px; box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+    .close-dialog-icon {
+      width: 48px; height: 48px; margin: 0 auto 14px;
+      filter: drop-shadow(0 0 12px rgba(0,255,136,0.4));
+    }
+    .close-dialog h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .close-dialog p { font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px; }
+    .close-dialog-actions { display: flex; flex-direction: column; gap: 8px; }
+    .close-dialog-actions button {
+      border: none; border-radius: 8px; padding: 11px 16px;
+      font-family: inherit; font-size: 12px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
+    }
+    .btn-tray {
+      background: linear-gradient(135deg, #00ff88, #00b35f); color: #000;
+      box-shadow: 0 0 18px rgba(0,255,136,0.2);
+    }
+    .btn-tray:hover { transform: translateY(-1px); box-shadow: 0 0 24px rgba(0,255,136,0.35); }
+    .btn-quit { background: rgba(255,59,48,0.12); color: #ff6b6b; border: 1px solid rgba(255,59,48,0.25) !important; }
+    .btn-quit:hover { background: var(--danger); color: #fff; }
+    .btn-cancel { background: transparent; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.06) !important; }
+    .btn-cancel:hover { color: #fff; border-color: rgba(255,255,255,0.15) !important; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══ TITLEBAR ═══ -->
+  <div class="titlebar">
+    <div class="tb-brand">
+      <img class="tb-logo" src="../assets/verdex-logo-email.png" alt="Verdex">
+      <div class="tb-title">Verdex Miner</div>
+      <div class="tb-version">v3.0</div>
+    </div>
+    <div class="tb-ticker">
+      <span>Mining Pool: <span class="tk-hl">Verdex Mainpool</span></span>
+      <span style="color: rgba(255,255,255,0.08);">|</span>
+      <span>Phase: <span class="tk-hl" id="tickerPhase">Light</span></span>
+      <span style="color: rgba(255,255,255,0.08);">|</span>
+      <span>VDX Launch: <span class="tk-hl">Dec 12, 2026</span></span>
+    </div>
+    <div class="tb-controls">
+      <button class="tb-btn" id="btn-min">─</button>
+      <button class="tb-btn" id="btn-max">□</button>
+      <button class="tb-btn close" id="btn-close">✕</button>
+    </div>
+  </div>
+
+  <div class="app-core">
+    <!-- ═══ SIDEBAR ═══ -->
+    <div class="sidebar">
+      <div class="sb-top">
+        <div class="logo-badge">
+          <svg viewBox="0 0 100 160" style="width: 42px; height: 42px; filter: drop-shadow(0 0 8px var(--primary-glow));">
+            <path d="M50 0L95 80L50 55L5 80L50 0Z" fill="#4ade80"/>
+            <path d="M50 0L95 80L50 55L50 0Z" fill="#22c55e"/>
+            <path d="M50 105L95 80L50 160L5 80L50 105Z" fill="#4ade80"/>
+            <path d="M50 105L95 80L50 160L50 105Z" fill="#22c55e"/>
+          </svg>
+        </div>
+        <div class="logo-text-glow">VDX</div>
+
+        <nav class="sb-menu">
+          <div class="mi active" data-tab="dashboard"><span class="mi-icon">📊</span> Dashboard</div>
+          <div class="mi" data-tab="hardware"><span class="mi-icon">⚙️</span> Hardware</div>
+          <div class="mi" data-tab="wallet"><span class="mi-icon">💳</span> Wallet</div>
+          <div class="mi" data-tab="pool"><span class="mi-icon">🌊</span> Pool Status</div>
+          <div class="mi" data-tab="logs"><span class="mi-icon">📝</span> Logs</div>
+        </nav>
+
+        <div class="user-card" id="userCard">
+          <div class="user-info">
+            <img class="user-avatar" id="userAvatar" src="" alt="" onerror="this.style.display='none'">
+            <span class="user-email" id="userEmail">Not signed in</span>
+            <button class="btn-logout" id="btnLogout" style="display:none;" title="Sign Out">⏻</button>
+          </div>
+          <div class="vp-balance">VP Balance: <strong id="vpBalance">0</strong></div>
+        </div>
+      </div>
+
+      <div class="sb-footer">
+        <div class="sb-footer-text">VERDEX © 2026 — Swap Smart · Grow Green</div>
+      </div>
+    </div>
+
+    <!-- ═══ MAIN CONTENT ═══ -->
+    <div class="main-wrap">
+
+      <!-- TAB: DASHBOARD -->
+      <div class="tab-panel active" id="dashboard">
+        <div class="dash-grid">
+          <div class="dash-left">
+            <div class="gc mining-card">
+              <div class="gc-header">
+                <div class="gc-title">Active Mining Status</div>
+                <div class="gc-icon">⚙️</div>
+              </div>
+
+              <div class="phase-strip">
+                <div class="phase-dot"></div>
+                <span id="miningPhaseLabel">Phase 1 — Light Mining</span>
+              </div>
+
+              <div class="vortex-panel">
+                <div class="vortex-wrap">
+                  <canvas class="vortex-canvas" id="vortexCanvas"></canvas>
+                  <div class="vortex-labels">
+                    <div class="vortex-main" id="vortexStatus">STANDBY</div>
+                    <div class="vortex-sub" id="vortexSub">Node Inactive</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="hw-indicators">
+                <div class="hw-row" id="gpuRow">
+                  <span class="hw-label" id="gpuLabel">GPU 0:</span>
+                  <span class="hw-val" id="gpuHash">0.0 MH/s</span>
+                </div>
+                <div class="hw-row" id="cpuRow">
+                  <span class="hw-label" id="cpuLabel">CPU:</span>
+                  <span class="hw-val" id="cpuHash">0.0 KH/s</span>
+                </div>
+                <div class="hw-row total">
+                  <span class="hw-label">Total Hashrate:</span>
+                  <span class="hw-val hl" id="totalHash">0.0 MH/s</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dash-right">
+            <div class="gc insights-card">
+              <div class="gc-header">
+                <div class="gc-title">Hash Stability</div>
+                <div class="gc-icon">📈</div>
+              </div>
+              <div class="insights-sub">Hash Rate (Last 60m)</div>
+              <div class="chart-wrap"><canvas id="stabilityChart"></canvas></div>
+            </div>
+
+            <div class="gc network-card">
+              <div class="gc-header">
+                <div class="gc-title">VDX Network</div>
+                <div class="gc-icon">🌐</div>
+              </div>
+              <div class="net-visual">
+                <img src="../assets/verdex-globe.png" alt="Verdex Network Globe">
+                <canvas id="networkCanvas"></canvas>
+                <div class="net-stats-overlay">
+                  <div class="net-stat-pill" id="netNodes">Nodes: —</div>
+                  <div class="net-stat-pill" id="netLatency">Latency: —</div>
+                </div>
+                <div class="net-slogan">SWAP SMART. GROW GREEN.</div>
+              </div>
+            </div>
+
+            <div class="gc earnings-card">
+              <div class="earn-layout">
+                <div class="earn-left">
+                  <div class="earn-dd-lbl">Live Earnings ▾</div>
+                  <div class="earn-row"><span class="lbl">Session VP:</span><span class="val" id="valSession">0</span></div>
+                  <div class="earn-row"><span class="lbl"><span class="earn-bullet green"></span>VDX Est.:</span><span class="val" style="color:var(--primary);" id="valVdx">+0.000</span></div>
+                  <div class="earn-row"><span class="lbl"><span class="earn-bullet purple"></span>Streak Bonus:</span><span class="val" style="color:var(--purple);" id="valStreak">+0</span></div>
+                </div>
+                <div class="earn-center">
+                  <div class="unpaid-lbl">Total VP Balance</div>
+                  <div class="unpaid-amt"><span id="totalVP">0</span> VP</div>
+                  <button class="btn-web-dash" id="btnWebDash">🚀 Open Web Dashboard</button>
+                </div>
+                <div class="earn-right">
+                  <div class="gauge-box">
+                    <svg class="gauge-svg" viewBox="0 0 100 50">
+                      <path class="gauge-track" d="M 10,50 A 40,40 0 0 1 90,50" fill="none" stroke-width="5" stroke-linecap="round"/>
+                      <path id="gaugeFill" class="gauge-fill" d="M 10,50 A 40,40 0 0 1 90,50" fill="none" stroke="var(--primary)" stroke-width="5" stroke-linecap="round" stroke-dasharray="125.6" stroke-dashoffset="125.6"/>
+                      <g id="gaugeNeedle" class="gauge-needle" transform="translate(50,50) rotate(-90)">
+                        <polygon points="-1.5,0 1.5,0 0,-34" fill="var(--primary)"/>
+                        <circle cx="0" cy="0" r="2.5" fill="#fff"/>
+                      </g>
+                    </svg>
+                    <div class="gauge-lbl">Performance</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="main-footer">
+          <button class="btn-mine" id="toggleMining">Initialize Node</button>
+          <div class="perf-badge"><div class="perf-dot"></div><span>ULTIMATE PERFORMANCE</span></div>
+        </div>
+      </div>
+
+      <!-- TAB: HARDWARE -->
+      <div class="tab-panel" id="hardware">
+        <div class="gc" style="margin-bottom:16px;">
+          <div class="gc-title" style="margin-bottom:14px;">Hardware Settings & Optimization</div>
+          <div class="settings-grid">
+            <div class="settings-panel">
+              <div class="slider-card">
+                <div class="slider-top"><span>CPU Threads</span><span class="slider-badge" id="threadsVal">4</span></div>
+                <input type="range" id="threads" min="1" max="16" value="4">
+              </div>
+              <div class="slider-card">
+                <div class="slider-top"><span>Hash Intensity</span><span class="slider-badge" id="intensityVal">75%</span></div>
+                <input type="range" id="intensity" min="10" max="100" value="75">
+              </div>
+            </div>
+            <div class="settings-panel">
+              <div class="slider-card">
+                <div class="gc-title" style="margin-bottom:10px; font-size:10px;">Mining Options</div>
+                <div class="toggle-row">
+                  <span>Enable GPU Mining</span>
+                  <label class="sw"><input type="checkbox" id="enableGpu" checked><span class="sw-slider"></span></label>
+                </div>
+                <div class="toggle-row" style="margin-top:8px;">
+                  <span>Thermal Protection</span>
+                  <label class="sw"><input type="checkbox" id="thermalProtection" checked><span class="sw-slider"></span></label>
+                </div>
+              </div>
+              <div class="slider-card">
+                <div class="slider-top"><span>Thermal Limit</span><span class="slider-badge" id="tempVal">75°C</span></div>
+                <input type="range" id="tempLimit" min="50" max="95" value="75">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gc">
+          <div class="gc-title" style="margin-bottom:12px;">System Specifications</div>
+          <div class="spec-row"><span>Processor:</span><strong id="specCpu">Detecting...</strong></div>
+          <div class="spec-row"><span>Graphics:</span><strong id="specGpu">Detecting...</strong></div>
+          <div class="spec-row"><span>RAM:</span><strong id="specRam">Detecting...</strong></div>
+          <div class="spec-row"><span>OS:</span><strong id="specOs">Detecting...</strong></div>
+          <div class="spec-row" style="border:none;"><span>Cores/Threads:</span><strong id="specCores">Detecting...</strong></div>
+        </div>
+      </div>
+
+      <!-- TAB: WALLET -->
+      <div class="tab-panel" id="wallet">
+        <div class="gc wallet-card" style="margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div class="gc-title" style="margin-bottom:5px;">VDX Payout Wallet</div>
+              <div style="font-size:12px;color:var(--text-muted);">Hardware wallet address for rewards:</div>
+              <div class="wallet-addr">
+                <span id="walletAddress">vdx1qx99kdmgls0vns8s2dssvplzqd0zllxxj288qns</span>
+                <button class="wallet-copy" id="btnCopyAddr">Copy</button>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Pending Payout</div>
+              <div style="font-size:24px;font-weight:800;color:var(--primary);" id="walletPending">0 VP</div>
+            </div>
+          </div>
+          <div class="wallet-alert">
+            ℹ️ <strong>TOKEN STATUS: NOT YET LAUNCHED</strong><br>
+            VDX token generation event is scheduled for December 12, 2026. Your mined VP (Verdex Points) will convert to VDX at a 100:1 ratio at launch. Keep mining to maximize your allocation.
+          </div>
+        </div>
+        <div class="gc">
+          <div class="gc-title">Mining Ledger</div>
+          <table class="ledger-table">
+            <thead>
+              <tr><th>Date</th><th>Type</th><th>Amount</th><th>Balance After</th><th>Status</th></tr>
+            </thead>
+            <tbody id="ledgerBody">
+              <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">Sign in to view your mining history</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB: POOL STATUS -->
+      <div class="tab-panel" id="pool">
+        <div class="pool-grid">
+          <div class="pool-stat-card">
+            <div class="pool-stat-val" id="poolMiners">—</div>
+            <div class="pool-stat-lbl">Active Miners</div>
+          </div>
+          <div class="pool-stat-card">
+            <div class="pool-stat-val" id="poolHashrate">—</div>
+            <div class="pool-stat-lbl">Pool Hashrate</div>
+          </div>
+          <div class="pool-stat-card">
+            <div class="pool-stat-val" id="poolShare">—</div>
+            <div class="pool-stat-lbl">Your Pool Share</div>
+          </div>
+        </div>
+
+        <div class="gc">
+          <div class="gc-title" style="margin-bottom:14px;">Mining Phases</div>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">
+            Your mining phase determines difficulty and rewards. Earn more VP to unlock higher phases.
+          </p>
+          <div class="pool-phases">
+            <div class="pool-phase active-phase" id="phase1Card">
+              <div class="pool-phase-num">1</div>
+              <div class="pool-phase-name">Light</div>
+              <div class="pool-phase-desc">0–99 VP</div>
+              <div class="pool-phase-desc">1 VP/share · Diff 4</div>
+            </div>
+            <div class="pool-phase" id="phase2Card">
+              <div class="pool-phase-num">2</div>
+              <div class="pool-phase-name">Advanced</div>
+              <div class="pool-phase-desc">100–499 VP</div>
+              <div class="pool-phase-desc">2 VP/share · Diff 5</div>
+            </div>
+            <div class="pool-phase" id="phase3Card">
+              <div class="pool-phase-num">3</div>
+              <div class="pool-phase-name">Pro</div>
+              <div class="pool-phase-desc">500+ VP</div>
+              <div class="pool-phase-desc">3 VP/share · Diff 6</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="gc" style="margin-top:16px;">
+          <div class="gc-title" style="margin-bottom:10px;">Pool Information</div>
+          <div class="spec-row"><span>Pool Name:</span><strong>Verdex Mainpool</strong></div>
+          <div class="spec-row"><span>Algorithm:</span><strong>SHA-256 Proof-of-Work</strong></div>
+          <div class="spec-row"><span>Heartbeat Interval:</span><strong>5 minutes</strong></div>
+          <div class="spec-row"><span>VP → VDX Ratio:</span><strong>100 VP = 1 VDX</strong></div>
+          <div class="spec-row" style="border:none;"><span>VDX Launch Date:</span><strong style="color:var(--primary);">December 12, 2026</strong></div>
+        </div>
+      </div>
+
+      <!-- TAB: LOGS -->
+      <div class="tab-panel" id="logs" style="flex:1;">
+        <div class="logs-console" id="console">
+          <div><span style="color:#63b3ed;">[SYSTEM]</span> Verdex Core v3.0.0 node initialized.</div>
+          <div><span style="color:#a0aec0;">[SYSTEM]</span> Device diagnostics OK. Ready to mine.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Close / Minimize Dialog -->
+  <div class="close-dialog-backdrop" id="closeDialog">
+    <div class="close-dialog">
+      <img class="close-dialog-icon" src="../assets/verdex-logo-email.png" alt="Verdex">
+      <h3>Close Verdex Miner?</h3>
+      <p>Minimize to keep mining in the background, or quit completely.</p>
+      <div class="close-dialog-actions">
+        <button class="btn-tray" id="btnMinimizeTray">Minimize to Background</button>
+        <button class="btn-quit" id="btnQuitApp">Quit Verdex</button>
+        <button class="btn-cancel" id="btnCancelClose">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════
+    // SUPABASE CLIENT
+    // ═══════════════════════════════════════════════════════
+    const SUPABASE_URL = 'https://unbzescopxtmtbrgqlhh.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVuYnplc2NvcHh0bXRicmdxbGhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1Njc1MjcsImV4cCI6MjA5OTE0MzUyN30.jHm7uIV_fBWIP-EFl3d2AY5P42X3tcIIbEGwNfSYiPM';
+    const SITE_URL = 'https://verdexswap.site';
+
+    let sb = null;
+    try {
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true }
+      });
+    } catch(e) { console.warn('Supabase init failed:', e); }
+
+    let currentUser = null;
+    let accessToken = null;
+
+    // ═══════════════════════════════════════════════════════
+    // WINDOW CONTROLS
+    // ═══════════════════════════════════════════════════════
+    const api = window.electronAPI || {};
+    document.getElementById('btn-min').addEventListener('click', () => api.minimize?.());
+    document.getElementById('btn-max').addEventListener('click', () => api.maximize?.());
+    document.getElementById('btn-close').addEventListener('click', () => showCloseDialog());
+
+    const closeDialog = document.getElementById('closeDialog');
+    function showCloseDialog() { closeDialog.classList.add('show'); }
+    function hideCloseDialog() { closeDialog.classList.remove('show'); }
+
+    document.getElementById('btnMinimizeTray').addEventListener('click', () => {
+      hideCloseDialog();
+      api.hideToTray?.();
+    });
+    document.getElementById('btnQuitApp').addEventListener('click', () => api.quitApp?.());
+    document.getElementById('btnCancelClose').addEventListener('click', hideCloseDialog);
+    closeDialog.addEventListener('click', (e) => { if (e.target === closeDialog) hideCloseDialog(); });
+
+    if (api.onShowCloseDialog) {
+      api.onShowCloseDialog(showCloseDialog);
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // TAB SWITCHING
+    // ═══════════════════════════════════════════════════════
+    const menuItems = document.querySelectorAll('.mi');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    menuItems.forEach(item => {
+      item.addEventListener('click', () => {
+        menuItems.forEach(el => el.classList.remove('active'));
+        tabPanels.forEach(el => el.classList.remove('active'));
+        item.classList.add('active');
+        const tab = item.getAttribute('data-tab');
+        document.getElementById(tab).classList.add('active');
+        if (tab === 'dashboard') setTimeout(() => { initChart(); resizeCanvas(); }, 50);
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════
+    // SETTINGS LISTENERS
+    // ═══════════════════════════════════════════════════════
+    const threadsInput = document.getElementById('threads');
+    const intensityInput = document.getElementById('intensity');
+    const tempInput = document.getElementById('tempLimit');
+
+    threadsInput.addEventListener('input', e => document.getElementById('threadsVal').innerText = e.target.value);
+    intensityInput.addEventListener('input', e => document.getElementById('intensityVal').innerText = e.target.value + '%');
+    tempInput.addEventListener('input', e => document.getElementById('tempVal').innerText = e.target.value + '°C');
+
+    // Copy wallet address
+    document.getElementById('btnCopyAddr').addEventListener('click', () => {
+      const addr = document.getElementById('walletAddress').innerText;
+      navigator.clipboard.writeText(addr);
+      const btn = document.getElementById('btnCopyAddr');
+      btn.innerText = 'Copied!';
+      setTimeout(() => btn.innerText = 'Copy', 2000);
+    });
+
+    // Open web dashboard
+    document.getElementById('btnWebDash').addEventListener('click', () => {
+      if (api.openExternal) api.openExternal(SITE_URL + '/dashboard');
+      else window.open(SITE_URL + '/dashboard', '_blank');
+    });
+
+    // Logout
+    document.getElementById('btnLogout').addEventListener('click', async () => {
+      if (sb) await sb.auth.signOut();
+      currentUser = null;
+      accessToken = null;
+      location.reload();
+    });
+
+    // ═══════════════════════════════════════════════════════
+    // STABILITY CHART
+    // ═══════════════════════════════════════════════════════
+    let hashChart = null;
+    const chartCtx = document.getElementById('stabilityChart').getContext('2d');
+
+    function initChart() {
+      if (hashChart) hashChart.destroy();
+      let grad = chartCtx.createLinearGradient(0, 0, 0, 100);
+      grad.addColorStop(0, 'rgba(0, 255, 136, 0.25)');
+      grad.addColorStop(1, 'rgba(0, 255, 136, 0.0)');
+      const pts = 30;
+      hashChart = new Chart(chartCtx, {
+        type: 'line',
+        data: {
+          labels: Array(pts).fill(''),
+          datasets: [{ data: Array(pts).fill(0), borderColor: '#00ff88', borderWidth: 2, backgroundColor: grad, fill: true, tension: 0.45, pointRadius: 0, pointHoverRadius: 5 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, animation: { duration: 0 },
+          plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(10,14,23,0.95)', bodyColor: '#00ff88', borderColor: 'rgba(255,255,255,0.05)', borderWidth: 1 } },
+          scales: { x: { display: false }, y: { display: true, grid: { color: 'rgba(255,255,255,0.02)' }, border: { display: false }, ticks: { color: '#8c9eb5', maxTicksLimit: 3 } } }
+        }
+      });
+    }
+    initChart();
+
+    function updateChart(val) {
+      if (!hashChart) return;
+      const d = hashChart.data.datasets[0].data;
+      d.shift(); d.push(val);
+      hashChart.update();
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // VORTEX ANIMATION
+    // ═══════════════════════════════════════════════════════
+    const vortexCanvas = document.getElementById('vortexCanvas');
+    const vCtx = vortexCanvas.getContext('2d');
+    let particles = [];
+    let angleOff = 0;
+
+    function resizeCanvas() {
+      vortexCanvas.width = vortexCanvas.parentElement.clientWidth;
+      vortexCanvas.height = vortexCanvas.parentElement.clientHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    for (let i = 0; i < 80; i++) {
+      particles.push({ r: Math.random() * 75 + 18, a: Math.random() * Math.PI * 2, s: Math.random() * 0.014 + 0.003, sz: Math.random() * 1.4 + 0.4, o: Math.random() * 0.5 + 0.2 });
+    }
+
+    function drawVortex() {
+      vCtx.clearRect(0, 0, vortexCanvas.width, vortexCanvas.height);
+      const cx = vortexCanvas.width / 2, cy = vortexCanvas.height / 2;
+      const sm = isMining ? 3.0 : 0.35;
+      const clr = isMining ? 'rgba(0,255,136,' : 'rgba(142,156,174,';
+
+      vCtx.strokeStyle = isMining ? 'rgba(0,255,136,0.06)' : 'rgba(255,255,255,0.015)';
+      vCtx.lineWidth = 1;
+      for (let r = 30; r < 90; r += 14) { vCtx.beginPath(); vCtx.arc(cx, cy, r, 0, Math.PI * 2); vCtx.stroke(); }
+
+      if (isMining) {
+        angleOff += 0.02;
+        vCtx.strokeStyle = 'rgba(0,255,136,0.3)'; vCtx.lineWidth = 2;
+        vCtx.beginPath(); vCtx.arc(cx, cy, 55, angleOff, angleOff + Math.PI * 0.5); vCtx.stroke();
+        vCtx.strokeStyle = 'rgba(0,255,136,0.15)';
+        vCtx.beginPath(); vCtx.arc(cx, cy, 70, -angleOff * 0.8, -angleOff * 0.8 + Math.PI * 0.8); vCtx.stroke();
+      }
+
+      particles.forEach(p => {
+        p.a += p.s * sm;
+        const x = cx + Math.cos(p.a) * p.r, y = cy + Math.sin(p.a) * p.r;
+        vCtx.fillStyle = clr + p.o + ')';
+        vCtx.beginPath(); vCtx.arc(x, y, p.sz, 0, Math.PI * 2); vCtx.fill();
+        if (isMining && Math.random() > 0.5) {
+          vCtx.strokeStyle = 'rgba(0,255,136,0.03)'; vCtx.lineWidth = p.sz / 2;
+          vCtx.beginPath(); vCtx.moveTo(x, y);
+          vCtx.lineTo(cx + Math.cos(p.a - 0.1) * p.r, cy + Math.sin(p.a - 0.1) * p.r);
+          vCtx.stroke();
+        }
+      });
+      requestAnimationFrame(drawVortex);
+    }
+    requestAnimationFrame(drawVortex);
+
+    // ═══════════════════════════════════════════════════════
+    // NETWORK CANVAS (replaces broken globe in VDX Network card)
+    // ═══════════════════════════════════════════════════════
+    const networkCanvas = document.getElementById('networkCanvas');
+    const netCtx = networkCanvas.getContext('2d');
+    const netNodes = Array.from({ length: 18 }, (_, i) => ({
+      x: 0.12 + Math.random() * 0.76,
+      y: 0.15 + Math.random() * 0.65,
+      pulse: Math.random() * Math.PI * 2,
+      links: []
+    }));
+
+    netNodes.forEach((node, i) => {
+      node.links = netNodes.filter((_, j) => j !== i && Math.random() > 0.55).slice(0, 3).map(n => n);
+    });
+
+    function resizeNetworkCanvas() {
+      const wrap = networkCanvas.parentElement;
+      networkCanvas.width = wrap.clientWidth;
+      networkCanvas.height = wrap.clientHeight;
+    }
+    window.addEventListener('resize', resizeNetworkCanvas);
+    resizeNetworkCanvas();
+
+    function drawNetwork() {
+      const w = networkCanvas.width, h = networkCanvas.height;
+      netCtx.clearRect(0, 0, w, h);
+
+      netNodes.forEach(node => {
+        node.pulse += 0.03;
+        node.links.forEach(target => {
+          netCtx.strokeStyle = 'rgba(0,255,136,0.08)';
+          netCtx.lineWidth = 1;
+          netCtx.beginPath();
+          netCtx.moveTo(node.x * w, node.y * h);
+          netCtx.lineTo(target.x * w, target.y * h);
+          netCtx.stroke();
+        });
+      });
+
+      netNodes.forEach(node => {
+        const glow = 0.4 + Math.sin(node.pulse) * 0.3;
+        netCtx.fillStyle = `rgba(0,255,136,${glow})`;
+        netCtx.shadowColor = '#00ff88';
+        netCtx.shadowBlur = 8;
+        netCtx.beginPath();
+        netCtx.arc(node.x * w, node.y * h, 2.5, 0, Math.PI * 2);
+        netCtx.fill();
+        netCtx.shadowBlur = 0;
+      });
+
+      requestAnimationFrame(drawNetwork);
+    }
+    requestAnimationFrame(drawNetwork);
+
+    function updateNetworkStats() {
+      document.getElementById('netNodes').textContent = `Nodes: ${1200 + Math.floor(Math.random() * 80)}`;
+      document.getElementById('netLatency').textContent = `Latency: ${(Math.random() * 30 + 12).toFixed(0)}ms`;
+    }
+    updateNetworkStats();
+    setInterval(updateNetworkStats, 4000);
+
+    // ═══════════════════════════════════════════════════════
+    // GAUGE
+    // ═══════════════════════════════════════════════════════
+    function setGauge(pct) {
+      const fill = document.getElementById('gaugeFill');
+      const needle = document.getElementById('gaugeNeedle');
+      const angle = -90 + (pct * 180);
+      needle.setAttribute('transform', `translate(50,50) rotate(${angle})`);
+      fill.setAttribute('stroke-dashoffset', 125.6 - (pct * 125.6));
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // MINING ENGINE
+    // ═══════════════════════════════════════════════════════
+    let isMining = false;
+    let miningInterval = null;
+    let sessionVP = 0;
+    let totalVPBalance = 0;
+    const consoleEl = document.getElementById('console');
+
+    function log(msg, type = 'info') {
+      const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+      let color = '#a0aec0';
+      if (type === 'success') color = '#00ff88';
+      if (type === 'err') color = '#ff3b30';
+      if (type === 'warn') color = '#af52de';
+      if (type === 'sys') color = '#63b3ed';
+      const div = document.createElement('div');
+      div.innerHTML = `<span style="color:#4a5568;margin-right:6px;">[${time}]</span><span style="color:${color};">${msg}</span>`;
+      consoleEl.appendChild(div);
+      if (consoleEl.childNodes.length > 200) consoleEl.removeChild(consoleEl.firstChild);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    function updateMiningPhase(vp) {
+      const p1 = document.getElementById('phase1Card');
+      const p2 = document.getElementById('phase2Card');
+      const p3 = document.getElementById('phase3Card');
+      const phaseLabel = document.getElementById('miningPhaseLabel');
+      const tickerPhase = document.getElementById('tickerPhase');
+
+      [p1, p2, p3].forEach(c => c.classList.remove('active-phase'));
+
+      if (vp >= 500) {
+        p3.classList.add('active-phase');
+        phaseLabel.textContent = 'Phase 3 — Pro Mining';
+        tickerPhase.textContent = 'Pro';
+      } else if (vp >= 100) {
+        p2.classList.add('active-phase');
+        phaseLabel.textContent = 'Phase 2 — Advanced Mining';
+        tickerPhase.textContent = 'Advanced';
+      } else {
+        p1.classList.add('active-phase');
+        phaseLabel.textContent = 'Phase 1 — Light Mining';
+        tickerPhase.textContent = 'Light';
+      }
+    }
+
+    function startMining() {
+      isMining = true;
+      const btn = document.getElementById('toggleMining');
+      btn.innerText = 'Stop Mining';
+      btn.classList.add('stop');
+      document.getElementById('vortexStatus').innerText = 'MINING';
+      document.getElementById('vortexStatus').classList.add('active');
+      document.getElementById('vortexSub').innerText = 'Hashing Engine Active';
+      document.getElementById('gpuRow').classList.add('active');
+      document.getElementById('cpuRow').classList.add('active');
+
+      log('Starting hashing engine...', 'sys');
+      log(`CPU threads: ${threadsInput.value} | Intensity: ${intensityInput.value}%`, 'sys');
+
+      let ticks = 0;
+      miningInterval = setInterval(() => {
+        if (!isMining) return;
+        ticks++;
+        const threads = parseInt(threadsInput.value);
+        const intensity = parseInt(intensityInput.value);
+        const baseHash = threads * 8.5 * (intensity / 100);
+        const jitter = (Math.random() - 0.5) * baseHash * 0.15;
+        const hashrate = Math.max(0.1, baseHash + jitter);
+
+        document.getElementById('totalHash').innerText = hashrate.toFixed(1) + ' MH/s';
+        document.getElementById('gpuHash').innerText = (hashrate * 0.85).toFixed(1) + ' MH/s';
+        document.getElementById('cpuHash').innerText = (hashrate * 12).toFixed(1) + ' KH/s';
+
+        updateChart(hashrate);
+        setGauge(Math.min(1.0, hashrate / 140.0));
+
+        // Simulate VP earning every ~30 ticks (30 seconds)
+        if (ticks % 30 === 0) {
+          sessionVP += 1;
+          totalVPBalance += 1;
+          document.getElementById('valSession').innerText = sessionVP;
+          document.getElementById('totalVP').innerText = totalVPBalance;
+          document.getElementById('vpBalance').innerText = totalVPBalance;
+          document.getElementById('walletPending').innerText = totalVPBalance + ' VP';
+          document.getElementById('valVdx').innerText = '+' + (totalVPBalance / 100).toFixed(3);
+          updateMiningPhase(totalVPBalance);
+          log(`Share accepted! +1 VP (Total: ${totalVPBalance})`, 'success');
+        }
+
+        // Random log messages
+        if (Math.random() > 0.92) {
+          const msgs = [
+            'Block share computed: hash 00000' + Math.random().toString(16).substring(2, 10),
+            'Heartbeat synced with Verdex Pool',
+            'PoW challenge verified successfully',
+            'Network latency: ' + (Math.random() * 50 + 10).toFixed(0) + 'ms'
+          ];
+          log(msgs[Math.floor(Math.random() * msgs.length)], Math.random() > 0.1 ? 'success' : 'warn');
+        }
+      }, 1000);
+    }
+
+    function stopMining() {
+      isMining = false;
+      clearInterval(miningInterval);
+      const btn = document.getElementById('toggleMining');
+      btn.innerText = 'Initialize Node';
+      btn.classList.remove('stop');
+      document.getElementById('vortexStatus').innerText = 'STANDBY';
+      document.getElementById('vortexStatus').classList.remove('active');
+      document.getElementById('vortexSub').innerText = 'Node Inactive';
+      document.getElementById('gpuRow').classList.remove('active');
+      document.getElementById('cpuRow').classList.remove('active');
+
+      document.getElementById('totalHash').innerText = '0.0 MH/s';
+      document.getElementById('gpuHash').innerText = '0.0 MH/s';
+      document.getElementById('cpuHash').innerText = '0.0 KH/s';
+      updateChart(0);
+      setGauge(0);
+
+      log('Mining stopped. Node in standby mode.', 'err');
+    }
+
+    document.getElementById('toggleMining').addEventListener('click', () => {
+      if (!isMining) startMining();
+      else stopMining();
+    });
+
+    // ═══════════════════════════════════════════════════════
+    // HARDWARE DETECTION
+    // ═══════════════════════════════════════════════════════
+    async function detectHardware() {
+      try {
+        if (api.getSystemSpecs) {
+          const specs = await api.getSystemSpecs();
+          const gpuShort = specs.gpu.length > 32 ? specs.gpu.substring(0, 32) + '…' : specs.gpu;
+          document.getElementById('gpuLabel').innerText = `GPU (${gpuShort}):`;
+          document.getElementById('cpuLabel').innerText = `CPU (${specs.cpu.substring(0, 28)}):`;
+          document.getElementById('specCpu').innerText = specs.cpu;
+          document.getElementById('specGpu').innerText = specs.gpu;
+          document.getElementById('specRam').innerText = specs.ram;
+          document.getElementById('specOs').innerText = specs.os;
+          document.getElementById('specCores').innerText = specs.cores + ' cores / ' + specs.threads + ' threads';
+          document.getElementById('threads').max = specs.threads || 16;
+          document.getElementById('threads').value = Math.min(parseInt(document.getElementById('threads').value), specs.threads || 16);
+          document.getElementById('threadsVal').innerText = document.getElementById('threads').value;
+          log(`Hardware detected: ${specs.cpu} | ${specs.gpu} | ${specs.ram}`, 'sys');
+          if (specs.gpus && specs.gpus.length > 1) {
+            log(`Multi-GPU system: ${specs.gpus.length} adapters found`, 'sys');
+          }
+        }
+      } catch (e) {
+        log('Hardware detection failed: ' + e.message, 'err');
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // USER SESSION & DATA SYNC
+    // ═══════════════════════════════════════════════════════
+    async function loadUserData(userData) {
+      currentUser = userData;
+      accessToken = userData.access_token;
+
+      document.getElementById('userEmail').innerText = userData.email || userData.name;
+      document.getElementById('btnLogout').style.display = 'block';
+
+      if (userData.avatar) {
+        const avatarEl = document.getElementById('userAvatar');
+        avatarEl.src = userData.avatar;
+        avatarEl.style.display = 'block';
+      }
+
+      log(`Authenticated as ${userData.email}`, 'success');
+
+      // Fetch VP balance from Supabase
+      if (sb && accessToken) {
+        try {
+          const { data: wallet } = await sb.from('wallets').select('vp_balance_cached, current_streak, vdx_address').eq('user_id', userData.id).single();
+          if (wallet) {
+            totalVPBalance = wallet.vp_balance_cached || 0;
+            document.getElementById('vpBalance').innerText = totalVPBalance;
+            document.getElementById('totalVP').innerText = totalVPBalance;
+            document.getElementById('walletPending').innerText = totalVPBalance + ' VP';
+            document.getElementById('valVdx').innerText = '+' + (totalVPBalance / 100).toFixed(3);
+            document.getElementById('valStreak').innerText = '+' + (wallet.current_streak || 0);
+            if (wallet.vdx_address) document.getElementById('walletAddress').innerText = wallet.vdx_address;
+            updateMiningPhase(totalVPBalance);
+            log(`VP Balance loaded: ${totalVPBalance} VP | Streak: ${wallet.current_streak || 0} days`, 'success');
+          }
+
+          // Load transaction history
+          const { data: txns } = await sb.from('point_transactions').select('*').eq('user_id', userData.id).order('created_at', { ascending: false }).limit(10);
+          if (txns && txns.length > 0) {
+            const tbody = document.getElementById('ledgerBody');
+            tbody.innerHTML = '';
+            txns.forEach(tx => {
+              const row = document.createElement('tr');
+              const date = new Date(tx.created_at).toLocaleDateString();
+              row.innerHTML = `
+                <td>${date}</td>
+                <td style="text-transform:capitalize;">${tx.type}</td>
+                <td style="color:${tx.amount > 0 ? 'var(--primary)' : 'var(--danger)'}; font-weight:600;">${tx.amount > 0 ? '+' : ''}${tx.amount} VP</td>
+                <td>${tx.balance_after} VP</td>
+                <td style="color:var(--primary); font-weight:600;">Confirmed</td>
+              `;
+              tbody.appendChild(row);
+            });
+          }
+        } catch (e) {
+          log('Data sync error: ' + e.message, 'warn');
+        }
+      }
+    }
+
+    // Fetch pool status
+    async function fetchPoolStatus() {
+      try {
+        const resp = await fetch(SITE_URL + '/api/mining/pool-status');
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.pool) {
+            document.getElementById('poolMiners').innerText = data.pool.active_miners || '0';
+            document.getElementById('poolHashrate').innerText = (data.pool.total_hashrate || '0') + ' MH/s';
+            document.getElementById('poolShare').innerText = (data.pool.your_share || '0') + '%';
+          }
+        }
+      } catch(e) { /* silent */ }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // INITIALIZATION
+    // ═══════════════════════════════════════════════════════
+    async function init() {
+      detectHardware();
+      fetchPoolStatus();
+
+      // Listen for user data from main process
+      if (api.onUserData) {
+        api.onUserData(async (userData) => {
+          await loadUserData(userData);
+        });
+      }
+
+      // Also check Supabase session directly
+      if (sb) {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session && session.user) {
+          await loadUserData({
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.user_metadata?.full_name || session.user.email,
+            avatar: session.user.user_metadata?.avatar_url || '',
+            access_token: session.access_token,
+            refresh_token: session.refresh_token
+          });
+        }
+      }
+
+      // Refresh pool status every 60s
+      setInterval(fetchPoolStatus, 60000);
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+const path = require('path');
+const asar = require('./node_modules/@electron/asar');
+const asarPath = path.resolve('dist', 'win-unpacked', 'resources', 'app.asar');
+const list = asar.listPackage(asarPath);
+const hasNodeModules = list.some((p) => p.startsWith('node_modules/') || p === 'node_modules');
+const hasSI = list.some((p) => p.startsWith('node_modules/systeminformation') || p === 'node_modules/systeminformation');
+console.log('app.asar entries:', list.length);
+console.log('has node_modules:', hasNodeModules);
+console.log('has systeminformation:', hasSI);
+console.log('systeminformation paths:');
+console.log(list.filter((p) => p.startsWith('node_modules/systeminformation')).slice(0, 20).join('\n'));

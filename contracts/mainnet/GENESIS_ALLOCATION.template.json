@@ -1,0 +1,57 @@
+{
+  "network": "Verdex Mainnet",
+  "symbol": "VDX",
+  "decimals": 18,
+  "maximumSupplyAtomic": "1000000000000000000000000000",
+  "maximumSupplyDisplay": "1000000000",
+  "status": "TEMPLATE_ONLY_DO_NOT_DEPLOY",
+  "allocations": [
+    {
+      "id": "liquidity-mining-and-farms",
+      "label": "Liquidity Mining & Farms",
+      "percent": 40,
+      "amountAtomic": "400000000000000000000000000",
+      "recipient": "REPLACE_WITH_VESTING_OR_REWARD_VAULT_MULTISIG",
+      "releasePolicy": "A separately audited emission vault; initial weekly emissions 5,000,000 VDX, then 10% reduction per quarter."
+    },
+    {
+      "id": "treasury-and-ecosystem",
+      "label": "Treasury & Ecosystem",
+      "percent": 20,
+      "amountAtomic": "200000000000000000000000000",
+      "recipient": "REPLACE_WITH_TIMELOCKED_TREASURY_MULTISIG",
+      "releasePolicy": "Governance-controlled, time-locked spending only."
+    },
+    {
+      "id": "team-and-advisors",
+      "label": "Team & Advisors",
+      "percent": 15,
+      "amountAtomic": "150000000000000000000000000",
+      "recipient": "REPLACE_WITH_AUDITED_TEAM_VESTING_VAULT",
+      "releasePolicy": "No liquid allocation at genesis; vesting schedule and beneficiaries require legal and governance approval."
+    },
+    {
+      "id": "community-and-airdrops",
+      "label": "Community & Airdrops",
+      "percent": 15,
+      "amountAtomic": "150000000000000000000000000",
+      "recipient": "REPLACE_WITH_AUDITED_COMMUNITY_DISTRIBUTION_VAULT",
+      "releasePolicy": "Claim program or governance-approved distribution, with anti-sybil controls."
+    },
+    {
+      "id": "private-sale",
+      "label": "Private Sale",
+      "percent": 10,
+      "amountAtomic": "100000000000000000000000000",
+      "recipient": "REPLACE_WITH_AUDITED_SALE_VESTING_VAULT",
+      "releasePolicy": "No transfer until applicable legal review, investor eligibility checks, and contractual vesting are in force."
+    }
+  ],
+  "approvalRequirements": [
+    "Independent contract audit completed and published",
+    "Genesis manifest signed by the approved governance multisig",
+    "All recipient addresses verified out-of-band in a recorded key ceremony",
+    "Mainnet validator keys generated in HSM or hardware wallets and never committed to source control",
+    "Testnet and staging rehearsal completed from the exact manifest"
+  ]
+}

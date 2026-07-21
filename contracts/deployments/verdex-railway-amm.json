@@ -1,0 +1,66 @@
+{
+  "network": "verdex-railway",
+  "rpcBase": "https://verdex-ecosystem-production.up.railway.app",
+  "chainId": 7201,
+  "deployer": "0xeb293d5e700f2b63e5fc546b9275d68d84604b41",
+  "timestamp": "2026-07-15T12:00:55.841Z",
+  "runtime": "verdex-js-vm",
+  "note": "Native JS-VM AMM (Solidity Hardhat suite is for full EVM/Geth). Single VerdexAMM contract = Factory+Router+Aggregator+ledger.",
+  "fees": {
+    "totalBps": 25,
+    "lpBps": 17,
+    "treasuryBps": 5,
+    "burnBps": 3,
+    "formula": "x * y = k"
+  },
+  "contracts": {
+    "VerdexAMM": "0x01d23206724793af4d26104946094333282db48e",
+    "VerdexFactory": "0x01d23206724793af4d26104946094333282db48e",
+    "VerdexRouter": "0x01d23206724793af4d26104946094333282db48e",
+    "VerdexAggregator": "0x01d23206724793af4d26104946094333282db48e",
+    "VerdexFeeSplitter": "0x01d23206724793af4d26104946094333282db48e",
+    "WVDX": "WVDX"
+  },
+  "tokens": [
+    "WVDX",
+    "USDT",
+    "ALP"
+  ],
+  "pairs": [
+    "ALP_USDT",
+    "ALP_WVDX",
+    "USDT_WVDX"
+  ],
+  "config": {
+    "treasury": "0xeb293d5e700f2b63e5fc546b9275d68d84604b41",
+    "burnAddress": "0x000000000000000000000000000000000000dead"
+  },
+  "smoke": {
+    "feeInfo": {
+      "result": {
+        "totalBps": 25,
+        "lpBps": 17,
+        "treasuryBps": 5,
+        "burnBps": 3,
+        "treasury": "0xeb293d5e700f2b63e5fc546b9275d68d84604b41",
+        "burn": "0x000000000000000000000000000000000000dead",
+        "version": "VerdexAMM-v1",
+        "formula": "x * y = k",
+        "amountOut": "(amountIn * 9975 * reserveOut) / (reserveIn * 10000 + amountIn * 9975)"
+      },
+      "logs": []
+    },
+    "best": {
+      "result": {
+        "path": [
+          "ALP",
+          "USDT"
+        ],
+        "amountOut": "997490050036750883"
+      },
+      "logs": []
+    },
+    "swapResult": "0x848db975dd067ad95f8cd83677f9c0e62d119296a55698bdf9cb85e1f6e2c3cc"
+  },
+  "deployTx": "0xc39dd7daad2eddc4bd85c341f0bab2a83a2b8d3634cbcabadd6b44c5e56e7c3f"
+}

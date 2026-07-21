@@ -1,5 +1,5 @@
 # Verdex Whitepaper
-## Version 1.0 | July 2026
+## Version 1.1 | July 2026 | Pre-launch technical update
 
 ---
 
@@ -7,7 +7,7 @@
 
 Verdex is a next-generation decentralized exchange (DEX) and DeFi ecosystem engineered to deliver institutional-grade liquidity infrastructure with consumer-grade simplicity. Inspired by the proven Automated Market Maker (AMM) models of Uniswap and PancakeSwap, Verdex introduces a vertically integrated suite of products — Swap, Pool, Farm, and Stake — governed by the VERDEX (VDX) token. The protocol is designed to maximize capital efficiency, minimize slippage, and align long-term incentives among traders, liquidity providers, and governance participants through sustainable tokenomics and transparent on-chain mechanics.
 
-This document presents the complete architecture, economic model, infrastructure stack, product logic, and strategic roadmap of Verdex. The protocol is currently under active development; token issuance and live swap functionality will follow testnet validation, third-party audits, and community review.
+This document presents the intended architecture, economic model, infrastructure stack, product logic, and strategic roadmap of Verdex. It is a pre-launch technical document, not a claim that a public mainnet, VDX contract, bridge, wallet transfer, P2P market, custody system, or KYC intake is live. The legacy testnet has been retired. Any public launch requires a signed genesis, independently controlled validators, verified contract deployments, independent audits, operational KYC/AML approval, and public release evidence.
 
 ---
 
@@ -52,13 +52,13 @@ graph TD
     subgraph Users ["👥 Ecosystem Participants"]
         T(Traders):::user
         LP(Liquidity Providers):::user
-        M(Node Miners):::user
+        V(Independent Validators):::user
     end
 
     %% Frontends
     subgraph Interfaces ["💻 Client Interfaces"]
         W[Web Swap UI & Dashboard]:::frontend
-        App[Verdex Desktop Miner]:::frontend
+        App[Verdex Web, Android & Desktop Clients]:::frontend
     end
 
     %% Smart Contracts / DEX
@@ -71,9 +71,9 @@ graph TD
     end
 
     %% Blockchain Network
-    subgraph Network ["🌐 Verdex L1 Blockchain (Chain ID 7201)"]
+    subgraph Network ["🌐 Proposed Verdex L1 (Chain ID 72010, not final)"]
         Mempool[(Transaction Mempool)]:::network
-        Consensus{PoA Consensus Engine}:::network
+        Consensus{QBFT Validator Consensus}:::network
         Burn[Dead Address / Burn]:::network
         Bridge[Cross-Chain Bridge Node]:::network
     end
@@ -84,7 +84,7 @@ graph TD
     %% Connections
     T -->|Executes Swaps| W
     LP -->|Supplies Assets| W
-    M -->|Runs Validation| App
+    V -->|Runs Validation| Consensus
 
     W -->|Routes Trades| Router
     Router -->|Queries Liquidity| Pools
@@ -95,11 +95,10 @@ graph TD
     T -->|Stakes VDX| Stake
     Stake -->|Fee Discounts & Gov| T
 
-    App -->|Pulls Txns| Mempool
+    App -->|Submits Signed Transactions| Mempool
     Mempool -->|Batching| Consensus
     Consensus -->|Validates Blocks| Pools
     Consensus -->|Base Fee| Burn
-    Consensus -->|Block Reward (VP)| App
 
     Bridge <-->|Lock & Mint| BSC
     Bridge <-->|Cross-Chain Liquidity| Pools
@@ -107,7 +106,7 @@ graph TD
 
 ### 3.1.1 Transaction Lifecycle Logic
 
-To illustrate the underlying protocol logic, here is the algorithmic flowchart mapping the exact decision tree for a Verdex swap transaction. This demonstrates how the smart contracts evaluate liquidity, route trades, and trigger network mining rewards.
+To illustrate the intended protocol logic, here is the decision tree for a Verdex swap transaction after audited contracts are deployed. Consensus does not mint VDX or points as a block reward.
 
 ```mermaid
 graph TD
@@ -134,12 +133,7 @@ graph TD
     G --> H
     
     H --> I[Execute Atomic Swap]:::process
-    I --> J{Is Node Miner Active?}:::decision
-    
-    J -- True --> K[Mint VP Reward to Miner]:::process
-    J -- False --> L[Burn Base Fee]:::process
-    
-    K --> L
+    I --> L[Apply audited gas and fee policy]:::process
     L --> M[/Output: Send Tokens to Wallet/]:::io
     M --> End([End Transaction]):::startStop
 ```
@@ -295,7 +289,7 @@ VDX is not merely a speculative asset. It is embedded into every layer of the pr
 
 ### 4.3 Emission Schedule
 
-VDX farm emissions follow a quarterly decay model. Initial weekly emissions begin at 5,000,000 VDX and decrease by 10% every quarter. This schedule rewards early liquidity providers while preserving long-term token scarcity. The full farming allocation of 400,000,000 VDX is expected to distribute over approximately 6–8 years.
+The 400,000,000 VDX liquidity and farming allocation is proposed, but its emission curve is not final. The previous example of 5,000,000 VDX per week with 10% quarterly decay does not reconcile with a 6–8 year runway. Before contracts are deployed, governance and auditors must publish a capped, time-indexed distribution schedule whose total cannot exceed the allocation. No VDX is minted by consensus. Any Android reward programme is a separate, audited, Safe-funded claim distributor with a maximum of 25 VDX per KYC-approved account per UTC day and a global epoch budget.
 
 ---
 
@@ -314,7 +308,7 @@ graph TD
 
     subgraph UserLayer ["🖥️ User Interface Layer"]
         UI[Web Swap UI]:::ui
-        Miner[Desktop Miner App]:::ui
+        Client[Web, Android & Desktop Clients]:::ui
     end
 
     subgraph CoreContracts ["⚙️ Core Smart Contracts"]
@@ -337,7 +331,7 @@ graph TD
     Farm --> Vault
     Vault --> Gov
     Gov --> Treasury
-    Miner --> Pair
+    Client --> Router
 ```
 
 - **VerdexFactory:** Deploys and indexes liquidity pair contracts via CREATE2 for predictable addresses.
@@ -354,7 +348,7 @@ Verdex pools can be configured to expose time-weighted average price (TWAP) orac
 
 ### 5.3 Cross-Chain Strategy & BNB Smart Chain Integration
 
-Verdex is architected for a multi-chain future, beginning with a strategic integration with the **BNB Smart Chain (BSC)**. The PRC20 standard implements a lock-and-mint decentralized bridge protocol, allowing assets to flow seamlessly between the Verdex Network and the BNB chain without centralized custodians.
+Verdex may pursue a multi-chain future, including BNB Smart Chain (BSC), only after a separately audited bridge design and independent operational controls are approved. No bridge is currently deployed or available for assets.
 
 ```mermaid
 sequenceDiagram
@@ -374,26 +368,26 @@ Future versions will expand this interoperability to Ethereum and Layer-2 rollup
 
 ### 5.4 Verdex Custom L1 Blockchain Protocol
 
-Verdex operates its own custom Layer-1 Proof-of-Authority (PoA) blockchain ecosystem engineered for maximum speed and security. The core protocol features include:
+Verdex's proposed custom Layer-1 is an EVM-compatible Hyperledger Besu QBFT network with four independently controlled validators. The proposed chain ID is 72010 and must be rechecked before the genesis ceremony. The core protocol design is:
 
-- **EIP-1559 Native Gas Adjustments & Burning**: Dynamic base fee calculations adjust block gas prices based on historical block space utilization. The entire base fee is permanently burned to `0x000000000000000000000000000000000000dead` at the end of each block execution, creating persistent structural supply deflation.
+- **No consensus VDX issuance**: QBFT block reward is zero. VDX is a fixed-supply PRC20 contract token released only from audited, timelocked allocation vaults.
+- **Native gas policy**: the native gas asset and any EIP-1559 configuration are separately ratified and published in the signed genesis. They are not VDX token issuance.
 
 ```mermaid
 graph LR
     classDef node fill:#1a1a1a,stroke:#00ff88,stroke-width:2px,color:#fff
     classDef db fill:#003311,stroke:#00ff88,stroke-width:2px,color:#fff
     
-    Tx[User Transactions]:::node --> |Mempool| MN[Miner Node 1]:::node
-    Tx --> |Mempool| MN2[Miner Node 2]:::node
+    Tx[User Transactions]:::node --> |Mempool| V1[QBFT Validator 1]:::node
+    Tx --> |Mempool| V2[QBFT Validator 2]:::node
     
-    MN --> |PoA Consensus| Block[New Block Proposed]:::db
-    MN2 --> |PoA Consensus| Block
+    V1 --> |QBFT Consensus| Block[Finalized Block]:::db
+    V2 --> |QBFT Consensus| Block
     
-    Block --> |Base Fee Burned| Burn[(Dead Address)]:::node
-    Block --> |Block Reward| VP[VP Points Minted]:::node
+    Block --> |No Consensus VDX Reward| Policy[Audited Distribution Policy]:::node
 ```
-- **Proof-of-Authority (PoA) Epochs**: Validator nodes participate in epochs of rotation, proposing blocks sequentially in a weighted round-robin sequence. Consensus is anchored by finality checkpoints at defined block depths.
-- **Validator Slashing & Reputation Scoring**: Active validator performance, double-signing detection, and uptime parameters are monitored continuously. Rogue or unresponsive validator nodes suffer scoring degradation, block reward slashing, temporary jailing, or permanent bans.
+- **QBFT finality**: Four validator nodes participate in an authenticated BFT protocol. The intended design tolerates one faulty validator; public addresses alone do not prove independent control.
+- **Validator operations**: Validator admission, removal, performance management, and incident response are governed by documented change control. No validator reward or penalty mechanism has been deployed.
 - **Priority Mempool Queue**: Features a priority-sorted transaction pool supporting Replace-By-Fee (RBF) overrides. Transactions are evaluated based on EIP-1559 maxPriorityFeePerGas (tips), defending against front-running and spam.
 - **Binary Merkle State Verification**: Employs binary Merkle tree indexing for transaction logs and receipts verification, enabling fast SPV (Simplified Payment Verification) validation.
 - **Event Log Bloom Filters**: Block headers carry a 256-byte `LogsBloom` filter index, allowing light clients to query logs and contracts events instantly.
@@ -431,9 +425,9 @@ Proposals require a minimum quorum of participating staked VDX and a majority vo
 | Phase | Milestone | Status |
 |-------|-----------|--------|
 | Phase 1 | Brand identity, website, whitepaper, and community channels | Completed |
-| Phase 2 | Verdex Testnet (7201) live — VP mining, faucet, explorer, PRC20 contracts. EVM Geth node + DEX contracts in development | In Progress |
-| Phase 3 | VDX token generation event, exchange listings, liquidity bootstrapping — **Targeting December 12, 2026** | Upcoming |
-| Phase 4 | Mainnet launch, governance activation, multi-chain expansion | Upcoming |
+| Phase 2 | Legacy testnet retired. Windows Besu QBFT deployment tooling and pre-launch operational documentation are in development. | In Progress |
+| Phase 3 | Independent validator ceremony, signed genesis, audited VDX/escrow contracts, Safe custody, KYC/AML operations, and public verification evidence. | Required before launch |
+| Phase 4 | Mainnet launch, governance activation, and public services only after Phase 3 evidence is complete. | Not launched |
 | Phase 5 | Advanced products: perpetuals, lending integration, institutional APIs | Future |
 
 ---
@@ -459,7 +453,7 @@ We invite the community to participate in building, testing, and governing the g
 
 ## Disclaimer
 
-This whitepaper is for informational purposes only and does not constitute financial, legal, or investment advice. Cryptocurrency investments carry substantial risk, including the potential loss of capital. The Verdex token and swap platform are not yet live. All specifications, allocations, and timelines are subject to change based on technical development, community feedback, regulatory considerations, and market conditions.
+This whitepaper is for informational purposes only and does not constitute financial, legal, or investment advice. Cryptocurrency carries substantial risk, including loss of capital. The Verdex token, mainnet, swap, P2P market, bridge, and KYC document intake are not yet live. No public RPC endpoint or validator service is available from this document. All specifications, allocations, and timelines remain subject to signed technical, security, operational, and regulatory approvals.
 
 ---
 

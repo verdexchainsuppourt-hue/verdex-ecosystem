@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verdex Admin — Production Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#030a06;--panel:#0a1810;--card:#0e1f15;--line:rgba(34,197,94,.15);--text:#f0fdf4;--muted:#86a389;--g:#22c55e;--gl:#4ade80;--amber:#f59e0b;--red:#ef4444;--blue:#3b82f6}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+a{color:var(--gl);text-decoration:none}
+.wrap{max-width:1400px;margin:0 auto;padding:20px}
+.nav{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 0 20px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px}.brand span{color:var(--gl)}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tab{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid transparent;background:transparent;color:var(--muted);transition:all .2s}
+.tab.active{background:rgba(34,197,94,.1);border-color:var(--line);color:var(--gl)}
+.tab:hover{color:var(--text)}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.05em;padding:4px 10px;border-radius:999px}
+.badge.green{background:rgba(34,197,94,.12);color:var(--gl);border:1px solid rgba(34,197,94,.3)}
+.badge.amber{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
+.badge.red{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.badge.blue{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.3)}
+.grid{display:grid;gap:16px}
+.grid-4{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.grid-2{grid-template-columns:repeat(auto-fit,minmax(400px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+.card h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:14px}
+.stat{font-size:32px;font-weight:900;font-family:'Space Grotesk',sans-serif;color:var(--gl);line-height:1}
+.stat-label{font-size:12px;color:var(--muted);margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 8px;color:var(--muted);font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--line)}
+td{padding:10px 8px;border-bottom:1px solid rgba(34,197,94,.06)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 14px;border-radius:8px;border:none;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit}
+.btn-g{background:var(--g);color:#04140a}.btn-r{background:var(--red);color:#fff}.btn-b{background:var(--blue);color:#fff}
+.btn-o{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.hidden{display:none}
+.auth{max-width:400px;margin:80px auto}
+.auth input{width:100%;background:rgba(34,197,94,.05);border:1px solid var(--line);border-radius:10px;padding:12px;color:var(--text);font:inherit;margin-bottom:10px}
+.err{color:var(--red);font-size:13px;margin-top:8px}
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+.dot.green{background:var(--g)}.dot.red{background:var(--red)}.dot.amber{background:var(--amber)}
+.mono{font-family:'Space Grotesk',sans-serif;font-size:12px}
+.pagination{display:flex;gap:8px;justify-content:center;margin-top:16px}
+@media(max-width:768px){.grid-2{grid-template-columns:1fr}.wrap{padding:12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav">
+    <div class="brand">VERDEX <span>ADMIN</span></div>
+    <div id="navRight" class="hidden">
+      <span class="badge green" id="adminBadge">ADMIN</span>
+      <button class="btn btn-o" onclick="logout()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- Auth -->
+  <div id="authBox" class="auth">
+    <div class="card">
+      <h3>Admin Sign In</h3>
+      <input id="email" type="email" placeholder="Admin email" autocomplete="username">
+      <input id="pass" type="password" placeholder="Password" autocomplete="current-password">
+      <button class="btn btn-g" style="width:100%;padding:12px" onclick="login()">Sign in</button>
+      <div id="authErr" class="err hidden"></div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="app" class="hidden">
+    <div class="tabs" id="tabBar">
+      <div class="tab active" data-tab="health" onclick="switchTab('health')">System Health</div>
+      <div class="tab" data-tab="kyc" onclick="switchTab('kyc')">KYC Review</div>
+      <div class="tab" data-tab="withdrawals" onclick="switchTab('withdrawals')">Withdrawals</div>
+      <div class="tab" data-tab="treasury" onclick="switchTab('treasury')">Treasury</div>
+      <div class="tab" data-tab="validators" onclick="switchTab('validators')">Validators</div>
+      <div class="tab" data-tab="users" onclick="switchTab('users')">Users</div>
+    </div>
+
+    <div id="content" style="margin-top:20px"></div>
+  </div>
+</div>
+
+<script>
+const SUPA_URL = 'https://unbzescopxtmtbrgqlhh.supabase.co';
+const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVuYnplc2NvcHh0bXRicmdxbGhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1Njc1MjcsImV4cCI6MjA5OTE0MzUyN30.jHm7uIV_fBWIP-EFl3d2AY5P42X3tcIIbEGwNfSYiPM';
+const sb = window.supabase.createClient(SUPA_URL, SUPA_ANON);
+let token = null, currentTab = 'health', usersOffset = 0;
+
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmt(n) { return Number(n).toLocaleString(); }
+
+async function api(path) {
+  const r = await fetch(path, { headers: { 'Authorization': 'Bearer ' + token } });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error?.message || d.error || 'HTTP ' + r.status);
+  return d;
+}
+async function apiPost(path, body) {
+  const r = await fetch(path, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error?.message || d.error || 'HTTP ' + r.status);
+  return d;
+}
+
+async function login() {
+  $('authErr').classList.add('hidden');
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email: $('email').value.trim(), password: $('pass').value });
+    if (error) throw error;
+    token = data.session.access_token;
+    // Verify admin
+    try {
+      await api('/api/admin?action=verify');
+      $('authBox').classList.add('hidden');
+      $('navRight').classList.remove('hidden');
+      $('app').classList.remove('hidden');
+      await switchTab('health');
+    } catch(e) {
+      throw new Error('Not an admin account');
+    }
+  } catch (e) {
+    $('authErr').textContent = e.message;
+    $('authErr').classList.remove('hidden');
+  }
+}
+
+function logout() {
+  sb.auth.signOut();
+  token = null;
+  $('authBox').classList.remove('hidden');
+  $('navRight').classList.add('hidden');
+  $('app').classList.add('hidden');
+}
+
+async function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  $('content').innerHTML = '<div class="loading">Loading…</div>';
+  try {
+    if (tab === 'health') await renderHealth();
+    else if (tab === 'kyc') await renderKYC();
+    else if (tab === 'withdrawals') await renderWithdrawals();
+    else if (tab === 'treasury') await renderTreasury();
+    else if (tab === 'validators') await renderValidators();
+    else if (tab === 'users') await renderUsers();
+  } catch (e) {
+    $('content').innerHTML = '<div class="card"><div class="err">' + esc(e.message) + '</div></div>';
+  }
+}
+
+async function renderHealth() {
+  const d = (await api('/api/admin?action=system-health')).data;
+  const bc = d.blockchain;
+  const cw = d.custodial_wallet;
+  const kyc = d.kyc;
+  const p2p = d.p2p;
+  $('content').innerHTML = `
+    <div class="grid grid-4" style="margin-bottom:16px">
+      <div class="card"><h3>RPC Status</h3><div class="stat ${bc.rpc_status==='online'?'':'amber'}">${bc.rpc_status==='online'?'ONLINE':bc.rpc_status.toUpperCase()}</div><div class="stat-label">Block: ${bc.latest_block ?? '—'}</div></div>
+      <div class="card"><h3>Active Wallets</h3><div class="stat">${fmt(cw.active_wallets)}</div><div class="stat-label">Custodial users</div></div>
+      <div class="card"><h3>Pending Withdrawals</h3><div class="stat ${cw.pending_withdrawals>0?'amber':''}">${fmt(cw.pending_withdrawals)}</div><div class="stat-label">Awaiting approval</div></div>
+      <div class="card"><h3>KYC Reviews</h3><div class="stat ${kyc.pending_reviews>0?'amber':''}">${fmt(kyc.pending_reviews)}</div><div class="stat-label">Pending review</div></div>
+    </div>
+    <div class="grid grid-4">
+      <div class="card"><h3>Pending Deposits</h3><div class="stat">${fmt(cw.pending_deposits)}</div><div class="stat-label">Awaiting confirmation</div></div>
+      <div class="card"><h3>AML Queue</h3><div class="stat ${cw.aml_review_queue>0?'red':''}">${fmt(cw.aml_review_queue)}</div><div class="stat-label">Need review</div></div>
+      <div class="card"><h3>Active P2P Trades</h3><div class="stat">${fmt(p2p.active_trades)}</div><div class="stat-label">In progress</div></div>
+      <div class="card"><h3>Open Disputes</h3><div class="stat ${p2p.open_disputes>0?'red':''}">${fmt(p2p.open_disputes)}</div><div class="stat-label">Need resolution</div></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Wallet Configuration</h3>
+      <table><tr><td>Deposits</td><td><span class="badge ${cw.config.deposits_enabled?'green':'red'}">${cw.config.deposits_enabled?'ENABLED':'DISABLED'}</span></td></tr>
+      <tr><td>Withdrawals</td><td><span class="badge ${cw.config.withdrawals_enabled?'green':'red'}">${cw.config.withdrawals_enabled?'ENABLED':'DISABLED'}</span></td></tr>
+      <tr><td>Transfers</td><td><span class="badge ${cw.config.transfers_enabled?'green':'red'}">${cw.config.transfers_enabled?'ENABLED':'DISABLED'}</span></td></tr>
+      <tr><td>Chain ID</td><td class="mono">${bc.chain_id}</td></tr></table>
+    </div>`;
+}
+
+async function renderKYC() {
+  const d = await api('/api/admin?action=kyc-queue');
+  const rows = d.data || [];
+  if (!rows.length) { $('content').innerHTML = '<div class="card"><p style="color:var(--muted)">No pending KYC reviews.</p></div>'; return; }
+  $('content').innerHTML = '<div class="card"><h3>KYC Review Queue (' + rows.length + ')</h3><table><thead><tr><th>User ID</th><th>Country</th><th>Level</th><th>Risk</th><th>Status</th><th>Submitted</th><th>Action</th></tr></thead><tbody>' +
+    rows.map(r => `<tr><td class="mono">${r.subject_user_id?.substring(0,8)}…</td><td>${esc(r.country_code)}</td><td>${esc(r.verification_level)}</td><td><span class="badge ${r.risk_tier==='high'?'red':r.risk_tier==='medium'?'amber':'green'}">${esc(r.risk_tier)}</span></td><td><span class="badge blue">${esc(r.status)}</span></td><td>${r.submitted_at?.substring(0,10) ?? '—'}</td><td><button class="btn btn-g" onclick="reviewKYC('${r.id}','approved')">Approve</button> <button class="btn btn-r" onclick="reviewKYC('${r.id}','rejected')">Reject</button></td></tr>`).join('') +
+    '</tbody></table></div>';
+}
+
+async function reviewKYC(caseId, status) {
+  try {
+    const jwt = token;
+    const r = await fetch('/api/kyc?action=review', { method: 'POST', headers: { 'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json' }, body: JSON.stringify({ case_id: caseId, status: status }) });
+    if (r.ok) { alert('KYC ' + status); await switchTab('kyc'); }
+    else { const d = await r.json().catch(()=>({})); alert('Error: ' + (d.error?.message || 'Failed')); }
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function renderWithdrawals() {
+  // Fetch pending withdrawals via treasury admin API
+  try {
+    const d = await api('/api/admin?action=validators'); // This checks admin auth
+    // Direct DB query for pending withdrawals
+    const { data, error } = await sb.from('verdex_custodial_withdrawals').select('*').in('status', ['requested','awaiting_signatures','approved']).order('created_at').limit(50);
+    if (error) throw error;
+    const rows = data || [];
+    if (!rows.length) { $('content').innerHTML = '<div class="card"><p style="color:var(--muted)">No pending withdrawals.</p></div>'; return; }
+    $('content').innerHTML = '<div class="card"><h3>Pending Withdrawals (' + rows.length + ')</h3><table><thead><tr><th>ID</th><th>Amount</th><th>Destination</th><th>Status</th><th>Multisig</th><th>Created</th><th>Action</th></tr></thead><tbody>' +
+      rows.map(w => {
+        const amt = (Number(w.amount_atomic)/1e18).toFixed(4);
+        return `<tr><td class="mono">${w.id.substring(0,8)}…</td><td><b>${amt} VDX</b></td><td class="mono">${w.destination_address?.substring(0,10)}…</td><td><span class="badge blue">${w.status}</span></td><td>${w.requires_multisig?'Yes ('+w.current_signatures+'/'+w.multisig_threshold+')':'No'}</td><td>${w.created_at?.substring(0,10)}</td><td><button class="btn btn-g" onclick="approveWithdrawal('${w.id}')">Approve</button> <button class="btn btn-r" onclick="rejectWithdrawal('${w.id}')">Reject</button></td></tr>`;
+      }).join('') + '</tbody></table></div>';
+  } catch(e) { $('content').innerHTML = '<div class="card"><div class="err">' + esc(e.message) + '</div></div>'; }
+}
+
+async function approveWithdrawal(id) {
+  try {
+    await apiPost('/api/wallet?action=admin-sign-withdrawal', { withdrawal_id: id, decision: 'approve' });
+    alert('Withdrawal approved'); await switchTab('withdrawals');
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function rejectWithdrawal(id) {
+  const reason = prompt('Rejection reason:');
+  if (!reason) return;
+  try {
+    await apiPost('/api/wallet?action=admin-sign-withdrawal', { withdrawal_id: id, decision: 'reject', reason });
+    alert('Withdrawal rejected'); await switchTab('withdrawals');
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function renderTreasury() {
+  const d = (await api('/api/admin?action=treasury')).data;
+  const t = d.custodial_totals;
+  $('content').innerHTML = `
+    <div class="grid grid-4" style="margin-bottom:16px">
+      <div class="card"><h3>Available Balance</h3><div class="stat">${t.available_vdx}</div><div class="stat-label">VDX</div></div>
+      <div class="card"><h3>Pending</h3><div class="stat" style="color:var(--amber)">${t.pending_vdx}</div><div class="stat-label">VDX</div></div>
+      <div class="card"><h3>Locked</h3><div class="stat" style="color:var(--blue)">${t.locked_vdx}</div><div class="stat-label">VDX</div></div>
+      <div class="card"><h3>Pending Withdrawals</h3><div class="stat">${d.pending_withdrawals}</div><div class="stat-label">Awaiting approval</div></div>
+    </div>
+    <div class="card"><h3>Treasury Signers (${d.treasury_signers.length})</h3><table><thead><tr><th>User ID</th><th>Role</th><th>Active</th><th>Granted</th></tr></thead><tbody>` +
+    d.treasury_signers.map(s => `<tr><td class="mono">${s.user_id.substring(0,8)}…</td><td><span class="badge green">${s.role}</span></td><td>${s.is_active?'✅':'❌'}</td><td>${s.granted_at?.substring(0,10)}</td></tr>`).join('') +
+    `</tbody></table></div>
+    <div class="card" style="margin-top:16px"><h3>Active Wallets: ${d.active_wallets}</h3></div>`;
+}
+
+async function renderValidators() {
+  try {
+    const d = (await api('/api/admin?action=validators')).data;
+    if (d.status === 'mainnet_not_configured' || d.status === 'rpc_unreachable') {
+      $('content').innerHTML = '<div class="card"><h3>Blockchain Status</h3><div class="stat amber">' + esc(d.status) + '</div><div class="stat-label">' + esc(d.message || d.error || '') + '</div></div>';
+      return;
+    }
+    $('content').innerHTML = `
+      <div class="grid grid-4" style="margin-bottom:16px">
+        <div class="card"><h3>Block Height</h3><div class="stat">${fmt(d.block_number)}</div></div>
+        <div class="card"><h3>Validators</h3><div class="stat">${d.validator_count}</div></div>
+        <div class="card"><h3>Peers</h3><div class="stat">${d.peers}</div></div>
+        <div class="card"><h3>Status</h3><div class="stat ${d.status==='synced'?'':'amber'}">${d.status.toUpperCase()}</div></div>
+      </div>
+      <div class="card"><h3>Active Validators</h3><table><thead><tr><th>Address</th><th>Status</th></tr></thead><tbody>` +
+      d.validators.map(v => `<tr><td class="mono">${v.address}</td><td><span class="badge green">${v.status}</span></td></tr>`).join('') +
+      '</tbody></table></div>';
+  } catch(e) { $('content').innerHTML = '<div class="card"><div class="err">' + esc(e.message) + '</div></div>'; }
+}
+
+async function renderUsers() {
+  const d = await api('/api/admin?action=users&limit=50&offset=' + usersOffset);
+  const rows = d.data || [];
+  if (!rows.length) { $('content').innerHTML = '<div class="card"><p style="color:var(--muted)">No users found.</p></div>'; return; }
+  $('content').innerHTML = '<div class="card"><h3>Users (' + d.total + ' total)</h3><table><thead><tr><th>ID</th><th>Username</th><th>Name</th><th>Joined</th></tr></thead><tbody>' +
+    rows.map(u => `<tr><td class="mono">${u.id.substring(0,8)}…</td><td>${esc(u.username||'—')}</td><td>${esc(u.full_name||'—')}</td><td>${u.created_at?.substring(0,10)}</td></tr>`).join('') +
+    '</tbody></table><div class="pagination">' +
+    (usersOffset > 0 ? '<button class="btn btn-o" onclick="usersOffset=Math.max(0,' + (usersOffset-50) + ');switchTab(\'users\')">Previous</button>' : '') +
+    '<button class="btn btn-o" onclick="usersOffset+=' + 50 + ';switchTab(\'users\')">Next</button></div></div>';
+}
+
+// Auto-login from session
+sb.auth.getSession().then(function(r) { if (r.data && r.data.session) { token = r.data.session.access_token; login(); } });
+</script>
+</body>
+</html>

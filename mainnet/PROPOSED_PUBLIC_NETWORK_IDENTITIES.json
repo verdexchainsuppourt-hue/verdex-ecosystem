@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "status": "FOUR_VALIDATOR_ADDRESSES_RECORDED_ENODES_AND_HOSTS_PENDING_NOT_GENESIS_NOT_DEPLOYED",
+  "updatedAt": "2026-07-18",
+  "network": {
+    "name": "Verdex Mainnet",
+    "proposedChainId": 72010,
+    "consensus": "Hyperledger Besu QBFT"
+  },
+  "proposedPublicEndpoints": {
+    "httpRpc": "https://rpc.verdexswap.site",
+    "webSocketRpc": "wss://rpc.verdexswap.site/ws",
+    "status": "WILDCARD_DNS_RESOLVES_BUT_NO_RPC_SERVICE_OR_EDGE_ROUTE_IS_PROVISIONED"
+  },
+  "proposedP2pHostnames": [
+    "validator-1.p2p.verdexswap.site",
+    "validator-2.p2p.verdexswap.site",
+    "validator-3.p2p.verdexswap.site",
+    "validator-4.p2p.verdexswap.site"
+  ],
+  "proposedValidatorAddresses": [
+    "0xcc90d8222b93859a1ec371a3acd21ae2f35ed383",
+    "0x34cb2a1c8888ad2ea5873399ccd77752f19d145f",
+    "0x8f3feca25502cc82fd4ed85a6f9052060bce9393",
+    "0x615c249379a42094bfdbde29e0c0d8e821e5a1b5"
+  ],
+  "proposedContractDeployerGasAddress": "0xcc90d8222b93859a1ec371a3acd21ae2f35ed383",
+  "missingReleaseInputs": [
+    "Four 512-bit node public keys and reachable enode URLs",
+    "Public IP addresses or DNS targets for every validator host",
+    "A distinct native-gas treasury address and reviewed genesis allocations",
+    "A final genesis timestamp and signed genesis ceremony approval",
+    "An edge proxy with TLS, authentication, rate limiting, and DDoS controls"
+  ],
+  "safetyNotes": [
+    "Addresses are public identifiers only; they do not prove validator control.",
+    "A Cloudflare wildcard may resolve the proposed hostnames to the generic website, but it is not an RPC service, an edge route, or a P2P endpoint.",
+    "No RPC service, genesis file, validator process, Safe, contract, token, or custody system is created by this record.",
+    "Validator private keys must stay under separate operator control outside this repository."
+  ]
+}

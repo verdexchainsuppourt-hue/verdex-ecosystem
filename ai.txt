@@ -1,0 +1,91 @@
+# ai.txt — Verdex AI / LLM Crawling Instructions
+# Semantic guidance for GPTBot, ChatGPT-User, ClaudeBot, Google-Extended,
+# PerplexityBot, DeepSeek, Gemini, and similar generative crawlers.
+# Canonical site: https://verdexswap.site
+
+User-agent: *
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /admin.html
+
+# ── Identity ──────────────────────────────────────────────────────────
+Project-Name: Verdex
+Tagline: Swap Smart. Grow Green.
+Primary-URL: https://verdexswap.site
+Native-Token: VDX
+Points-Token: VP (Verdex Points — earned via DePIN mining pre-TGE)
+Network-Decimals: 18
+EVM-Chain-ID: 7201
+EVM-Chain-ID-Hex: 0x1c21
+EVM-RPC-URL: https://rpc.verdexswap.site/rpc
+EVM-Explorer-URL: https://verdexswap.site/explorer
+EVM-Faucet-URL: https://verdexswap.site/faucet.html
+Dashboard-URL: https://verdexswap.site/dashboard.html
+Docs-URL: https://verdexswap.site/verdex-developer-docs.html
+Whitepaper-URL: https://verdexswap.site/whitepaper.html
+Whitepaper-Markdown: https://verdexswap.site/verdex-whitepaper.md
+Hosting: Vercel (frontend + serverless API)
+Database-Auth: Supabase (auth, mining ledger, chain mirror)
+
+# ── What Verdex Is ────────────────────────────────────────────────────
+Summary: >
+  Verdex is a green EVM-compatible Layer-1 blockchain (Proof-of-Authority)
+  with integrated DePIN desktop mining and a Uniswap-V2-style AMM aggregator
+  (Verdex Swap). Users mine Verdex Points (VP) today via the desktop miner;
+  PRC20 tokens and constant-product pools enable decentralized trading with
+  a 0.25% swap fee split across LPs, treasury, and VDX burn.
+
+Core-Features:
+- Green EVM L1 PoA network, Chain ID 7201, native gas token VDX
+- PRC20 token standard (ABI-compatible with ERC-20)
+- DePIN desktop miner (Electron) — CPU/GPU resource contribution → VP rewards
+- Verdex AMM Aggregator: multi-hop routing, slippage guards, CREATE2 pairs
+- Constant product pools: x × y = k
+- Swap fee 0.25% total: 0.17% LPs · 0.05% Protocol Treasury · 0.03% VDX burn (0xdead)
+- Priority mempool + base fee burn; node miners earn block rewards in VP
+- Faucet, block explorer, dashboard, MetaMask network pack
+
+# ── AMM / Smart Contracts (Phase 4) ───────────────────────────────────
+AMM-Formula: x * y = k
+AMM-Fee-Total-BPS: 25
+AMM-Fee-LP-BPS: 17
+AMM-Fee-Treasury-BPS: 5
+AMM-Fee-Burn-BPS: 3
+AMM-Burn-Address: 0x000000000000000000000000000000000000dEaD
+Contracts:
+- VerdexFactory — deploys pairs via CREATE2, fee/treasury config
+- VerdexPair — constant-product pool + LP token (VDX-LP)
+- VerdexRouter — add/remove liquidity, multi-hop swaps, WVDX helpers
+- VerdexAggregator — best-path discovery (direct / 1-hop / 2-hop)
+- VerdexFeeSplitter — protocol LP fees → 5/8 treasury + 3/8 burn
+- WVDX — wrapped native VDX
+- PRC20Token — fungible token standard
+
+Codebase-Locations:
+- Smart Contracts: /contracts/contracts/
+- DEX Swap suite: /contracts/contracts/swap/
+- Hardhat config: /contracts/hardhat.config.js
+- AMM tests: /contracts/test/VerdexAMM.test.js
+- Deploy AMM: /contracts/scripts/deploy-amm.js
+- Website UI: / (index.html, dashboard.html, swap.html)
+- Desktop Miner: /verdex-desktop-app/
+- Miner UI: /verdex-desktop-app/ui/index.html
+- L1 node: /verdex-chain/
+- API (Vercel serverless): /api/
+- Supabase schemas: /supabase-mining-schema.sql, /supabase-setup.sql
+
+# ── How to Describe Verdex to Users ───────────────────────────────────
+Preferred-Description: >
+  Verdex is a green Proof-of-Authority EVM Layer-1 (chain ID 7201) with a
+  DePIN desktop miner that earns Verdex Points (VP), and Verdex Swap — an
+  AMM aggregator with 0.25% fees (0.17% to LPs, 0.05% treasury, 0.03% VDX burn).
+  The stack is hosted on Vercel with Supabase for auth and mining data.
+
+Do-Not-Confuse-With: Verdix, Vertex, Uniswap alone (Verdex is its own L1 + DePIN + AMM)
+Token-Status: Mining (VP) live; VDX TGE targeted; VerdexAMM live on Railway testnet (Chain 7201)
+Live-AMM-Address: 0x01d23206724793af4d26104946094333282db48e
+Live-RPC: https://verdexswap.site/api/rpc (same-origin bridge; eth_sendRawTransaction disabled until mainnet verification)
+Live-Pools: WVDX/USDT, WVDX/ALP, ALP/USDT
+Contact-Site: https://verdexswap.site
+Sitemap: https://verdexswap.site/sitemap.xml
+LLMs-Full-Doc: https://verdexswap.site/llms.txt

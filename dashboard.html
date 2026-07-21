@@ -650,10 +650,10 @@
           <div class="wallet-balance" style="margin: 0;">
             <span id="vp-balance">0</span><span class="vp-label" style="font-size: 16px; margin-left: 4px;">VP</span>
           </div>
-          <button class="create-token-btn" id="btn-convert-payout" onclick="requestMiningPayout()" style="padding: 6px 14px; font-size:11px; width:auto; border-radius:6px; background:linear-gradient(135deg, #00ff88 0%, #00b35f 100%); color:#000;">Convert to Testnet VDXL</button>
+          <button class="create-token-btn" id="btn-convert-payout" onclick="requestMiningPayout()" style="padding: 6px 14px; font-size:11px; width:auto; border-radius:6px; background:linear-gradient(135deg, #00ff88 0%, #00b35f 100%); color:#000;">Request mainnet reward claim</button>
         </div>
         <div style="font-size: 11px; color: var(--color-text-muted); margin-top: 10px; line-height: 1.4; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
-          💡 Mined VP converts to <strong>Testnet VDXL</strong>. Main token launch is scheduled for <strong>December 12, 2026</strong>.
+          💡 Mining rewards settle as <strong>real mainnet VDX</strong> only after epoch claim finality. No testnet conversion.
         </div>
         <div class="wallet-meta">
           <div class="wallet-meta-item">
@@ -697,10 +697,9 @@
     <!-- VDX ON-CHAIN WALLET CARD -->
     <div class="dash-card full" style="margin-bottom: 20px; border-color: rgba(0, 255, 100, 0.2);">
       <div class="card-label" style="color: var(--color-primary-light); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-        <span>Verdex L1 On-Chain VDX Wallet <span style="font-size:11px;opacity:0.85;font-weight:500;">· Chain ID 7201</span> <span id="vdx-wallet-type-badge" style="margin-left: 8px;"></span></span>
+        <span>Verdex Mainnet VDX Wallet <span style="font-size:11px;opacity:0.85;font-weight:500;">· Network configuration required</span> <span id="vdx-wallet-type-badge" style="margin-left: 8px;"></span></span>
         <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <button type="button" id="btn-add-metamask" onclick="window.addVerdexToWallet && addVerdexToWallet().then(()=>showToast('Verdex Testnet ready in MetaMask','success')).catch(e=>showToast(e.message||String(e),'error'))" style="font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid var(--color-border);background:rgba(34,197,94,0.1);color:var(--color-primary);cursor:pointer;font-weight:600;">Add MetaMask Network</button>
-          <a href="/faucet" style="font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid var(--color-border);color:var(--color-primary);text-decoration:none;font-weight:600;">Faucet</a>
+          <button type="button" id="btn-add-metamask" onclick="window.addVerdexToWallet && addVerdexToWallet().then(()=>showToast('Verdex Mainnet ready in MetaMask','success')).catch(e=>showToast(e.message||String(e),'error'))" style="font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid var(--color-border);background:rgba(34,197,94,0.1);color:var(--color-primary);cursor:pointer;font-weight:600;">Add Mainnet Network</button>
           <span id="rpc-status" class="streak-badge" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: var(--color-danger); font-size: 11px;">RPC Offline</span>
         </span>
       </div>
@@ -765,7 +764,7 @@
             <div style="display: flex; gap: 24px; align-items: baseline; flex-wrap: wrap;">
               <div class="wallet-balance" style="font-size: 32px; margin: 0;">
               <span id="vdx-onchain-balance">0.0000</span><span class="vp-label" style="color: var(--color-primary-light); font-size:14px; margin-left:4px;">VDX</span>
-              <button type="button" id="btn-request-vdx" onclick="requestFaucetVDX()" style="margin-left:12px;padding:6px 14px;font-size:11px;border-radius:6px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#000;border:none;cursor:pointer;font-weight:700;" title="Get free testnet VDX on live L1">Request VDX</button>
+              <button type="button" id="btn-request-vdx" disabled style="margin-left:12px;padding:6px 14px;font-size:11px;border-radius:6px;background:rgba(148,163,184,0.25);color:#cbd5e1;border:none;cursor:not-allowed;font-weight:700;" title="Mainnet has no faucet">No Faucet on Mainnet</button>
               <button type="button" id="btn-refresh-vdx" onclick="pollVDXBalance().then(()=>showToast('Balance refreshed from live L1','success')).catch(()=>{})" style="margin-left:6px;padding:6px 12px;font-size:11px;border-radius:6px;background:transparent;color:var(--color-primary);border:1px solid var(--color-border);cursor:pointer;font-weight:700;" title="Refresh on-chain balance">Refresh</button>
             </div>
             <div id="vdx-faucet-status" style="margin-top:8px;font-size:12px;color:var(--color-text-muted);"></div>
@@ -980,6 +979,7 @@
     </div>
 
 
+
     <div class="dash-card full" style="margin-bottom: 20px;">
       <div class="card-label">Download Verdex Miner</div>
       <div class="card-title">Start Mining Verdex Points</div>
@@ -996,11 +996,11 @@
           <span class="download-version" style="font-size:11px;color:var(--color-primary-light);font-weight:700;letter-spacing:0.5px;margin-top:4px;">v4.0.2 · .exe · 83 MB</span>
         </a>
         <!-- Android -->
-        <a class="download-btn" id="download-android" href="/assets/downloads/Verdex-Android-1.9.2.apk" target="_blank" style="text-decoration:none;">
+        <a class="download-btn" id="download-android" href="/assets/downloads/Verdex-Android-1.10.9-build56.apk" target="_blank" style="text-decoration:none;">
           <span class="download-icon">🤖</span>
           <span class="download-os">Android</span>
           <span class="download-desc">Mobile miner &middot; wallet &middot; referrals &middot; full UI</span>
-          <span class="download-version" style="font-size:11px;color:var(--color-primary-light);font-weight:700;letter-spacing:0.5px;margin-top:4px;">v1.9.2 &middot; .apk &middot; 77 MB</span>
+          <span class="download-version" style="font-size:11px;color:var(--color-primary-light);font-weight:700;letter-spacing:0.5px;margin-top:4px;">v1.10.9 &middot; .apk &middot; 79 MB</span>
         </a>
         <!-- Linux -->
         <a class="download-btn" id="download-linux" href="/assets/downloads/verdex-linux-amd64.tar.gz" target="_blank" style="text-decoration:none;">
@@ -1531,6 +1531,33 @@
       await loadUserData();
       initVDXWallet();
       initVDXContractPanel();
+      if (typeof refreshKycStatus === 'function') refreshKycStatus();
+    }
+
+    async function refreshKycStatus() {
+      const badge = document.getElementById('kyc-status-badge');
+      const msg = document.getElementById('kyc-status-msg');
+      const p2p = document.getElementById('kyc-p2p-flag');
+      const tier = document.getElementById('kyc-tier-flag');
+      if (!badge) return;
+      try {
+        const data = typeof fetchKycStatus === 'function' ? await fetchKycStatus() : null;
+        if (!data) {
+          badge.textContent = 'Sign in required';
+          if (msg) msg.textContent = 'Sign in to load KYC / P2P entitlement.';
+          return;
+        }
+        const st = data.status || 'not_started';
+        badge.textContent = String(st).toUpperCase();
+        badge.style.background = data.p2p_eligible ? 'rgba(34,197,94,0.18)' : 'rgba(245,158,11,0.15)';
+        badge.style.color = data.p2p_eligible ? 'var(--color-primary-light)' : '#f59e0b';
+        if (msg) msg.textContent = (data.next_action && data.next_action.message) || 'Verification status loaded.';
+        if (p2p) p2p.textContent = 'P2P: ' + (data.p2p_eligible ? 'eligible' : (data.p2p_entitlement_state || 'not eligible'));
+        if (tier) tier.textContent = 'Tier: ' + (data.tier != null ? data.tier : '—');
+      } catch (e) {
+        badge.textContent = 'Unavailable';
+        if (msg) msg.textContent = e.message || 'Could not load KYC status';
+      }
     }
 
     async function loadUserData() {
@@ -1945,16 +1972,21 @@
     });
 
     // ============================================================
-    // VDX NATIVE CHAIN WALLET CONTROLLER (Chain ID 7201)
+    // VDX NATIVE CHAIN WALLET CONTROLLER (Mainnet — verified via /api/network)
     // ============================================================
     // Live L1 — prefer same-origin proxy (vercel → Railway), fallback direct Railway
-    const VDX_RPC_URL = (window.VERDEX_NETWORK && window.VERDEX_NETWORK.liveRpcBase)
-      || 'https://verdex-ecosystem-production.up.railway.app';
+    const VDX_RPC_URL = (window.VERDEX_NETWORK && window.VERDEX_NETWORK.rpcHttp) || null;
     // Always hit live chain for wallet ops (never Supabase mirror)
     const VDX_L1 = VDX_RPC_URL;
-    const VDX_CHAIN_ID = (window.VERDEX_NETWORK && window.VERDEX_NETWORK.chainId) || 7201;
+    const VDX_CHAIN_ID = (window.VERDEX_NETWORK && window.VERDEX_NETWORK.chainId) || null;
     let vdxPrivateKey = localStorage.getItem('vdx_private_key');
     let vdxAddress = '';
+
+    function requireConfiguredMainnet() {
+      if (!window.VERDEX_NETWORK || !window.VERDEX_NETWORK.configured || !VDX_RPC_URL || !VDX_CHAIN_ID) {
+        throw new Error('Verdex mainnet is not configured. No testnet fallback is available.');
+      }
+    }
 
     function escapeHtml(str) {
       const div = document.createElement('div');
@@ -2439,6 +2471,11 @@
 
     async function pollVDXBalance() {
       if (!vdxAddress) return;
+      if (!window.VERDEX_NETWORK || !window.VERDEX_NETWORK.configured) {
+        const pendingStatus = document.getElementById('rpc-status');
+        if (pendingStatus) pendingStatus.textContent = 'Mainnet Pending';
+        return;
+      }
       const addr = String(vdxAddress).toLowerCase();
       const rpcStatus = document.getElementById('rpc-status');
       try {
@@ -2559,6 +2596,7 @@
       document.getElementById('summary-subtotal').textContent = `${amount.toFixed(4)} ${assetType}`;
 
       try {
+        requireConfiguredMainnet();
         // Fetch current gas price stats from node
         const res = await fetch(`${VDX_L1}/api/gas/price`);
         const data = await res.json();
@@ -2660,6 +2698,7 @@
     }
 
     async function signAndBroadcastTransaction(txObj) {
+      requireConfiguredMainnet();
       const isMetaMask = localStorage.getItem('vdx_wallet_type') === 'metamask';
       let txSigned;
       
@@ -2719,6 +2758,12 @@
     }
 
     async function submitVDXTransfer() {
+      try {
+        requireConfiguredMainnet();
+      } catch (err) {
+        showToast(err.message, 'error');
+        return;
+      }
       const to = document.getElementById('vdx-send-to').value.trim();
       const amount = document.getElementById('vdx-send-amount').value.trim();
       const assetType = document.getElementById('vdx-send-asset-type').value;
@@ -3108,6 +3153,8 @@ class Contract {
     }
 
     async function requestFaucetVDX() {
+      showToast('The testnet faucet is retired. Mainnet VDX is never distributed through a public faucet.', 'error');
+      return;
       // Dashboard "Verdex L1 On-Chain VDX Wallet" → Request VDX
       if (!vdxAddress || !/^0x[a-fA-F0-9]{40}$/.test(vdxAddress)) {
         showToast('Set up your L1 wallet first (Generate / Import / MetaMask).', 'error');
@@ -3115,7 +3162,7 @@ class Contract {
       }
       const addr = String(vdxAddress).toLowerCase();
       const amount = 10;
-      const L1 = 'https://verdex-ecosystem-production.up.railway.app';
+      const L1 = null;
       const btn = document.getElementById('btn-request-vdx');
       const statusEl = document.getElementById('vdx-faucet-status');
       const balEl = document.getElementById('vdx-onchain-balance');

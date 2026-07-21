@@ -1,0 +1,60 @@
+name: Verify mainnet release evidence
+
+on:
+  pull_request:
+    paths:
+      - 'mainnet/MAINNET_RELEASE_EVIDENCE.json'
+      - 'mainnet/TRUSTED_VALIDATOR_KEYS.json'
+      - 'contracts/scripts/verify-mainnet-evidence.js'
+      - '.github/workflows/verify-mainnet-evidence.yml'
+  push:
+    branches: [fresh-main]
+    paths:
+      - 'mainnet/MAINNET_RELEASE_EVIDENCE.json'
+      - 'mainnet/TRUSTED_VALIDATOR_KEYS.json'
+      - 'contracts/scripts/verify-mainnet-evidence.js'
+      - '.github/workflows/verify-mainnet-evidence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify independently supplied release evidence
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      VERDEX_TRUSTED_GENESIS_ED25519_PUBLIC_KEY: ${{ secrets.VERDEX_TRUSTED_GENESIS_ED25519_PUBLIC_KEY }}
+      VERDEX_TRUSTED_AUDITOR_ED25519_PUBLIC_KEY: ${{ secrets.VERDEX_TRUSTED_AUDITOR_ED25519_PUBLIC_KEY }}
+      VERDEX_TRUSTED_COMPLIANCE_ED25519_PUBLIC_KEY: ${{ secrets.VERDEX_TRUSTED_COMPLIANCE_ED25519_PUBLIC_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v22
+        with:
+          node-version: 22
+
+      - name: Require a real release dossier and independent trust roots
+        shell: bash
+        run: |
+          test -f mainnet/MAINNET_RELEASE_EVIDENCE.json
+          test -f mainnet/TRUSTED_VALIDATOR_KEYS.json
+          test -n "$VERDEX_TRUSTED_GENESIS_ED25519_PUBLIC_KEY"
+          test -n "$VERDEX_TRUSTED_AUDITOR_ED25519_PUBLIC_KEY"
+          test -n "$VERDEX_TRUSTED_COMPLIANCE_ED25519_PUBLIC_KEY"
+
+      - name: Verify chain, validators, Safe, contracts, audit, and approval
+        shell: bash
+        run: |
+          node contracts/scripts/verify-mainnet-evidence.js \
+            mainnet/MAINNET_RELEASE_EVIDENCE.json \
+            --trusted-validators mainnet/TRUSTED_VALIDATOR_KEYS.json \
+            | tee mainnet-evidence-verification.json
+
+      - name: Preserve the non-secret verification result
+        uses: actions/upload-artifact@v4
+        with:
+          name: mainnet-evidence-verification
+          path: mainnet-evidence-verification.json
+          if-no-files-found: error

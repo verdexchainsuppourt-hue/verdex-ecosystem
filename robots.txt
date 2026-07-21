@@ -1,28 +1,109 @@
+# Verdex robots.txt — https://verdexswap.site
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /admin.html
+Disallow: /.env
+Disallow: /node_modules
+Disallow: /contracts/node_modules
+Disallow: /verdex-desktop-app/node_modules
 
+# OpenAI
 User-agent: OAI-SearchBot
 Allow: /
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /admin.html
 
 User-agent: ChatGPT-User
 Allow: /
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /admin.html
 
 User-agent: GPTBot
 Allow: /
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /admin.html
 
+# Google AI / Search
 User-agent: Google-Extended
 Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /admin.html
 
 User-agent: Googlebot
 Allow: /
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /admin.html
 
+# Anthropic
+User-agent: ClaudeBot
+Allow: /
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /admin.html
+
+User-agent: anthropic-ai
+Allow: /
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /admin.html
+
+# Perplexity
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /admin.html
+
+# Microsoft
 User-agent: Bingbot
 Allow: /
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /admin.html
+
+# Common Crawl / research
+User-agent: CCBot
+Allow: /
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /admin.html
+
+# ByteDance / others
+User-agent: Bytespider
+Allow: /
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /admin.html
+
+# Apple
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /admin.html
+
+# Meta
+User-agent: FacebookBot
+Allow: /
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /admin.html
+
+# Cohere / You.com style
+User-agent: cohere-ai
+Allow: /
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /admin.html
 
 Sitemap: https://verdexswap.site/sitemap.xml
+# LLM index
+# https://verdexswap.site/llms.txt
+# https://verdexswap.site/ai.txt

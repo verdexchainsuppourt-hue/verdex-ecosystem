@@ -1,0 +1,20 @@
+{
+  "status": "PENDING_HARDWARE_OWNER_ATTESTATION_NOT_DEPLOYED",
+  "purpose": "Verdex mainnet governance and genesis-vault Safe ownership proposal",
+  "safeOwners": [
+    "0xcc90d8222b93859A1ec371A3ACD21Ae2f35ED383",
+    "0x34cB2a1C8888Ad2Ea5873399CCd77752F19d145f",
+    "0x8f3fECA25502Cc82fd4eD85A6f9052060BCE9393"
+  ],
+  "threshold": 2,
+  "deploymentPrerequisites": [
+    "Each owner confirms that its key was created from a new, unshared hardware-wallet backup.",
+    "A Verdex EVM staging/mainnet chain is live and independently reachable.",
+    "A Safe-compatible singleton and proxy factory have been deployed and verified on that chain.",
+    "Each owner verifies the Safe setup transaction on its own hardware-wallet screen before signing."
+  ],
+  "prohibited": [
+    "Do not use any address whose private key, seed phrase, or wallet backup was shared in chat or stored online.",
+    "Do not fund or use this proposed Safe until the deployment prerequisites are satisfied."
+  ]
+}

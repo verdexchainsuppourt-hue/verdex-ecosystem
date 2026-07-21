@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "status": "TEMPLATE_ONLY_TO_BE_PROVIDED_DURING_DEPLOYMENT",
+  "networkName": "Verdex Mainnet",
+  "chainId": 72010,
+  "genesisTimestampUnixSeconds": 0,
+  "besuDistribution": {
+    "version": "26.7.0",
+    "sourceUrl": "https://github.com/besu-eth/besu/releases/download/26.7.0/besu-26.7.0.zip",
+    "sha256": "f91f7f378faf1b804e4c9389904dd702d1b00d0033daebcfc2e145fe1c133863"
+  },
+  "qbft": {
+    "blockPeriodSeconds": 5,
+    "requestTimeoutSeconds": 10,
+    "epochLength": 30000,
+    "gasLimit": "0x1c9c380",
+    "minimumGasPriceWei": "1000000000"
+  },
+  "validatorAddresses": [
+    "TO_BE_PROVIDED_DURING_DEPLOYMENT_VALIDATOR_A_PUBLIC_ADDRESS",
+    "TO_BE_PROVIDED_DURING_DEPLOYMENT_VALIDATOR_B_PUBLIC_ADDRESS",
+    "TO_BE_PROVIDED_DURING_DEPLOYMENT_VALIDATOR_C_PUBLIC_ADDRESS",
+    "TO_BE_PROVIDED_DURING_DEPLOYMENT_VALIDATOR_D_PUBLIC_ADDRESS"
+  ],
+  "bootnodes": [
+    "TO_BE_PROVIDED_DURING_DEPLOYMENT_ENODE_A",
+    "TO_BE_PROVIDED_DURING_DEPLOYMENT_ENODE_B",
+    "TO_BE_PROVIDED_DURING_DEPLOYMENT_ENODE_C",
+    "TO_BE_PROVIDED_DURING_DEPLOYMENT_ENODE_D"
+  ],
+  "nativeGasAllocations": [
+    {
+      "address": "TO_BE_PROVIDED_DURING_DEPLOYMENT_GAS_TREASURY_ADDRESS",
+      "balanceHex": "TO_BE_PROVIDED_DURING_DEPLOYMENT_NATIVE_GAS_ALLOCATION"
+    },
+    {
+      "address": "TO_BE_PROVIDED_DURING_DEPLOYMENT_CONTRACT_DEPLOYER_ADDRESS",
+      "balanceHex": "TO_BE_PROVIDED_DURING_DEPLOYMENT_DEPLOYER_GAS_ALLOCATION"
+    }
+  ],
+  "publicRpc": {
+    "hostAllowlist": ["TO_BE_PROVIDED_DURING_DEPLOYMENT_PUBLIC_RPC_HOSTNAME"],
+    "corsOrigins": ["https://verdexswap.site"],
+    "rateLimitOwner": "TO_BE_PROVIDED_DURING_DEPLOYMENT_EDGE_SECURITY_OWNER"
+  }
+}

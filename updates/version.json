@@ -3,18 +3,26 @@
   "mandatory": true,
   "minVersion": "3.3.0",
   "productName": "Verdex Miner",
-  "releaseDate": "2026-07-17",
-  "notes": "Crystal logo \u00c2\u00b7 Enhanced auth (Google + email/password) \u00c2\u00b7 Live network stats on login \u00c2\u00b7 P2P network visualization \u00c2\u00b7 Mining stability improvements \u00c2\u00b7 Bug fixes.",
+  "releaseDate": "2026-07-18",
+  "network": "mainnet",
+  "proposedChainId": 72010,
+  "notes": "Mainnet product shift · Testnet 7201 retired · KYC/AML + P2P APIs · Explorer shell · Android 1.9.5 · Real VDX only after chain verification.",
   "downloads": {
     "windows": {
-      "url": "https://github.com/verdexchainsuppourt-hue/verdex-ecosystem/releases/download/v4.0.2/Verdex-Miner-Setup-4.0.2.exe",
+      "url": "https://verdexswap.site/updates/Verdex-Miner-Setup-4.0.2.exe",
       "fileName": "Verdex-Miner-Setup-4.0.2.exe",
       "size": 87066846
     },
     "android": {
-      "url": "https://github.com/verdexchainsuppourt-hue/verdex-ecosystem/releases/download/v4.0.2/Verdex-Android-1.9.2.apk",
-      "fileName": "Verdex-Android-1.9.2.apk"
+      "url": "https://verdexswap.site/assets/downloads/Verdex-Android-1.10.8-build55.apk",
+      "fileName": "Verdex-Android-1.10.8-build55.apk"
     }
   },
-  "feedUrl": "https://verdexswap.site/updates"
+  "feedUrl": "https://verdexswap.site/updates",
+  "links": {
+    "explorer": "https://verdexswap.site/explorer",
+    "p2p": "https://verdexswap.site/p2p",
+    "network": "https://verdexswap.site/api/network",
+    "registry": "https://verdexswap.site/public-network.json"
+  }
 }

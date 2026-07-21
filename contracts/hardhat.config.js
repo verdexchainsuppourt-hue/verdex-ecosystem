@@ -1,5 +1,17 @@
 require('@nomicfoundation/hardhat-toolbox');
 
+const mainnetChainId = process.env.VERDEX_MAINNET_CHAIN_ID
+  ? Number(process.env.VERDEX_MAINNET_CHAIN_ID)
+  : undefined;
+
+const verdexMainnet = {
+  url: process.env.VDX_RPC_URL || 'http://127.0.0.1:8545',
+  accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
+};
+if (Number.isSafeInteger(mainnetChainId) && mainnetChainId > 0 && mainnetChainId !== 7201) {
+  verdexMainnet.chainId = mainnetChainId;
+}
+
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
@@ -10,18 +22,9 @@ module.exports = {
   },
   networks: {
     hardhat: {
-      chainId: 7201
+      chainId: 31337
     },
-    verdex: {
-      url: process.env.VERDEX_RPC_URL || 'https://verdex-ecosystem-production.up.railway.app/rpc',
-      chainId: 7201,
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
-    },
-    verdexLocal: {
-      url: process.env.VERDEX_LOCAL_RPC || 'http://127.0.0.1:8545',
-      chainId: 7201,
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
-    }
+    verdexMainnet
   },
   paths: {
     sources: './contracts',

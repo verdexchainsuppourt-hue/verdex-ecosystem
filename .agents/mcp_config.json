@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "agent-router": {
+      "serverUrl": "https://agent-router-backend-1023201593264.europe-west1.run.app/mcp/sse?apiKey=a2a_3rl-agK5oo8u-eX6_bPnSIBpOYEoCCUwafh0wCQ99rY"
+    }
+  }
+}

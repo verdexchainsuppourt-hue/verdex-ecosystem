@@ -1,7 +1,7 @@
 {
   "name": "verdex-miner",
   "version": "4.0.2",
-  "description": "Verdex DePIN Desktop Miner — Mine VP/VDX with CPU & GPU on Chain 7201",
+  "description": "Verdex DePIN Desktop Miner — Mine VP/VDX with CPU & GPU on Verdex Mainnet (proposed chain 72010; testnet 7201 retired)",
   "main": "main.js",
   "scripts": {
     "start": "electron .",

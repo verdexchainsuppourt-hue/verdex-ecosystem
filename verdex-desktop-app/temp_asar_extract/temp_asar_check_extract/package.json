@@ -1,0 +1,13 @@
+{
+  "name": "verdex-miner",
+  "version": "3.0.0",
+  "description": "Verdex DePIN Desktop Miner — Mine VDX with CPU & GPU",
+  "main": "main.js",
+  "author": "Verdex",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "node-fetch": "^2.6.7",
+    "systeminformation": "^5.22.0"
+  }
+}

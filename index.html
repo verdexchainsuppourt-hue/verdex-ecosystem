@@ -3,38 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verdex — Swap Smart. Grow Green. | Green EVM L1 · DePIN Miner · AMM</title>
-  <meta name="description" content="Verdex is a green EVM Layer-1 (Chain ID 7201) with DePIN desktop mining and Verdex Swap AMM. Mine VP, trade with 0.25% fees (0.17% LPs · 0.05% treasury · 0.03% burn), full self-custody.">
-  <meta name="keywords" content="Verdex, VDX, VP, DePIN miner, green EVM, Chain 7201, DEX, AMM aggregator, PRC20, PoA blockchain, swap, liquidity, yield farming, Verdex Swap">
+  <title>Verdex — Mainnet · DePIN Miner · P2P · KYC | Swap Smart. Grow Green.</title>
+  <meta name="description" content="Verdex Mainnet product: DePIN miners (Windows 4.0.2 · Android 1.10.9), KYC/AML, P2P marketplace, explorer. Proposed chain ID 72010 (Besu QBFT). Real VDX. Testnet 7201 retired.">
+  <meta name="keywords" content="Verdex, VDX, mainnet, DePIN miner, P2P, KYC, chain 72010, Besu QBFT, green EVM, Android miner, Windows miner">
   <meta name="author" content="Verdex">
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <meta name="theme-color" content="#00ff88">
   <meta name="msvalidate.01" content="1633AE4FBBAF10022A33179BE8A25436" />
   <link rel="canonical" href="https://verdexswap.site/">
-  
+
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Verdex">
   <meta property="og:locale" content="en_US">
   <meta property="og:title" content="Verdex — Swap Smart. Grow Green.">
-  <meta property="og:description" content="Green EVM L1 (7201) + DePIN miner + AMM aggregator. 0.25% swap fees. Mine VP today. Self-custody DeFi.">
+  <meta property="og:description" content="Verdex Mainnet product live: miners, KYC/AML, P2P, explorer. Proposed chain 72010. Real VDX.">
   <meta property="og:url" content="https://verdexswap.site/">
   <meta property="og:image" content="https://verdexswap.site/assets/verdex-token.png">
   <meta property="og:image:alt" content="Verdex VDX token">
-  
+
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Verdex — Swap Smart. Grow Green.">
-  <meta name="twitter:description" content="Green EVM L1 · DePIN desktop miner · AMM with 0.25% fees. Chain ID 7201.">
+  <meta name="twitter:description" content="Verdex Mainnet · Android 1.10.9 · Windows 4.0.2 · KYC · P2P · Explorer · chain 72010.">
   <meta name="twitter:image" content="https://verdexswap.site/assets/verdex-token.png">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  
-  <link rel="stylesheet" href="css/style.css?v=3.0.5">
-  
+
+  <link rel="stylesheet" href="css/style.css?v=4.0.0">
+  <link rel="stylesheet" href="css/premium.css?v=4.0.0">
+
   <!-- GSAP for Cinematic Animations -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
@@ -68,11 +69,11 @@
         "@type": "WebApplication",
         "name": "Verdex",
         "url": "https://verdexswap.site",
-        "description": "Verdex is a green EVM-compatible Layer-1 (Chain ID 7201, PoA) with DePIN desktop mining (VP rewards) and a constant-product AMM aggregator (0.25% fee: 0.17% LPs, 0.05% treasury, 0.03% VDX burn).",
+        "description": "Verdex Mainnet product: DePIN mining apps, KYC/AML, P2P marketplace, and explorer. Proposed Besu QBFT chain ID 72010. Real VDX.",
         "applicationCategory": "FinanceApplication",
-        "operatingSystem": "Windows, Linux, Web",
-        "browserRequirements": "Requires JavaScript. MetaMask or EIP-1193 wallet recommended.",
-        "keywords": "Verdex, VDX, VP, green EVM blockchain, DePIN desktop mining, PRC20, Chain 7201, crypto miner, green DeFi, Verdex Swap, AMM aggregator",
+        "operatingSystem": "Windows, Android, Linux, Web",
+        "browserRequirements": "Requires JavaScript. MetaMask or EIP-1193 wallet recommended after mainnet verification.",
+        "keywords": "Verdex, VDX, mainnet, DePIN, P2P, KYC, chain 72010, Android miner, Windows miner",
         "offers": {
           "@type": "Offer",
           "price": "0.00",
@@ -94,13 +95,28 @@
 </head>
 <body>
 
-  <!-- Preloader -->
+  <!-- Premium Preloader -->
   <div class="preloader" id="preloader">
-    <img src="assets/verdex-token.png?v=3.1.2" class="preloader-logo logo-filter" alt="Verdex Token" style="width: 150px; height: auto; transform-origin: center center;">
+    <div class="preloader-inner">
+      <img src="assets/verdex-token.png?v=3.1.2" class="preloader-logo logo-filter" alt="Verdex Token" style="width: 110px; height: auto; transform-origin: center center;">
+      <div class="preloader-bar"><span class="preloader-bar-fill" id="preloaderBarFill"></span></div>
+      <div class="preloader-percent" id="preloaderPercent">0%</div>
+      <div class="preloader-tag">Swap Smart · Grow Green</div>
+    </div>
   </div>
 
   <!-- Scroll Progress -->
   <div class="scroll-progress" id="scrollProgress"></div>
+
+  <!-- Ambient Aurora Background -->
+  <div class="aurora" aria-hidden="true">
+    <div class="aurora-blob b1"></div>
+    <div class="aurora-blob b2"></div>
+    <div class="aurora-blob b3"></div>
+  </div>
+
+  <!-- Film Grain -->
+  <div class="grain-overlay" aria-hidden="true"></div>
 
   <!-- Background Effects -->
   <div class="green-corner-tl"></div>
@@ -125,7 +141,7 @@
         <li><a href="#roadmap">Roadmap</a></li>
         <li><a href="faq.html">FAQ</a></li>
         <li><a href="explorer/index.html">Explorer</a></li>
-        <li><a href="faucet.html">Faucet</a></li>
+        <li><a href="mainnet.html">Mainnet</a></li>
         <li><a href="dashboard.html">Dashboard</a></li>
         <li><a href="dashboard.html#miner">Miner</a></li>
       </ul>
@@ -139,15 +155,24 @@
 
   <!-- Hero Section -->
   <header class="hero" id="home">
+    <div class="hero-beams" aria-hidden="true">
+      <div class="hero-beam b1"></div>
+      <div class="hero-beam b2"></div>
+      <div class="hero-beam b3"></div>
+    </div>
+    <div class="hero-grid-floor" aria-hidden="true"></div>
+    <canvas class="hero-canvas" id="heroCanvas" aria-hidden="true"></canvas>
+
     <div class="container hero-container">
       <div class="hero-content">
         <div class="hero-badge">
           <span class="pulse-dot"></span>
-          Live on Verdex Testnet · Chain ID 7201
+          Mainnet product live · Proposed chain 72010 · Testnet retired
         </div>
         <h1 class="hero-title">
-          <span class="gradient-text">Swap Smart.</span><br>
-          <span class="outline-text">Grow Green.</span>
+          <span class="ht-line"><span class="ht-word gradient-text">Swap</span> <span class="ht-word gradient-text">Smart.</span></span>
+          <span class="ht-line"><span class="ht-word gradient-text">Grow</span> <span class="ht-word gradient-text">Green.</span></span>
+          <span class="ht-line"><span class="ht-word outline-text">Mine</span> <span class="ht-word outline-text">DePIN.</span></span>
         </h1>
         <p class="hero-subtitle">
           Green PoA Layer-1 with <strong>DePIN mining</strong>, <strong>live AMM quotes</strong>, faucet, and explorer — all with self-custody. Mine VP today. Trade on Verdex Swap.
@@ -181,6 +206,8 @@
           <img src="assets/verdex-token.png?v=3.1.2" class="hero-animation" alt="Verdex Token Logo">
           <div class="orbit-ring orbit-ring-1"></div>
           <div class="orbit-ring orbit-ring-2"></div>
+          <div class="orbit-sat s1" aria-hidden="true"></div>
+          <div class="orbit-sat s2" aria-hidden="true"></div>
         </div>
       </div>
     </div>
@@ -199,10 +226,10 @@
         </div>
         <div class="dl-text">
           <h4 class="dl-title">Download &rarr; Install &rarr; Mine VDX</h4>
-          <p class="dl-desc">Verdex Miner v4.0.2 for Windows &amp; Android v1.9.2. Apps auto-update on launch. Mine points that convert to VDX at mainnet launch.</p>
+          <p class="dl-desc">Verdex Miner v4.0.2 for Windows &amp; Android v1.10.9. Apps auto-update on launch. Mainnet VDX · KYC/P2P ready · real rewards at claim finality.</p>
           <div class="dl-meta">
             <span class="dl-badge">🪟 Windows v4.0.2</span>
-            <span class="dl-badge">🤖 Android v1.9.2</span>
+            <span class="dl-badge">🤖 Android v1.10.9</span>
             <span class="dl-badge">🐧 Linux CLI</span>
             <span class="dl-badge">🌐 Browser</span>
           </div>
@@ -214,9 +241,9 @@
           Download for Windows
           <span class="dl-version">v4.0.2</span>
         </a>
-        <a href="assets/downloads/Verdex-Android-1.9.2.apk" class="dl-btn" id="dl-btn-android" style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:#4ade80;text-decoration:none;display:inline-flex;align-items:center;gap:10px;padding:13px 22px;border-radius:10px;font-weight:700;font-size:14px;transition:all 0.25s;">
+        <a href="assets/downloads/Verdex-Android-1.10.9-build56.apk" class="dl-btn" id="dl-btn-android" style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:#4ade80;text-decoration:none;display:inline-flex;align-items:center;gap:10px;padding:13px 22px;border-radius:10px;font-weight:700;font-size:14px;transition:all 0.25s;">
           🤖 Android APK
-          <span class="dl-version" style="background:rgba(0,0,0,0.2);">v1.9.2</span>
+          <span class="dl-version" style="background:rgba(0,0,0,0.2);">v1.10.9</span>
         </a>
         <a href="/dashboard" class="dl-alt">Linux CLI &amp; browser mining <svg style="width:10px;height:10px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></a>
       </div>
@@ -507,8 +534,8 @@
           <div class="roadmap-dot"></div>
           <div class="roadmap-content">
             <span class="roadmap-phase">Phase 2</span>
-            <h3>Testnet Launch</h3>
-            <p>Verdex Testnet (chain ID 7201) live with VP mining, faucet, explorer, PRC20, and VerdexAMM (0.25% fee pools seeded).</p>
+            <h3>Mainnet product launch</h3>
+            <p>Website, miners, KYC/AML, P2P APIs, and explorer live. Proposed Besu chain ID 72010; on-chain VDX after validator + contract verification.</p>
           </div>
         </div>
         <div class="roadmap-item active">
@@ -565,7 +592,7 @@
             <path d="M50 105L95 80L50 160L5 80L50 105Z" fill="#4ade80"/>
           </svg>
         </div>
-        <h2>Verdex Swap is <span class="gradient-text">Live on Testnet</span></h2>
+        <h2>Verdex is <span class="gradient-text">shifting to Mainnet</span></h2>
         <p>
           On-chain AMM with <strong>0.25% fees</strong> (0.17% LPs · 0.05% treasury · 0.03% burn).
           Pools: <strong>WVDX / USDT / ALP</strong>. Multi-hop routing &amp; live quotes ready.
@@ -632,12 +659,12 @@
           <p style="color: var(--color-text-muted); font-size: 13.5px; line-height: 1.6;">The Verdex DePIN desktop miner is a lightweight local application (available for Windows and Linux) that enables users to connect their idle GPU/CPU hardware power to the Verdex DePIN mining pool. By running the desktop miner, users secure the network infrastructure and earn Verdex Points (VP) automatically, which prepare them for the native VDX token distribution.</p>
         </div>
         <div class="faq-card" style="background: rgba(255, 255, 255, 0.02); padding: 24px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); transition: border-color 0.3s;">
-          <h3 style="color: var(--color-primary-light); font-size: 16px; margin-bottom: 10px; font-family: 'Space Grotesk', sans-serif;">How to obtain testnet VDX tokens using the faucet?</h3>
-          <p style="color: var(--color-text-muted); font-size: 13.5px; line-height: 1.6;">To test the EVM capabilities of the Verdex PRC20 Testnet, users can access the official Testnet Faucet at <code>https://verdexswap.site/faucet.html</code>. Simply enter your EVM-compatible address (e.g. MetaMask) to request and receive free testnet VDX tokens to deploy smart contracts, test transaction latency, and interact with swap pools.</p>
+          <h3 style="color: var(--color-primary-light); font-size: 16px; margin-bottom: 10px; font-family: 'Space Grotesk', sans-serif;">Is there a public faucet?</h3>
+          <p style="color: var(--color-text-muted); font-size: 13.5px; line-height: 1.6;">No. The testnet faucet is permanently retired. Mainnet VDX is never distributed through a public faucet. Mining rewards and P2P settlement use real VDX only after chain and contract verification.</p>
         </div>
         <div class="faq-card" style="background: rgba(255, 255, 255, 0.02); padding: 24px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); transition: border-color 0.3s;">
-          <h3 style="color: var(--color-primary-light); font-size: 16px; margin-bottom: 10px; font-family: 'Space Grotesk', sans-serif;">Is Verdex listed on Chainlist?</h3>
-          <p style="color: var(--color-text-muted); font-size: 13.5px; line-height: 1.6;">Yes, the Verdex PRC20 Testnet is officially registered and submitted to the EVM Chainlist repository. The network can be added automatically to MetaMask or other wallets via Chain ID <code>7201</code>, currency symbol <code>VDX</code>, and RPC URL <code>https://rpc.verdexswap.site</code>. Block details are publicly verifiable on the integrated Block Explorer.</p>
+          <h3 style="color: var(--color-primary-light); font-size: 16px; margin-bottom: 10px; font-family: 'Space Grotesk', sans-serif;">What is the mainnet chain ID?</h3>
+          <p style="color: var(--color-text-muted); font-size: 13.5px; line-height: 1.6;">Proposed Verdex Mainnet chain ID is <code>72010</code> (Besu QBFT). Legacy testnet <code>7201</code> is retired. Add network only after <code>/api/network</code> returns verified. Explorer: <code>https://verdexswap.site/explorer</code>.</p>
         </div>
       </div>
     </div>
@@ -646,6 +673,7 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="container">
+      <div class="footer-mega" aria-hidden="true">VERDEX</div>
       <div class="footer-grid">
         <div class="footer-brand">
           <a href="#" class="logo">
@@ -665,7 +693,7 @@
             <li><a href="swap.html">Swap</a></li>
             <li><a href="dashboard.html">Mine VP</a></li>
             <li><a href="explorer/">Explorer</a></li>
-            <li><a href="faucet.html">Faucet</a></li>
+            <li><a href="mainnet.html">Mainnet</a></li>
           </ul>
         </div>
         <div class="footer-links">
@@ -698,14 +726,14 @@
       </div>
       <div class="footer-bottom">
         <p>&copy; 2026 Verdex. All rights reserved.</p>
-        <p class="disclaimer">Verdex is a decentralized protocol on testnet. This website is for informational purposes only and does not constitute financial advice. Crypto involves risk.</p>
+        <p class="disclaimer">Verdex mainnet product surface is live; on-chain settlement requires verified RPC and contracts. This website is informational only and is not financial advice. Crypto involves risk.</p>
         <p class="disclaimer" style="margin-top: 20px; font-size: 0.85rem;">Developed by <strong style="color: var(--color-primary-light);">Suleman</strong> — Other developers will be revealed soon.</p>
       </div>
     </div>
   </footer>
 
   <script src="js/network-config.js?v=4.0.1"></script>
-  <script src="js/main.js?v=4.0.1"></script>
+  <script src="js/main.js?v=4.1.0"></script>
   <script>
     async function addVerdexToMetaMask() {
       const btn = document.getElementById('metamask-btn');
@@ -716,22 +744,9 @@
       btn.disabled = true;
       btn.innerHTML = '<span style="opacity:0.7">Adding...</span>';
       try {
-        if (window.addVerdexToWallet) {
-          await addVerdexToWallet();
-        } else {
-          const origin = window.location.origin;
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [{
-              chainId: '0x1C21',
-              chainName: 'Verdex PRC20 Testnet',
-              nativeCurrency: { name: 'Verdex', symbol: 'VDX', decimals: 18 },
-              rpcUrls: ['https://rpc.verdexswap.site/rpc'],
-              blockExplorerUrls: ['https://verdexswap.site/explorer']
-            }]
-          });
-        }
-        btn.innerHTML = '✅ Verdex Added!';
+        if (!window.addVerdexToWallet) throw new Error('Network helper unavailable');
+        await addVerdexToWallet();
+        btn.innerHTML = '✅ Verdex Mainnet Added!';
         btn.style.borderColor = 'rgba(0,255,136,0.8)';
         btn.style.background = 'rgba(0,255,136,0.1)';
         setTimeout(() => {
@@ -742,10 +757,11 @@
         }, 3000);
       } catch (err) {
         btn.disabled = false;
-        btn.innerHTML = '❌ Failed — Retry';
+        const msg = (err && err.message) ? String(err.message) : 'Failed';
+        btn.innerHTML = msg.includes('not configured') ? '⏳ Mainnet pending' : '❌ Failed — Retry';
         setTimeout(() => {
           btn.innerHTML = '<svg style="width:16px;height:16px;margin-right:6px;vertical-align:middle;" viewBox="0 0 24 24" fill="currentColor"><path d="M21.32 3L13.23 9.11l1.54-3.68L21.32 3zm-18.65 0l8.06 6.13-1.46-3.7L2.67 3zM18.19 15.97l-2.15 3.29 4.61 1.27 1.32-4.49-3.78-.07zm-14.5.07l1.32 4.49 4.59-1.27-2.13-3.29-3.78.07zm-.82-5.51l-1.09 5.07 3.59-.19-2.5-4.88zm16.26 0l-2.52 4.88 3.61.19-1.09-5.07zM8.39 13.95l-2.44-.98.87-3.74 1.57 4.72zm7.22 0l1.57-4.72.89 3.74-2.46.98z"/></svg>Add to MetaMask';
-        }, 3000);
+        }, 4000);
       }
     }
   </script>

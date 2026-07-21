@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verdex P2P — Mainnet VDX Marketplace</title>
+<meta name="description" content="Buy and sell real mainnet VDX with KYC-gated P2P escrow coordination.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="/js/auth.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#030a06;--panel:#0a1810;--line:rgba(34,197,94,.18);--text:#f0fdf4;--muted:#86a389;--g:#22c55e;--gl:#4ade80;--amber:#f59e0b;--red:#ef4444}
+body{font-family:Inter,system-ui,sans-serif;background:radial-gradient(circle at top left,#14532d33,transparent 40%),var(--bg);color:var(--text);min-height:100vh}
+a{color:var(--gl);text-decoration:none}
+.wrap{max-width:1100px;margin:0 auto;padding:24px}
+.nav{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:28px}
+.brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:20px}
+.brand span{color:var(--gl)}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:#0b1a12;color:var(--muted)}
+.badge.live{color:var(--gl);border-color:rgba(34,197,94,.4)}
+.hero h1{font-family:'Space Grotesk',sans-serif;font-size:clamp(28px,4vw,42px);line-height:1.1;margin:12px 0}
+.hero p{color:var(--muted);max-width:640px;line-height:1.65;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px}
+.card h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:14px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 8px;color:var(--muted);font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--line)}
+td{padding:12px 8px;border-bottom:1px solid rgba(34,197,94,.06)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:10px;border:none;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
+.btn-primary{background:var(--g);color:#04140a}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid var(--line)}
+input,select,textarea{width:100%;background:rgba(34,197,94,.05);border:1px solid var(--line);border-radius:10px;padding:11px 12px;color:var(--text);font:inherit;margin-bottom:10px}
+label{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.stat{font-size:12px;color:var(--muted)}.stat b{color:var(--gl);font-size:18px;display:block;font-family:'Space Grotesk',sans-serif}
+.err{color:var(--red);font-size:13px;margin-top:8px}.ok{color:var(--gl);font-size:13px;margin-top:8px}
+.hidden{display:none}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
+.pill-sell{background:rgba(34,197,94,.15);color:var(--gl)}
+.pill-buy{background:rgba(59,130,246,.15);color:#60a5fa}
+</style>
+<link rel="stylesheet" href="css/premium.css?v=4.0.0">
+</head>
+<body>
+  <div class="aurora" aria-hidden="true">
+    <div class="aurora-blob b1"></div>
+    <div class="aurora-blob b2"></div>
+    <div class="aurora-blob b3"></div>
+  </div>
+  <div class="grain-overlay" aria-hidden="true"></div>
+<div class="wrap">
+  <div class="nav">
+    <div class="brand">VERDEX <span>P2P</span></div>
+    <div class="row" style="margin:0">
+      <span class="badge live" id="netBadge">MAINNET · VDX</span>
+      <a class="btn btn-outline" href="/dashboard">Dashboard</a>
+      <a class="btn btn-outline" href="/explorer">Explorer</a>
+      <a class="btn btn-outline" href="/kyc-moderation">KYC staff</a>
+    </div>
+  </div>
+
+  <section class="hero">
+    <div class="badge">Real VDX marketplace coordination</div>
+    <h1>Buy &amp; sell mainnet VDX with KYC-gated P2P</h1>
+    <p>
+      Orders and matching run on Verdex servers. Settlement uses on-chain
+      <strong>VerdexP2PEscrow</strong> once the mainnet RPC and contracts pass release verification.
+      No testnet balances. No simulated escrow.
+    </p>
+    <div class="row">
+      <div class="stat"><b id="capP2p">—</b>Marketplace</div>
+      <div class="stat"><b id="capKyc">—</b>Your KYC</div>
+      <div class="stat"><b id="capCreate">—</b>Create orders</div>
+      <div class="stat"><b id="capEscrow">Pending</b>On-chain escrow</div>
+    </div>
+  </section>
+
+  <div id="authBox" class="card" style="margin:22px 0">
+    <h2>Sign in</h2>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:12px">Use your Verdex account to view the book and manage orders.</p>
+    <label>Email</label>
+    <input id="email" type="email" autocomplete="username">
+    <label>Password</label>
+    <input id="password" type="password" autocomplete="current-password">
+    <div class="row">
+      <button class="btn btn-primary" id="btnLogin">Sign in</button>
+      <button class="btn btn-outline" id="btnGoogle">Google</button>
+    </div>
+    <div id="authErr" class="err hidden"></div>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="grid" style="margin-top:22px">
+      <div class="card">
+        <h2>Open order book</h2>
+        <div class="row" style="margin-bottom:12px">
+          <select id="filterSide" style="max-width:160px;margin:0">
+            <option value="">All sides</option>
+            <option value="sell_vdx">Sell VDX</option>
+            <option value="buy_vdx">Buy VDX</option>
+          </select>
+          <button class="btn btn-outline" id="btnRefresh">Refresh</button>
+        </div>
+        <div style="overflow:auto">
+          <table>
+            <thead>
+              <tr><th>Side</th><th>Price</th><th>Available</th><th>Fiat</th><th>Methods</th><th>Ref</th></tr>
+            </thead>
+            <tbody id="bookBody"><tr><td colspan="6" style="color:var(--muted)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Create order (allowlist / KYC)</h2>
+        <label>Side</label>
+        <select id="side">
+          <option value="sell_vdx">Sell VDX</option>
+          <option value="buy_vdx">Buy VDX</option>
+        </select>
+        <label>Amount (VDX, whole tokens for UI → wei × 1e18)</label>
+        <input id="amount" type="number" min="0.0001" step="any" placeholder="100">
+        <label>Price per VDX (fiat)</label>
+        <input id="price" type="number" min="0" step="any" placeholder="1.00">
+        <label>Fiat currency</label>
+        <input id="currency" maxlength="3" value="USD" style="text-transform:uppercase">
+        <label>Payment methods (comma separated)</label>
+        <input id="methods" placeholder="BANK_TRANSFER, JAZZCASH">
+        <label>Terms</label>
+        <textarea id="terms" placeholder="Payment window, bank notes…"></textarea>
+        <button class="btn btn-primary" id="btnCreate" style="width:100%;margin-top:8px">Post order</button>
+        <div id="createMsg" class="ok hidden"></div>
+        <div id="createErr" class="err hidden"></div>
+        <p style="color:var(--muted);font-size:12px;margin-top:14px;line-height:1.5">
+          During launch only allowlisted makers can post. Complete KYC in the Android app or staff console.
+          Escrow deposit intents appear after mainnet contract verification.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const SUPABASE_URL = (window.__VERDEX_AUTH && window.__VERDEX_AUTH.url) || 'https://unbzescopxtmtbrgqlhh.supabase.co';
+  const SUPABASE_ANON = (window.__VERDEX_AUTH && window.__VERDEX_AUTH.anon) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVuYnplc2NvcHh0bXRicmdxbGhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1Njc1MjcsImV4cCI6MjA5OTE0MzUyN30.jHm7uIV_fBWIP-EFl3d2AY5P42X3tcIIbEGwNfSYiPM';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  let token = null;
+  const $ = (id) => document.getElementById(id);
+  const show = (el, on) => el.classList.toggle('hidden', !on);
+  function toWei(v) {
+    const n = Number(v);
+    if (!Number.isFinite(n) || n <= 0) return null;
+    // simple decimal to wei for UI (max 6 dp)
+    const [w, f = ''] = String(v).split('.');
+    const frac = (f + '000000000000000000').slice(0, 18);
+    return BigInt(w || '0') * 10n**18n + BigInt(frac || '0');
+  }
+  async function api(path, opts) {
+    opts = opts || {};
+    const headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token };
+    if (opts.method && opts.method !== 'GET') headers['X-Idempotency-Key'] = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+    const r = await fetch(path, { method: opts.method || 'GET', headers, body: opts.body ? JSON.stringify(opts.body) : undefined });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error((data.error && data.error.message) || data.error || ('HTTP ' + r.status));
+    return data;
+  }
+  async function enter(session) {
+    token = session.access_token;
+    show($('authBox'), false);
+    show($('app'), true);
+    await refreshCaps();
+    await loadBook();
+  }
+  async function refreshCaps() {
+    try {
+      const r = await api('/api/p2p?action=capabilities');
+      const c = r.data || r; // handle both {data:{...}} and flat shapes
+      $('capP2p').textContent = (c.p2p_enabled || c.p2pEnabled) ? 'ON' : 'OFF';
+      $('capKyc').textContent = (c.kyc && c.kyc.status) || '—';
+      $('capCreate').textContent = c.can_create_orders ? 'YES' : 'NO';
+      $('capEscrow').textContent = c.escrow && c.escrow.live ? 'LIVE' : 'Pending';
+      $('btnCreate').disabled = !c.can_create_orders;
+      $('netBadge').textContent = 'MAINNET · chain ' + (c.proposed_chain_id || 72010);
+    } catch (e) {
+      $('capP2p').textContent = 'ERR';
+    }
+  }
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  async function loadBook() {
+    try {
+      const side = $('filterSide').value;
+      const q = side ? ('&side=' + encodeURIComponent(side)) : '';
+      const data = await api('/api/p2p?action=orders' + q);
+      const rows = data.orders || data.data || [];
+      if (!rows.length) {
+        $('bookBody').innerHTML = '<tr><td colspan="6" style="color:var(--muted)">No open orders yet. Allowlisted makers can post first.</td></tr>';
+        return;
+      }
+      $('bookBody').innerHTML = rows.map(function(o){
+        const pill = o.side === 'sell_vdx' ? 'pill-sell' : 'pill-buy';
+        const avail = o.remaining_amount_atomic;
+        return '<tr><td><span class="pill '+pill+'">'+escapeHtml(o.side)+'</span></td><td>'+escapeHtml(o.fiat_price_per_vdx)+'</td><td style="font-family:monospace;font-size:11px">'+escapeHtml(String(avail).slice(0,18))+'…</td><td>'+escapeHtml(o.fiat_currency)+'</td><td>'+escapeHtml((o.payment_method_codes||[]).join(', '))+'</td><td>'+escapeHtml((o.public_reference||'').slice(0,12))+'</td></tr>';
+      }).join('');
+    } catch (e) {
+      $('bookBody').innerHTML = '<tr><td colspan="6" class="err">'+escapeHtml(e.message)+'</td></tr>';
+    }
+  }
+  $('btnLogin').onclick = async function() {
+    show($('authErr'), false);
+    try {
+      const { data, error } = await sb.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value });
+      if (error) throw error;
+      await enter(data.session);
+    } catch (e) { $('authErr').textContent = e.message; show($('authErr'), true); }
+  };
+  $('btnGoogle').onclick = async function() {
+    await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + '/p2p' } });
+  };
+  $('btnRefresh').onclick = function(){ refreshCaps(); loadBook(); };
+  $('filterSide').onchange = loadBook;
+  $('btnCreate').onclick = async function() {
+    show($('createMsg'), false); show($('createErr'), false);
+    try {
+      const wei = toWei($('amount').value);
+      if (!wei) throw new Error('Invalid amount');
+      const methods = $('methods').value.split(',').map(function(s){return s.trim();}).filter(Boolean);
+      const data = await api('/api/p2p?action=orders', {
+        method: 'POST',
+        body: {
+          side: $('side').value,
+          token_amount_atomic: wei.toString(),
+          minimum_trade_amount_atomic: wei.toString(),
+          fiat_currency: $('currency').value.trim().toUpperCase(),
+          fiat_price_per_vdx: Number($('price').value),
+          payment_method_codes: methods,
+          terms_summary: $('terms').value
+        }
+      });
+      $('createMsg').textContent = 'Order posted: ' + (data.order && data.order.public_reference);
+      show($('createMsg'), true);
+      loadBook();
+    } catch (e) {
+      $('createErr').textContent = e.message;
+      show($('createErr'), true);
+    }
+  };
+  sb.auth.getSession().then(function(r){ if (r.data && r.data.session) enter(r.data.session); });
+})();
+</script>
+</body>
+</html>

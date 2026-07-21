@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: transparent;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      -webkit-app-region: drag;
+      font-family: 'Segoe UI', -apple-system, sans-serif;
+    }
+
+    .splash-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      opacity: 0;
+      animation: splashFade 3.0s ease forwards;
+    }
+
+    @keyframes splashFade {
+      0% { opacity: 0; transform: scale(0.98); }
+      12% { opacity: 1; transform: scale(1); }
+      80% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1.03); }
+    }
+
+    .splash-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 16px;
+    }
+
+    .splash-vignette {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, 0.5) 100%),
+        linear-gradient(180deg, rgba(0,255,136,0.06) 0%, transparent 40%, rgba(0,0,0,0.35) 100%);
+      pointer-events: none;
+      z-index: 2;
+      border-radius: 16px;
+    }
+    .splash-brand {
+      position: absolute;
+      left: 0; right: 0; bottom: 28px;
+      z-index: 3;
+      text-align: center;
+      color: #fff;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      letter-spacing: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      opacity: 0;
+      animation: brandIn 1.2s ease 0.4s forwards;
+      text-shadow: 0 0 18px rgba(0,255,136,0.45);
+    }
+    .splash-brand span { color: #00ff88; }
+    @keyframes brandIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 0.95; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="splash-container">
+    <video class="splash-video" autoplay muted playsinline>
+      <source src="assets/splash.mp4" type="video/mp4">
+    </video>
+    <div class="splash-vignette"></div>
+    <div class="splash-brand">Verdex Miner · <span>DePIN Node</span></div>
+  </div>
+</body>
+</html>

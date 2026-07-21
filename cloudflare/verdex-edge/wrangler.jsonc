@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "verdex-edge",
+  "main": "worker.js",
+  "compatibility_date": "2026-07-18",
+  "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "verdexswap.site/updates/android/*",
+      "zone_name": "verdexswap.site"
+    }
+  ]
+}

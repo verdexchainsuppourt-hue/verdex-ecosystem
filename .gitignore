@@ -1,0 +1,85 @@
+# ========================================
+# Verdex .gitignore — Phase 1 hardened
+# ========================================
+
+# Secrets & environment
+.env
+.env.*
+!.env.example
+
+# Dependencies & local tooling
+node_modules/
+portable-node/
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Build / packaging artifacts
+dist/
+build/
+*.spec
+.vercel
+.cache/
+.next/
+.turbo/
+out/
+
+# Chain runtime data (never commit chain state)
+verdex-chain/data/
+verdex-chain/data-peer/
+chain/geth-testnet/geth-data/
+chain/geth-testnet/keystore/
+contracts/cache/
+contracts/artifacts/
+contracts/typechain-types/
+
+# Large binaries — ship via GitHub Releases or CDN, not git
+# GitHub hard limit is 100MB per file — EXE/APK exceed this
+node.zip
+node.msi
+*.exe
+*.apk
+assets/downloads/*.exe
+assets/downloads/*.apk
+assets/downloads/*.blockmap
+updates/*.exe
+updates/*.apk
+updates/*.blockmap
+handle.zip
+verdex-deploy.zip
+*.msi
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+
+# Python artifacts (from build scripts)
+*.whl
+*.egg-info/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+*.swp
+*.swo
+*~
+.idea/
+.vscode/settings.json
+.vscode/launch.json
+
+# Generated / local / debug
+_debug_db.js
+test_recent.json
+scratch/
+*.tmp
+*.bak
+
+# Sensitive keys — never ever commit these
+*.pem
+*.key
+*.p12
+*.pfx
+!contracts/test/*.key

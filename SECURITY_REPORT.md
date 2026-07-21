@@ -1,5 +1,13 @@
 # VerdexSwap Security Report
 
+> **Scope warning (mainnet):** This is a historical automated scan of the
+> earlier PRC20 testnet contracts. It is **not** an audit of
+> `contracts/contracts/mainnet/VerdexMainnetVDX.sol` or
+> `contracts/contracts/mainnet/VerdexP2PEscrow.sol`, and it must not be used as
+> a basis to deploy real VDX or enable P2P. Those contracts require an
+> independent audit, staging deployment, multisig key ceremony and public
+> source/bytecode verification before any mainnet launch.
+
 ## Date: July 13, 2026
 ## Auditor: Automated Static Analysis (Slither v0.11.5)
 ## Scope: All Solidity smart contracts in `contracts/contracts/`

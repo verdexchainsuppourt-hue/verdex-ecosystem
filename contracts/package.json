@@ -1,0 +1,25 @@
+{
+  "name": "@verdex/contracts",
+  "version": "2.0.0",
+  "description": "Verdex PRC20 + Phase 4 AMM (Factory, Pair, Router, Aggregator) — 0.25% fee",
+  "private": true,
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "test:mainnet": "hardhat test test/VerdexMainnetEscrow.test.js",
+    "test:amm": "hardhat test test/VerdexAMM.test.js",
+    "deploy:prc20": "hardhat run scripts/deploy-prc20.js --network verdex",
+    "deploy:prc20:local": "hardhat run scripts/deploy-prc20.js --network hardhat",
+    "deploy:amm": "hardhat run scripts/deploy-amm.js --network verdex",
+    "deploy:amm:local": "hardhat run scripts/deploy-amm.js --network hardhat",
+    "deploy:mainnet": "hardhat run scripts/deploy-mainnet.js --network verdexMainnet",
+    "verify:mainnet-evidence": "node scripts/verify-mainnet-evidence.js",
+    "deploy:local": "hardhat run scripts/deploy-amm.js --network hardhat",
+    "node": "hardhat node"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.0.2",
+    "hardhat": "^2.22.0"
+  }
+}
