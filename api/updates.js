@@ -8,8 +8,8 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const manifest = {
-    version: "1.21.0",
-    versionCode: 71,
+    version: "1.21.1",
+    versionCode: 72,
     channel: "apk",
     updateMode: "in_app_apk",
     minVersion: "1.0.0",
@@ -18,8 +18,8 @@ module.exports = async (req, res) => {
     updateType: "full",
     network: "mainnet",
     chainId: 72010,
-    apkUrl: "https://verdexswap.site/assets/downloads/Verdex-Android-1.21.0-build71.apk",
-    sha256: "8e10c69a82da8d7bb9b6bc95c3f9d6394e712a1d021e320b153381b82211e898",
+    apkUrl: "https://verdexswap.site/assets/downloads/Verdex-Android-1.21.1-build72.apk",
+    sha256: "7d679d55ef4acaf218e2a0544dbfaf1e561b6f6bf892cf1d2617e3ec7b1ddb37",
     changelog: [
       "FIXED: KYC country selection sheet now includes full 200+ offline country list with flag emojis",
       "FIXED: P2P trade creation 'table reference not found' error resolved via verdex_custodial_wallets link",
