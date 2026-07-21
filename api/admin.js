@@ -253,6 +253,87 @@ module.exports = async (req, res) => {
       });
     }
 
+    if (action === 'reverse-transfer') {
+      const { transfer_id, reason } = req.body || {};
+      if (!transfer_id) return jsonResponse(res, 400, { error: 'transfer_id required' });
+
+      const now = new Date().toISOString();
+      const { data: tx, error: txErr } = await supabase
+        .from('verdex_custodial_history')
+        .select('*')
+        .eq('id', transfer_id)
+        .maybeSingle();
+
+      if (txErr || !tx) return jsonResponse(res, 404, { error: 'Transfer record not found' });
+
+      const amt = Number(tx.amount || tx.amount_vdx || 0);
+      if (amt <= 0 || !tx.user_id || !tx.counterparty_user_id) {
+        return jsonResponse(res, 400, { error: 'Invalid transfer record for reversal' });
+      }
+
+      const { data: recvBal } = await supabase
+        .from('verdex_custodial_balances')
+        .select('id, balance')
+        .eq('user_id', tx.counterparty_user_id)
+        .eq('asset_symbol', tx.asset_symbol || 'VDX')
+        .maybeSingle();
+
+      if (recvBal) {
+        await supabase.from('verdex_custodial_balances').update({
+          balance: Math.max(0, Number(recvBal.balance) - amt),
+          updated_at: now
+        }).eq('id', recvBal.id);
+      }
+
+      const { data: sendBal } = await supabase
+        .from('verdex_custodial_balances')
+        .select('id, balance')
+        .eq('user_id', tx.user_id)
+        .eq('asset_symbol', tx.asset_symbol || 'VDX')
+        .maybeSingle();
+
+      if (sendBal) {
+        await supabase.from('verdex_custodial_balances').update({
+          balance: Number(sendBal.balance) + amt,
+          updated_at: now
+        }).eq('id', sendBal.id);
+      }
+
+      await logAudit(admin.id, 'transfer_reversed', {
+        resource_type: 'transfer',
+        resource_id: transfer_id,
+        metadata: { amount: amt, from: tx.user_id, to: tx.counterparty_user_id, reason }
+      });
+
+      return jsonResponse(res, 200, {
+        success: true,
+        message: `Transfer ${transfer_id} of ${amt} ${tx.asset_symbol || 'VDX'} reversed successfully.`
+      });
+    }
+
+    if (action === 'freeze-wallet') {
+      const { wallet_address, is_frozen, reason } = req.body || {};
+      if (!wallet_address) return jsonResponse(res, 400, { error: 'wallet_address required' });
+
+      const normAddr = wallet_address.trim().toLowerCase();
+      const { data: wal } = await supabase
+        .from('wallets')
+        .select('id')
+        .ilike('vdx_address', normAddr)
+        .maybeSingle();
+
+      if (!wal) return jsonResponse(res, 404, { error: 'Wallet not found' });
+
+      await supabase.from('wallets').update({
+        is_frozen: !!is_frozen,
+        freeze_reason: is_frozen ? (reason || 'Admin freeze') : null,
+        updated_at: new Date().toISOString()
+      }).eq('id', wal.id);
+
+      await logAudit(admin.id, 'wallet_frozen', { resource_type: 'wallet', resource_id: normAddr, metadata: { is_frozen, reason } });
+      return jsonResponse(res, 200, { success: true, message: `Wallet ${normAddr} frozen status set to ${!!is_frozen}` });
+    }
+
     if (action === 'review-kyc') {
       const { case_id, decision, reason } = req.body || {};
       if (!case_id || !decision) return jsonResponse(res, 400, { error: 'case_id and decision required' });
