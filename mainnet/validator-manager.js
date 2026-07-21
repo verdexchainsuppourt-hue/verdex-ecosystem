@@ -58,6 +58,16 @@ function cmd(cmdStr, opts = {}) {
   }
 }
 
+function isProcessAlive(pid) {
+  if (!pid) return false;
+  try {
+    process.kill(parseInt(pid, 10), 0);
+    return true;
+  } catch (e) {
+    return e.code === 'EPERM';
+  }
+}
+
 function validatorDir(index) {
   return join(VALIDATORS_DIR, `validator-${index}`);
 }
@@ -112,6 +122,11 @@ async function rpcCall(index, method, params = []) {
 // Besu binary resolution
 // ---------------------------------------------------------------------------
 function findBesu() {
+  const localAppData = process.env.LOCALAPPDATA || '';
+  const winPath = join(localAppData, 'Verdex', 'toolchain', 'besu-26.7.0', 'bin', 'besu.bat');
+  if (existsSync(winPath)) {
+    return winPath;
+  }
   // Check common locations
   const paths = [
     join(BESU_HOME, 'besu', 'bin', 'besu'),
@@ -267,8 +282,7 @@ async function startValidator(index) {
   const pidFile = join(vDir, 'besu.pid');
   if (existsSync(pidFile)) {
     const pid = readFileSync(pidFile, 'utf8').trim();
-    const running = cmd(`kill -0 ${pid} 2>/dev/null`);
-    if (running !== null) {
+    if (isProcessAlive(pid)) {
       log('warn', 'Validator already running', { index, pid });
       return;
     }
@@ -289,10 +303,16 @@ async function startValidator(index) {
 
   log('info', 'Starting validator', { index, rpc_port: rpcPort(index), p2p_port: p2pPort(index) });
 
+  const env = { ...process.env };
+  if (process.platform === 'win32' && env.JAVA_HOME) {
+    delete env.JAVA_HOME;
+  }
   const child = spawn(besu, args, {
     detached: true,
+    shell: process.platform === 'win32',
     stdio: ['ignore', 'pipe', 'pipe'],
     cwd: vDir,
+    env,
   });
 
   // Write PID file
@@ -310,11 +330,10 @@ async function startValidator(index) {
 
   // Wait a moment and check if it's still alive
   await new Promise(r => setTimeout(r, 3000));
-  const alive = cmd(`kill -0 ${child.pid} 2>/dev/null`);
-  if (alive === null) {
+  if (!isProcessAlive(child.pid)) {
     log('error', 'Validator process died immediately — check logs', { index, logFile });
     // Read last 20 lines of log
-    const logs = cmd(`tail -20 ${logFile} 2>/dev/null`);
+    const logs = cmd(`tail -20 ${logFile} 2>/dev/null`) || cmd(`powershell -Command "Get-Content -Tail 20 -Path '${logFile}'"`);
     if (logs) console.log(logs);
     process.exit(1);
   }
@@ -349,8 +368,7 @@ async function stopValidator(index) {
   // Wait up to 10 seconds for graceful shutdown
   for (let i = 0; i < 10; i++) {
     await new Promise(r => setTimeout(r, 1000));
-    const alive = cmd(`kill -0 ${pid} 2>/dev/null`);
-    if (alive === null) {
+    if (!isProcessAlive(pid)) {
       // Process stopped
       try { require('fs').unlinkSync(pidFile); } catch {}
       log('info', 'Validator stopped', { index });
@@ -406,7 +424,7 @@ async function status() {
     let pid = null;
     if (existsSync(pidFile)) {
       pid = readFileSync(pidFile, 'utf8').trim();
-      running = cmd(`kill -0 ${pid} 2>/dev/null`) !== null;
+      running = isProcessAlive(pid);
     }
 
     // Try RPC health check
@@ -506,7 +524,7 @@ async function checkValidatorHealth(index) {
   let running = false;
   if (existsSync(pidFile)) {
     const pid = readFileSync(pidFile, 'utf8').trim();
-    running = cmd(`kill -0 ${pid} 2>/dev/null`) !== null;
+    running = isProcessAlive(pid);
   }
 
   if (!running) {

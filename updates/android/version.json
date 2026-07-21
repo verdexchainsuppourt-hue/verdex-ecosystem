@@ -1,6 +1,6 @@
 {
-  "version": "1.20.0",
-  "versionCode": 70,
+  "version": "1.21.0",
+  "versionCode": 71,
   "channel": "apk",
   "updateMode": "in_app_apk",
   "minVersion": "1.0.0",
@@ -8,18 +8,16 @@
   "mandatory": false,
   "updateType": "full",
   "network": "mainnet",
-  "chainId": 31337,
-  "apkUrl": "https://verdexswap.site/assets/downloads/Verdex-Android-1.20.0-build70.apk",
-  "sha256": "fceb3113a78c24c93471146881477efdb77cfb3cb38117fb2e96d1bae884f4f2",
+  "chainId": 72010,
+  "apkUrl": "https://verdexswap.site/assets/downloads/Verdex-Android-1.21.0-build71.apk",
+  "sha256": "8e10c69a82da8d7bb9b6bc95c3f9d6394e712a1d021e320b153381b82211e898",
   "changelog": [
-    "PHASE 4: Enterprise Custodial Wallet Subsystem Live",
-    "NEW: Dedicated Deposit Screen (Network Selection, QR Code, Copy & Share Address)",
-    "NEW: Dedicated Withdraw Screen (Validation, Multi-step Confirmation, Network Selector)",
-    "NEW: Dedicated Transfer Screen (Recipient UID Lookup, Multi-token support)",
-    "NEW: Dedicated Transaction History Screen (Filterable by All, Deposit, Withdraw, Transfer)",
-    "NEW: Custodial Escrow Lock, Release, and Refund RPC Integration",
-    "NEW: Live Admin Wallet Dashboard at /wallet-admin (Audit Log, Risk Alerts, Escrow Management)",
-    "STABILITY: Fixed version update loop & improved overall Android compatibility"
+    "FIXED: KYC country selection sheet now includes full 200+ offline country list with flag emojis",
+    "FIXED: P2P trade creation 'table reference not found' error resolved via verdex_custodial_wallets link",
+    "NEW: P2P Listing Edit & Delete functionality directly on user ad cards and via modal sheets",
+    "NEW: Real Mining VP -> VDX token conversion endpoint & dedicated conversion tab",
+    "FIXED: Vault deposit address copy button with safe fallback & haptic feedback",
+    "NEW: Enhanced Web Admin Panel with P2P order/trade controls & risk monitoring"
   ],
-  "releasedAt": "2026-07-21T18:00:00.000Z"
+  "releasedAt": "2026-07-21T20:00:00.000Z"
 }

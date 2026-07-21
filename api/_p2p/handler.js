@@ -818,7 +818,89 @@ async function pauseOrder(req, res) {
   if (!data) return apiError(res, 404, 'ORDER_NOT_FOUND', 'Open order not found for this user');
 
   await recordAudit(user.id, 'p2p.order.paused', 'verdex_p2p_orders', id, {});
-  return jsonResponse(res, 200, { order: data });
+  return jsonResponse(res, 200, { success: true, order: data });
+}
+
+/**
+ * POST /api/wallet?ns=p2p&action=edit-order
+ * Edit an existing listing.
+ */
+async function editOrder(req, res) {
+  const user = await verifyUser(req);
+  if (!user) return apiError(res, 401, 'UNAUTHORIZED', 'Authentication required');
+
+  const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+  const orderId = body.order_id || body.id;
+  if (!validateUuid(orderId)) return apiError(res, 400, 'INVALID_ORDER_ID', 'Invalid listing ID');
+
+  const supabase = getSupabase();
+  const { data: order } = await supabase
+    .from('verdex_p2p_orders')
+    .select('*')
+    .eq('id', orderId)
+    .maybeSingle();
+
+  if (!order) return apiError(res, 404, 'ORDER_NOT_FOUND', 'Listing not found');
+  if (order.creator_user_id !== user.id) {
+    return apiError(res, 403, 'FORBIDDEN', 'Only the listing creator can edit this post');
+  }
+
+  const updates = {
+    is_edited: true,
+    edited_at: new Date().toISOString()
+  };
+
+  if (body.fiat_unit_price !== undefined) updates.fiat_unit_price = String(body.fiat_unit_price);
+  if (body.min_fiat_amount !== undefined) updates.min_fiat_amount = String(body.min_fiat_amount);
+  if (body.max_fiat_amount !== undefined) updates.max_fiat_amount = String(body.max_fiat_amount);
+  if (body.payment_method_codes && Array.isArray(body.payment_method_codes)) updates.payment_method_codes = body.payment_method_codes;
+  if (body.terms !== undefined) updates.terms = String(body.terms);
+  if (body.status && ['open', 'paused'].includes(body.status)) updates.status = body.status;
+
+  const { data: updated, error } = await supabase
+    .from('verdex_p2p_orders')
+    .update(updates)
+    .eq('id', orderId)
+    .select('*')
+    .single();
+
+  if (error) return apiError(res, 400, 'DB_ERROR', error.message);
+  await recordAudit(user.id, 'p2p.order.edited', 'verdex_p2p_orders', orderId, updates);
+  return jsonResponse(res, 200, { success: true, order: mapOrderToMobile(updated) });
+}
+
+/**
+ * POST /api/wallet?ns=p2p&action=delete-order
+ * Delete/Cancel an existing listing.
+ */
+async function deleteOrder(req, res) {
+  const user = await verifyUser(req);
+  if (!user) return apiError(res, 401, 'UNAUTHORIZED', 'Authentication required');
+
+  const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+  const orderId = body.order_id || body.id;
+  if (!validateUuid(orderId)) return apiError(res, 400, 'INVALID_ORDER_ID', 'Invalid listing ID');
+
+  const supabase = getSupabase();
+  const { data: order } = await supabase
+    .from('verdex_p2p_orders')
+    .select('*')
+    .eq('id', orderId)
+    .maybeSingle();
+
+  if (!order) return apiError(res, 404, 'ORDER_NOT_FOUND', 'Listing not found');
+  if (order.creator_user_id !== user.id) {
+    return apiError(res, 403, 'FORBIDDEN', 'Only the listing creator can delete this post');
+  }
+
+  const { error } = await supabase
+    .from('verdex_p2p_orders')
+    .update({ status: 'cancelled', edited_at: new Date().toISOString() })
+    .eq('id', orderId);
+
+  if (error) return apiError(res, 400, 'DB_ERROR', error.message);
+  await recordAudit(user.id, 'p2p.order.deleted', 'verdex_p2p_orders', orderId, {});
+  return jsonResponse(res, 200, { success: true, message: 'Listing deleted successfully.' });
 }
 
 // ---------------------------------------------------------------------------
@@ -946,11 +1028,11 @@ async function openTrade(req, res) {
       const sellerUserId = order.side === 'sell_vdx' ? order.creator_user_id : user.id;
 
       const [buyerWalletRes, sellerWalletRes] = await Promise.all([
-        supabase.from('wallets').select('vdx_address').eq('user_id', buyerUserId).maybeSingle(),
-        supabase.from('wallets').select('vdx_address').eq('user_id', sellerUserId).maybeSingle()
+        supabase.from('verdex_custodial_wallets').select('deposit_address').eq('user_id', buyerUserId).maybeSingle(),
+        supabase.from('verdex_custodial_wallets').select('deposit_address').eq('user_id', sellerUserId).maybeSingle()
       ]);
-      const buyerAddress = buyerWalletRes.data && buyerWalletRes.data.vdx_address;
-      const sellerAddress = sellerWalletRes.data && sellerWalletRes.data.vdx_address;
+      const buyerAddress = buyerWalletRes.data && buyerWalletRes.data.deposit_address;
+      const sellerAddress = sellerWalletRes.data && sellerWalletRes.data.deposit_address;
       if (!isValidEvmAddress(buyerAddress)) {
         return apiError(res, 400, 'BUYER_WALLET_MISSING', 'Buyer has no registered Verdex wallet', { traceId: tid });
       }
@@ -1855,6 +1937,8 @@ module.exports = async (req, res) => {
     if (action === 'orders' && req.method === 'GET') return await listOrders(req, res);
     if (action === 'orders' && req.method === 'POST') return await createOrder(req, res);
     if (action === 'my-orders') return await myOrders(req, res);
+    if (action === 'edit-order' && req.method === 'POST') return await editOrder(req, res);
+    if (action === 'delete-order' && req.method === 'POST') return await deleteOrder(req, res);
     if (action === 'pause' && req.method === 'POST') return await pauseOrder(req, res);
     if (action === 'trades' && req.method === 'POST') return await openTrade(req, res);
     if (action === 'trade' && req.method === 'GET') return await getTrade(req, res);

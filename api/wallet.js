@@ -14,6 +14,7 @@ module.exports = async (req, res) => {
     'address-book', 'address-book-add', 'address-book-remove',
     'lookup-user',
     'escrow-lock', 'escrow-release', 'escrow-refund',
+    'convert-vp-to-vdx', 'get-vp-balance',
     'admin-reconciliation', 'admin-expire-withdrawals',
     'admin-pending-withdrawals', 'admin-sign-withdrawal',
     'admin-health', 'admin-balances',

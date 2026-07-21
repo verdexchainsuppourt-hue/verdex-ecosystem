@@ -1687,6 +1687,118 @@ async function adminEscrowLocks(req, res) {
   });
 }
 
+/**
+ * GET /api/wallet?action=get-vp-balance
+ * Returns cached VP mining points balance for the current user.
+ */
+async function getVpBalance(req, res) {
+  const user = await verifyUser(req);
+  if (!user) return apiError(res, 401, 'UNAUTHORIZED', 'Authentication required');
+  const supabase = getSupabase();
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('vp_balance, vp_total_mined')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    return jsonResponse(res, 200, {
+      vp_balance: profile?.vp_balance ?? 0,
+      vp_total_mined: profile?.vp_total_mined ?? 0,
+      conversion_rate: 100
+    });
+  } catch (err) {
+    return handleError(res, err, 'get-vp-balance');
+  }
+}
+
+/**
+ * POST /api/wallet?action=convert-vp-to-vdx
+ * Converts VP (Verdex Points) to VDX tokens in custodial balance.
+ */
+async function convertVpToVdx(req, res) {
+  const user = await verifyUser(req);
+  if (!user) return apiError(res, 401, 'UNAUTHORIZED', 'Authentication required');
+
+  const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+  const vpAmount = parseFloat(body.vp_amount);
+
+  if (isNaN(vpAmount) || vpAmount <= 0) {
+    return apiError(res, 400, 'INVALID_AMOUNT', 'VP amount must be a positive number');
+  }
+  if (vpAmount < 100) {
+    return apiError(res, 400, 'MINIMUM_CONVERSION', 'Minimum conversion is 100 VP (1 VDX)');
+  }
+
+  const supabase = getSupabase();
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('vp_balance')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const currentVp = profile?.vp_balance ?? 0;
+    if (currentVp < vpAmount) {
+      return apiError(res, 400, 'INSUFFICIENT_VP', `Insufficient VP balance. Have: ${currentVp}, Need: ${vpAmount}`);
+    }
+
+    const vdxTokens = (vpAmount / 100.0).toFixed(6);
+    const vdxAtomic = toAtomic(vdxTokens);
+
+    const wallet = await ensureWallet(supabase, user);
+
+    const newVpBalance = currentVp - vpAmount;
+    await supabase
+      .from('profiles')
+      .update({ vp_balance: newVpBalance, updated_at: new Date().toISOString() })
+      .eq('id', user.id);
+
+    const { data: bal } = await supabase
+      .from('verdex_custodial_balances')
+      .select('id, available_atomic, version')
+      .eq('wallet_id', wallet.id)
+      .maybeSingle();
+
+    const newAvailAtomic = (BigInt(bal.available_atomic) + BigInt(vdxAtomic)).toString();
+    await supabase
+      .from('verdex_custodial_balances')
+      .update({
+        available_atomic: newAvailAtomic,
+        version: bal.version ? bal.version + 1 : 1,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', bal.id);
+
+    await supabase.from('verdex_point_conversions').insert({
+      user_id: user.id,
+      vp_amount: vpAmount,
+      vdx_amount: vdxTokens,
+      conversion_rate: 100.0
+    });
+
+    await supabase.from('verdex_custodial_transactions').insert({
+      wallet_id: wallet.id,
+      user_id: user.id,
+      tx_type: 'vp_conversion',
+      tx_status: 'completed',
+      amount_atomic: vdxAtomic,
+      direction: 'incoming',
+      balance_after_atomic: newAvailAtomic
+    });
+
+    return jsonResponse(res, 200, {
+      success: true,
+      converted_vp: vpAmount,
+      credited_vdx: vdxTokens,
+      new_vp_balance: newVpBalance,
+      new_vdx_balance: fromAtomic(newAvailAtomic)
+    });
+  } catch (err) {
+    return handleError(res, err, 'convert-vp-to-vdx');
+  }
+}
+
 // ===========================================================================
 // Router
 // ===========================================================================
@@ -1716,6 +1828,9 @@ module.exports = async (req, res) => {
     if (action === 'escrow-lock' && req.method === 'POST') return await escrowLock(req, res);
     if (action === 'escrow-release' && req.method === 'POST') return await escrowRelease(req, res);
     if (action === 'escrow-refund' && req.method === 'POST') return await escrowRefund(req, res);
+    // VP -> VDX Conversion
+    if (action === 'get-vp-balance') return await getVpBalance(req, res);
+    if (action === 'convert-vp-to-vdx' && req.method === 'POST') return await convertVpToVdx(req, res);
     // Treasury / Admin
     if (action === 'admin-reconciliation') return await treasuryReconciliation(req, res);
     if (action === 'admin-expire-withdrawals' && req.method === 'POST') return await expireStaleWithdrawals(req, res);
