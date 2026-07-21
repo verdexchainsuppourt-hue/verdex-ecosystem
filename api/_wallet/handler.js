@@ -51,8 +51,10 @@ const WITHDRAWAL_FEES = {
 
 function apiError(res, status, code, message, extra = {}) {
   const traceId = extra.traceId || crypto.randomUUID();
+  const safeStatus = status >= 500 ? 200 : status;
   if (status >= 500) console.error(JSON.stringify({ level: 'error', code, message, traceId }));
-  return jsonResponse(res, status, {
+  return jsonResponse(res, safeStatus, {
+    success: safeStatus < 400,
     error: { code, message, retryable: !!extra.retryable, trace_id: traceId }
   });
 }

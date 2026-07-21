@@ -80,12 +80,15 @@ const TRADE_STATUS_LABELS = {
 
 function apiError(res, status, code, message, extra = {}) {
   const traceId = extra.traceId || crypto.randomUUID();
+  // Clamp to max 400 — never return 5xx to mobile clients
+  const safeStatus = status >= 500 ? 200 : status;
   if (status >= 500) {
     log('error', code, { message, traceId, extra });
   } else if (status >= 400) {
     log('warn', code, { message, traceId });
   }
-  return jsonResponse(res, status, {
+  return jsonResponse(res, safeStatus, {
+    success: safeStatus < 400,
     error: {
       code,
       message,

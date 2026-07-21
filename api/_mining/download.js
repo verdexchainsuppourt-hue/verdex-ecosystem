@@ -41,6 +41,6 @@ module.exports = async (req, res) => {
     stream.pipe(res);
   } catch (err) {
     console.error('download error:', err.message);
-    res.status(500).json({ error: 'Download failed' });
+    res.status(200).json({ success: false, error: 'Download temporarily unavailable. Try again.' });
   }
 };

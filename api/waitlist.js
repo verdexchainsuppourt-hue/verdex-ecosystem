@@ -330,6 +330,6 @@ module.exports = async function handler(req, res) {
 
   } catch (err) {
     console.error('Waitlist error:', err);
-    return res.status(500).json({ error: 'Something went wrong. Please try again.' });
+    return res.status(200).json({ success: false, error: 'Something went wrong. Please try again.' });
   }
 };

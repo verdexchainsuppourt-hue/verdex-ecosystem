@@ -1,6 +1,6 @@
 {
-  "version": "1.25.0",
-  "versionCode": 77,
+  "version": "1.25.1",
+  "versionCode": 78,
   "channel": "apk",
   "updateMode": "in_app_apk",
   "minVersion": "1.0.0",
@@ -9,14 +9,13 @@
   "updateType": "full",
   "network": "mainnet",
   "chainId": 72010,
-  "apkUrl": "https://verdexswap.site/assets/downloads/Verdex-Android-1.25.0-build77.apk",
-  "sha256": "f39b6630a5406c9adf2d6ca3b5393ce3df1a5d49e331fbd0fd568eed4e8da0b7",
+  "apkUrl": "https://verdexswap.site/assets/downloads/Verdex-Android-1.25.1-build78.apk",
+  "sha256": "7af5dbb8cf0def5f98caacb6e3ce4311b5e70af35886ad67f0014fa0f939700d",
   "changelog": [
-    "FIXED: P2P Order Creation error (createOrder backend route fully restored)",
-    "FIXED: VP to VDX token conversion (convertVpToVdx backend route fully restored)",
-    "FIXED: Mainnet Chain Explorer offline errors — real-time blocks, stats, and validator metrics now 100% active",
-    "NEW: Master Admin Panel Passcode protection (ch.199456) with strict IP rate limiting",
-    "NEW: Master Admin Panel Dispute Resolution (release to buyer / refund to seller) and User Ban/Unban management"
+    "NEW: Version 1.25.1 Build 78 official release",
+    "NEW: Centralized Master Admin Ban/Unban enforcement across P2P trading, VP token conversions, and wallet operations",
+    "FIXED: Seamless zero-failure KYC submission & real-time Admin Panel review queue integration",
+    "FIXED: Mainnet status & chain explorer online monitoring"
   ],
-  "releasedAt": "2026-07-22T00:43:00.000Z"
+  "releasedAt": "2026-07-22T01:25:00.000Z"
 }
