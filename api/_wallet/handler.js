@@ -1938,6 +1938,77 @@ async function getVpBalance(req, res) {
     });
   } catch (err) {
     return handleError(res, err, 'getVpBalance');
+async function convertVpToVdx(req, res) {
+  try {
+    const user = await verifyUser(req);
+    if (!user) return apiError(res, 401, 'UNAUTHORIZED', 'Authentication required');
+
+    const body = parseBody(req);
+    const vpAmount = Math.max(100, Math.floor(Number(body.vp_amount || body.amount || body.vp || 100)));
+
+    const supabase = getSupabase();
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('vp_balance')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const currentVp = Number(prof?.vp_balance || 0);
+    if (currentVp < vpAmount) {
+      return apiError(res, 400, 'INSUFFICIENT_VP', `Insufficient VP balance. Available: ${currentVp} VP, Requested: ${vpAmount} VP`);
+    }
+
+    const vdxConverted = (vpAmount / 100);
+    const remainingVp = currentVp - vpAmount;
+    const now = new Date().toISOString();
+
+    await supabase.from('profiles').update({
+      vp_balance: remainingVp,
+      updated_at: now
+    }).eq('id', user.id);
+
+    const { data: cust } = await supabase
+      .from('verdex_custodial_balances')
+      .select('id, balance')
+      .eq('user_id', user.id)
+      .eq('asset_symbol', 'VDX')
+      .maybeSingle();
+
+    const currentVdx = Number(cust?.balance || 0);
+    const newVdx = currentVdx + vdxConverted;
+
+    if (cust) {
+      await supabase.from('verdex_custodial_balances').update({
+        balance: newVdx,
+        updated_at: now
+      }).eq('id', cust.id);
+    } else {
+      await supabase.from('verdex_custodial_balances').insert({
+        user_id: user.id,
+        asset_symbol: 'VDX',
+        balance: newVdx,
+        updated_at: now
+      });
+    }
+
+    await supabase.from('point_transactions').insert({
+      user_id: user.id,
+      amount: -vpAmount,
+      reason: 'convert_to_vdx',
+      metadata: { converted_vdx: vdxConverted, rate: '100:1' },
+      created_at: now
+    }).catch(() => {});
+
+    return jsonResponse(res, 200, {
+      success: true,
+      message: `Successfully converted ${vpAmount} VP to ${vdxConverted} VDX`,
+      converted_vdx: vdxConverted,
+      vdx_amount: vdxConverted,
+      remaining_vp: remainingVp,
+      new_vdx_balance: newVdx
+    });
+  } catch (err) {
+    return handleError(res, err, 'convertVpToVdx');
   }
 }
 
@@ -1972,7 +2043,7 @@ module.exports = async (req, res) => {
     if (action === 'escrow-refund' && req.method === 'POST') return await escrowRefund(req, res);
     // VP -> VDX Conversion
     if (action === 'get-vp-balance') return await getVpBalance(req, res);
-    if (action === 'convert-vp-to-vdx' && req.method === 'POST') return await convertVpToVdx(req, res);
+    if ((action === 'convert-vp-to-vdx' || action === 'convert' || action === 'convert-vp') && req.method === 'POST') return await convertVpToVdx(req, res);
     // Treasury / Admin
     if (action === 'admin-reconciliation') return await treasuryReconciliation(req, res);
     if (action === 'admin-expire-withdrawals' && req.method === 'POST') return await expireStaleWithdrawals(req, res);

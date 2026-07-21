@@ -1929,6 +1929,58 @@ async function unblockUser(req, res) {
     .eq('blocked_user_id', blocked_user_id);
 
   return jsonResponse(res, 200, { success: true, message: 'User unblocked' });
+async function createOrder(req, res) {
+  const user = await verifyUser(req);
+  if (!user) return apiError(res, 401, 'UNAUTHORIZED', 'Authentication required');
+  if (!checkRateLimit(`p2p:create:${user.id}`, 20, 60000).allowed) {
+    return apiError(res, 429, 'RATE_LIMITED', 'Too many requests');
+  }
+
+  const body = parseBody(req);
+  const side = (body.side || body.type || 'sell_vdx').toLowerCase();
+  const priceFiat = Number(body.price_fiat || body.fiat_unit_price || body.price || 0);
+  const amountVdx = Number(body.amount_vdx || body.quantity || body.total_vdx || 0);
+  const minFiat = Number(body.min_fiat || body.min_fiat_amount || body.min_amount || 0);
+  const maxFiat = Number(body.max_fiat || body.max_fiat_amount || body.max_amount || (priceFiat * amountVdx));
+  const currency = (body.fiat_symbol || body.currency || body.fiat_currency || 'PKR').toUpperCase();
+  const paymentMethods = Array.isArray(body.payment_methods)
+    ? body.payment_methods
+    : (body.payment_method ? [body.payment_method] : [{ method: 'easypaisa', label: 'EasyPaisa' }]);
+
+  if (priceFiat <= 0 || amountVdx <= 0) {
+    return apiError(res, 400, 'INVALID_PARAMS', 'Price and VDX amount must be greater than zero');
+  }
+
+  const supabase = getSupabase();
+  const now = new Date().toISOString();
+
+  const { data: newOrder, error: createErr } = await supabase
+    .from('verdex_p2p_orders')
+    .insert({
+      creator_user_id: user.id,
+      side: side.includes('buy') ? 'buy_vdx' : 'sell_vdx',
+      price_fiat: priceFiat,
+      amount_vdx: amountVdx,
+      min_fiat: minFiat,
+      max_fiat: maxFiat,
+      fiat_symbol: currency,
+      payment_methods: paymentMethods,
+      status: 'active',
+      terms: body.terms || body.notes || 'Fast release, online banking only',
+      created_at: now,
+      updated_at: now
+    })
+    .select()
+    .single();
+
+  if (createErr) throw createErr;
+
+  return jsonResponse(res, 200, {
+    success: true,
+    message: 'P2P Listing posted successfully',
+    data: newOrder,
+    order: newOrder
+  });
 }
 
 async function editOrder(req, res) {
