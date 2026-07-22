@@ -9,6 +9,7 @@ module.exports = async (req, res) => {
   // Custodial wallet subsystem — new actions.
   const custodialActions = [
     'custodial-balance', 'custodial-deposit-address', 'custodial-tokens',
+    'custodial-deposit', 'custodial-notify-deposit',
     'custodial-withdraw', 'custodial-transfer', 'custodial-transfer-token',
     'custodial-history', 'custodial-deposits', 'custodial-withdrawals',
     'address-book', 'address-book-add', 'address-book-remove',
