@@ -227,6 +227,140 @@ async function getWallet(supabase, userId) {
   return data;
 }
 
+/**
+ * Universal Recipient Resolver:
+ * Accepts:
+ *  - UUID / UID (e.g. '3dab3d80-ef38-43f6-a4e9-f7d1e3e8eb3d')
+ *  - EVM Deposit Address or Self-Custody Address (e.g. '0x6868a8be9eb76e9bf6978f981f0f89d3c13074ef')
+ *  - Username (e.g. 'john_doe' or '@john_doe')
+ *  - Email (e.g. 'john@example.com')
+ *  - Prefix/Substring UID
+ * Returns { userId, username, depositAddress } or null.
+ */
+async function resolveRecipient(supabase, inputQuery) {
+  if (!inputQuery || typeof inputQuery !== 'string') return null;
+  const q = inputQuery.trim().replace(/^@/, '');
+  if (!q) return null;
+
+  // 1. Direct UUID match in profiles
+  if (validateUuid(q)) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, username, full_name')
+      .eq('id', q)
+      .maybeSingle();
+    if (profile) {
+      const { data: w } = await supabase
+        .from('verdex_custodial_wallets')
+        .select('deposit_address')
+        .eq('user_id', profile.id)
+        .maybeSingle();
+      return {
+        userId: profile.id,
+        username: profile.username || profile.full_name || 'User',
+        depositAddress: w?.deposit_address || null
+      };
+    }
+  }
+
+  // 2. EVM Address match (check custodial deposit_address OR self-custody wallets vdx_address)
+  if (isValidEvmAddress(q)) {
+    // 2a. Check verdex_custodial_wallets
+    const { data: rWallet } = await supabase
+      .from('verdex_custodial_wallets')
+      .select('user_id, deposit_address')
+      .ilike('deposit_address', q)
+      .maybeSingle();
+    if (rWallet) {
+      const { data: prof } = await supabase.from('profiles').select('username, full_name').eq('id', rWallet.user_id).maybeSingle();
+      return {
+        userId: rWallet.user_id,
+        username: prof?.username || prof?.full_name || 'User',
+        depositAddress: rWallet.deposit_address
+      };
+    }
+
+    // 2b. Check self-custody wallets table (vdx_address)
+    const { data: selfWallet } = await supabase
+      .from('wallets')
+      .select('user_id, vdx_address')
+      .ilike('vdx_address', q)
+      .maybeSingle();
+    if (selfWallet) {
+      const { data: prof } = await supabase.from('profiles').select('username, full_name').eq('id', selfWallet.user_id).maybeSingle();
+      return {
+        userId: selfWallet.user_id,
+        username: prof?.username || prof?.full_name || 'User',
+        depositAddress: selfWallet.vdx_address
+      };
+    }
+  }
+
+  // 3. Username match
+  const { data: profByUsername } = await supabase
+    .from('profiles')
+    .select('id, username, full_name')
+    .ilike('username', q)
+    .maybeSingle();
+  if (profByUsername) {
+    const { data: w } = await supabase
+      .from('verdex_custodial_wallets')
+      .select('deposit_address')
+      .eq('user_id', profByUsername.id)
+      .maybeSingle();
+    return {
+      userId: profByUsername.id,
+      username: profByUsername.username || profByUsername.full_name || 'User',
+      depositAddress: w?.deposit_address || null
+    };
+  }
+
+  // 4. Email match
+  if (q.includes('@')) {
+    const { data: profByEmail } = await supabase
+      .from('profiles')
+      .select('id, username, full_name')
+      .ilike('email', q)
+      .maybeSingle();
+    if (profByEmail) {
+      const { data: w } = await supabase
+        .from('verdex_custodial_wallets')
+        .select('deposit_address')
+        .eq('user_id', profByEmail.id)
+        .maybeSingle();
+      return {
+        userId: profByEmail.id,
+        username: profByEmail.username || profByEmail.full_name || 'User',
+        depositAddress: w?.deposit_address || null
+      };
+    }
+  }
+
+  // 5. Check substring match on profile ID or name
+  try {
+    const { data: profs } = await supabase
+      .from('profiles')
+      .select('id, username, full_name')
+      .or(`id.ilike.${q}%,username.ilike.${q}%`)
+      .limit(1);
+    if (profs && profs.length > 0) {
+      const target = profs[0];
+      const { data: w } = await supabase
+        .from('verdex_custodial_wallets')
+        .select('deposit_address')
+        .eq('user_id', target.id)
+        .maybeSingle();
+      return {
+        userId: target.id,
+        username: target.username || target.full_name || 'User',
+        depositAddress: w?.deposit_address || null
+      };
+    }
+  } catch (_) {}
+
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Ensure the caller has a custodial wallet. Creates one if missing.
 // Uses the key store to deterministically derive the deposit address.
@@ -623,31 +757,12 @@ async function internalTransfer(req, res) {
     // Ensure sender wallet exists
     await ensureWallet(supabase, user);
 
-    // Resolve recipient by username or deposit address.
-    let recipientUserId;
-    const recipClean = recipient.trim().replace(/^@/, '');
-    if (isValidEvmAddress(recipClean)) {
-      const { data: rWallet } = await supabase
-        .from('verdex_custodial_wallets')
-        .select('user_id')
-        .ilike('deposit_address', recipClean)
-        .maybeSingle();
-      if (!rWallet) {
-        return apiError(res, 404, 'RECIPIENT_NOT_FOUND', 'No Verdex wallet at that address', { traceId: tid });
-      }
-      recipientUserId = rWallet.user_id;
-    } else {
-      // Look up by username in profiles.
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', recipClean.toLowerCase())
-        .maybeSingle();
-      if (!profile) {
-        return apiError(res, 404, 'RECIPIENT_NOT_FOUND', `No user named "${recipient}"`, { traceId: tid });
-      }
-      recipientUserId = profile.id;
+    // Resolve recipient by UID, EVM address, username, or email.
+    const recipObj = await resolveRecipient(supabase, recipient);
+    if (!recipObj) {
+      return apiError(res, 404, 'RECIPIENT_NOT_FOUND', `Recipient user not found for input: ${recipient}`, { traceId: tid });
     }
+    const recipientUserId = recipObj.userId;
 
     if (recipientUserId === user.id) {
       return apiError(res, 400, 'SELF_TRANSFER', 'Cannot transfer to yourself', { traceId: tid });
@@ -1124,25 +1239,12 @@ async function transferToken(req, res) {
       return apiError(res, 400, 'INVALID_AMOUNT', 'Invalid amount for this token', { traceId: tid });
     }
 
-    // Resolve recipient.
-    let recipientUserId;
-    if (isValidEvmAddress(recipient)) {
-      const { data: rWallet } = await supabase
-        .from('verdex_custodial_wallets')
-        .select('user_id')
-        .eq('deposit_address', recipient.toLowerCase())
-        .maybeSingle();
-      if (!rWallet) return apiError(res, 404, 'RECIPIENT_NOT_FOUND', 'No wallet at that address', { traceId: tid });
-      recipientUserId = rWallet.user_id;
-    } else {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', recipient.trim().toLowerCase())
-        .maybeSingle();
-      if (!profile) return apiError(res, 404, 'RECIPIENT_NOT_FOUND', `No user named "${recipient}"`, { traceId: tid });
-      recipientUserId = profile.id;
+    // Resolve recipient by UID, EVM address, username, or email.
+    const recipObj = await resolveRecipient(supabase, recipient);
+    if (!recipObj) {
+      return apiError(res, 404, 'RECIPIENT_NOT_FOUND', `Recipient user not found for input: ${recipient}`, { traceId: tid });
     }
+    const recipientUserId = recipObj.userId;
 
     if (recipientUserId === user.id) {
       return apiError(res, 400, 'SELF_TRANSFER', 'Cannot transfer to yourself', { traceId: tid });
@@ -2216,6 +2318,31 @@ async function notifyDeposit(req, res) {
   } catch (err) {
     return handleError(res, err, 'notifyDeposit');
   }
+}
+
+/**
+ * GET /api/wallet?action=lookup-user&q=...
+ */
+async function lookupUser(req, res) {
+  const user = await verifyUser(req);
+  if (!user) return apiError(res, 401, 'UNAUTHORIZED', 'Authentication required');
+
+  const q = req.query.q || req.query.query || '';
+  const supabase = getSupabase();
+  const recip = await resolveRecipient(supabase, q);
+
+  if (!recip) {
+    return jsonResponse(res, 200, { success: false, message: 'User not found' });
+  }
+
+  return jsonResponse(res, 200, {
+    success: true,
+    user: {
+      id: recip.userId,
+      username: recip.username,
+      deposit_address: recip.depositAddress
+    }
+  });
 }
 
 // ===========================================================================
