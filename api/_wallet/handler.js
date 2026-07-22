@@ -217,11 +217,22 @@ async function isTreasurySigner(supabase, userId) {
   return data;
 }
 
+async function getWallet(supabase, userId) {
+  if (!userId) return null;
+  const { data } = await supabase
+    .from('verdex_custodial_wallets')
+    .select('*, balance:verdex_custodial_balances(*)')
+    .eq('user_id', userId)
+    .maybeSingle();
+  return data;
+}
+
 // ---------------------------------------------------------------------------
 // Ensure the caller has a custodial wallet. Creates one if missing.
 // Uses the key store to deterministically derive the deposit address.
 // ---------------------------------------------------------------------------
 async function ensureWallet(supabase, user) {
+  if (!user || !user.id) return null;
   const existing = await getWallet(supabase, user.id);
   if (existing) return existing;
 
@@ -277,7 +288,7 @@ async function ensureWallet(supabase, user) {
 
   await supabase
     .from('verdex_custodial_balances')
-    .insert({ wallet_id: wallet.id, user_id: user.id });
+    .upsert({ wallet_id: wallet.id, user_id: user.id }, { onConflict: 'wallet_id' });
 
   return { ...wallet, balance: null };
 }
@@ -609,13 +620,17 @@ async function internalTransfer(req, res) {
 
   const supabase = getSupabase();
   try {
+    // Ensure sender wallet exists
+    await ensureWallet(supabase, user);
+
     // Resolve recipient by username or deposit address.
     let recipientUserId;
-    if (isValidEvmAddress(recipient)) {
+    const recipClean = recipient.trim().replace(/^@/, '');
+    if (isValidEvmAddress(recipClean)) {
       const { data: rWallet } = await supabase
         .from('verdex_custodial_wallets')
         .select('user_id')
-        .eq('deposit_address', recipient.toLowerCase())
+        .ilike('deposit_address', recipClean)
         .maybeSingle();
       if (!rWallet) {
         return apiError(res, 404, 'RECIPIENT_NOT_FOUND', 'No Verdex wallet at that address', { traceId: tid });
@@ -626,7 +641,7 @@ async function internalTransfer(req, res) {
       const { data: profile } = await supabase
         .from('profiles')
         .select('id')
-        .eq('username', recipient.trim().toLowerCase())
+        .eq('username', recipClean.toLowerCase())
         .maybeSingle();
       if (!profile) {
         return apiError(res, 404, 'RECIPIENT_NOT_FOUND', `No user named "${recipient}"`, { traceId: tid });
@@ -637,6 +652,9 @@ async function internalTransfer(req, res) {
     if (recipientUserId === user.id) {
       return apiError(res, 400, 'SELF_TRANSFER', 'Cannot transfer to yourself', { traceId: tid });
     }
+
+    // Ensure recipient wallet and balance row exist
+    await ensureWallet(supabase, { id: recipientUserId });
 
     // Check transfers enabled.
     const config = await getConfig(supabase);

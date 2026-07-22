@@ -4,8 +4,8 @@ const {
   verifyUser,
   apiError,
   getSupabase,
-  parseBody
 } = require('./lib');
+const { parseBody } = require('../../lib/api-lib');
 
 module.exports = async (req, res) => {
   setCORS(res);
@@ -16,7 +16,7 @@ module.exports = async (req, res) => {
     const user = await verifyUser(req);
     if (!user) return apiError(res, 401, 'UNAUTHORIZED', 'Authentication required');
 
-    const body = parseBody(req) || {};
+    const body = (typeof parseBody === 'function' ? parseBody(req) : req.body) || {};
     const supabase = getSupabase();
     const now = new Date().toISOString();
     const reviewDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
