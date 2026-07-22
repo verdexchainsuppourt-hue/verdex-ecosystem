@@ -34,6 +34,21 @@
       "source": "/add-network",
       "destination": "/mainnet",
       "permanent": false
+    },
+    {
+      "source": "/updates/version.json",
+      "destination": "/api/updates",
+      "permanent": false
+    },
+    {
+      "source": "/updates/android/version.json",
+      "destination": "/api/updates",
+      "permanent": false
+    },
+    {
+      "source": "/updates/android-play/version.json",
+      "destination": "/api/updates",
+      "permanent": false
     }
   ],
   "rewrites": [
