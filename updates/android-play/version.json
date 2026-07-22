@@ -10,7 +10,7 @@
   "network": "mainnet",
   "chainId": 72010,
   "apkUrl": "https://verdexswap.site/assets/downloads/Verdex-Android-1.25.4-build81.apk",
-  "sha256": "7403cde949a7382ff50e3e6f5f27b5a4c27d3b0bf0cb16cb8c8bfe01d20d6754",
+  "sha256": "9547636cc2a0dd56034e0ca82d9b54f59bd0261217c1690f265f4f9ddb290584",
   "changelog": [
     "FIXED: Master Admin Panel Integration & System Health Status",
     "FIXED: KYC Admin Routing & Moderation Queue Synchronization",
