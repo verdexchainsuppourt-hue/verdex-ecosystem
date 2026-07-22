@@ -1,10 +1,10 @@
 {
   "version": "1.25.4",
-  "versionCode": 81,
+  "versionCode": 80,
   "channel": "apk",
   "updateMode": "in_app_apk",
   "minVersion": "1.0.0",
-  "minVersionCode": 81,
+  "minVersionCode": 80,
   "mandatory": false,
   "updateType": "full",
   "network": "mainnet",
