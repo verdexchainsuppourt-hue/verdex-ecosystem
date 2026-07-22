@@ -16,7 +16,7 @@ const LATEST_UPDATE_MANIFEST = {
   network: "mainnet",
   chainId: 72010,
   apkUrl: "https://verdexswap.site/assets/downloads/Verdex-Android-1.25.4-build81.apk",
-  sha256: "9547636cc2a0dd56034e0ca82d9b54f59bd0261217c1690f265f4f9ddb290584",
+  sha256: "da44000c12f93ab77a835758aaf8da14d6c49a0a9441b775ec912858394bccca",
   changelog: [
     "FIXED: Master Admin Panel Integration & System Health Status",
     "FIXED: KYC Admin Routing & Moderation Queue Synchronization",
