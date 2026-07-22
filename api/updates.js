@@ -6,7 +6,7 @@ const { setCORS, jsonResponse } = require('../lib/api-lib');
 
 const LATEST_UPDATE_MANIFEST = {
   version: "1.25.4",
-  versionCode: 80,
+  versionCode: 81,
   channel: "apk",
   updateMode: "in_app_apk",
   minVersion: "1.0.0",
