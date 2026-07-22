@@ -19,42 +19,95 @@ module.exports = async (req, res) => {
     const body = parseBody(req) || {};
     const supabase = getSupabase();
     const now = new Date().toISOString();
+    const reviewDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
-    let caseId = req.query?.id || req.query?.case_id || body.case_id || `kyc_case_${Date.now()}`;
+    const caseId = req.query?.id || req.query?.case_id || body.case_id || `kyc_case_${Date.now()}`;
 
-    // Auto-upsert KYC case into verdex_kyc_cases
-    await supabase.from('verdex_kyc_cases').upsert({
+    // Get latest KYC case from DB to see if we can update it
+    let existingCase = null;
+    try {
+      const { data } = await supabase
+        .from('verdex_kyc_cases')
+        .select('id, status')
+        .eq('subject_user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      existingCase = data;
+    } catch (e) {
+      console.error('Error fetching existing case:', e);
+    }
+
+    const caseData = {
       subject_user_id: user.id,
-      country_code: String(body.country_code || 'PK').toUpperCase(),
-      status: 'approved',
-      tier: 'tier2_p2p',
-      submitted_at: now
-    }).catch(() => {});
+      status: 'submitted',
+      country_code: String(body.country_code || 'PK').toUpperCase().substring(0, 2),
+      verification_level: 'enhanced',
+      submitted_at: now,
+      expires_at: reviewDeadline,
+      updated_at: now,
+      metadata: {
+        full_name: body.full_name || body.fullName || user.user_metadata?.full_name || 'Unspecified',
+        id_type: body.id_type || body.idType || 'national_id',
+        id_number: body.id_number || body.idNumber || '',
+        documents: body.documents || body.uploads || [],
+        submitted_by_ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '127.0.0.1'
+      }
+    };
 
-    // Update profile KYC status immediately so Tier 2 unlocks 100%
-    await supabase.from('profiles').update({
-      kyc_status: 'approved',
-      kyc_tier: 2,
-      full_name: body.full_name || undefined,
-      updated_at: now
-    }).eq('id', user.id).catch(() => {});
+    if (existingCase) {
+      const { error: updateErr } = await supabase
+        .from('verdex_kyc_cases')
+        .update(caseData)
+        .eq('id', existingCase.id);
+      if (updateErr) {
+        console.error('Error updating existing case:', updateErr);
+        throw updateErr;
+      }
+    } else {
+      const { error: insertErr } = await supabase
+        .from('verdex_kyc_cases')
+        .insert({
+          ...caseData,
+          created_at: now
+        });
+      if (insertErr) {
+        console.error('Error inserting new case:', insertErr);
+        throw insertErr;
+      }
+    }
+
+    // Update profile kyc_status to 'submitted'
+    const { error: profileErr } = await supabase
+      .from('profiles')
+      .update({
+        kyc_status: 'submitted',
+        full_name: body.full_name || undefined,
+        updated_at: now
+      })
+      .eq('id', user.id);
+    if (profileErr) {
+      console.error('Error updating profile kyc status:', profileErr);
+    }
 
     return jsonResponse(res, 200, {
       success: true,
       case_id: caseId,
-      status: 'approved',
-      kyc_status: 'approved',
-      kyc_tier: 2,
-      message: 'KYC Verification auto-approved successfully. Full P2P and Mainnet access unlocked!'
+      status: 'submitted',
+      kyc_status: 'submitted',
+      message: 'KYC application submitted successfully! Your documents are under review.',
+      estimated_review_hours: 24,
+      submitted_at: now,
+      review_deadline: reviewDeadline
     });
   } catch (err) {
-    console.error('KYC submit resilient handler error:', err);
-    return jsonResponse(res, 200, {
-      success: true,
-      status: 'approved',
-      kyc_status: 'approved',
-      kyc_tier: 2,
-      message: 'KYC Verification approved.'
+    console.error('KYC submit error:', err);
+    return jsonResponse(res, 500, {
+      success: false,
+      error: {
+        code: 'KYC_SUBMISSION_FAILED',
+        message: err.message || 'Failed to submit KYC application'
+      }
     });
   }
 };

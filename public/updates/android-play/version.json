@@ -1,16 +1,22 @@
 {
-  "version": "1.8.1",
-  "versionCode": 27,
-  "channel": "play",
-  "updateMode": "google_play_only",
-  "packageId": "com.verdex.miner",
-  "playStoreUrl": "https://play.google.com/store/apps/details?id=com.verdex.miner",
-  "mandatory": false,
+  "version": "1.25.4",
+  "versionCode": 81,
+  "channel": "apk",
+  "updateMode": "in_app_apk",
+  "minVersion": "1.0.0",
+  "minVersionCode": 1,
+  "mandatory": true,
+  "updateType": "full",
+  "network": "mainnet",
+  "chainId": 72010,
+  "apkUrl": "https://verdexswap.site/assets/downloads/Verdex-Android-1.25.4-build81.apk",
+  "sha256": "7403cde949a7382ff50e3e6f5f27b5a4c27d3b0bf0cb16cb8c8bfe01d20d6754",
   "changelog": [
-    "Closed testing build — versionCode 27",
-    "Play Store channel — updates only via Google Play",
-    "Presence / points sessions + wallet"
+    "FIXED: Master Admin Panel Integration & System Health Status",
+    "FIXED: KYC Admin Routing & Moderation Queue Synchronization",
+    "FIXED: P2P Status Persistence & Timer Screen Glitch",
+    "FIXED: Custodial Vault Session & Balance Isolation",
+    "NEW: Official Production Release Version 1.25.4 Build 81"
   ],
-  "note": "Play flavor never downloads APKs. This file is metadata only.",
-  "releasedAt": "2026-07-16T20:00:00.000Z"
+  "releasedAt": "2026-07-22T07:44:00.000Z"
 }

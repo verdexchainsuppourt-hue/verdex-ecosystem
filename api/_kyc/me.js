@@ -4,10 +4,7 @@ const {
   verifyUser,
   apiError,
   getTraceId,
-  getLatestCase,
-  getEntitlement,
-  getEvidenceForCase,
-  redactedCaseStatus
+  getSupabase
 } = require('./lib');
 
 module.exports = async (req, res) => {
@@ -19,56 +16,94 @@ module.exports = async (req, res) => {
     const user = await verifyUser(req);
     if (!user) return apiError(res, 401, 'UNAUTHORIZED', 'Authentication required');
 
-    let caseStatus = {
-      status: 'approved',
-      verification_level: 'tier2_p2p',
-      p2p_eligible: true,
-      tier: 2
-    };
+    const supabase = getSupabase();
 
+    // Check user's latest KYC case from DB
+    let kycCase = null;
     try {
-      const kycCase = await getLatestCase(user.id).catch(() => null);
-      const entitlement = await getEntitlement(user.id).catch(() => null);
-      const evidence = kycCase ? await getEvidenceForCase(kycCase.id).catch(() => []) : [];
-      if (kycCase) {
-        caseStatus = redactedCaseStatus(kycCase, entitlement, evidence);
+      const { data, error } = await supabase
+        .from('verdex_kyc_cases')
+        .select('*')
+        .eq('subject_user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) {
+        console.error('Database error in KYC check:', error);
+      } else {
+        kycCase = data;
       }
+    } catch (e) {
+      console.error('Error fetching KYC case:', e);
+    }
+
+    // Check user's profile KYC status
+    let profile = null;
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('kyc_status, kyc_tier')
+        .eq('id', user.id)
+        .maybeSingle();
+      profile = data;
     } catch (_) {}
+
+    // Compute REAL status from DB records
+    let rawStatus = kycCase?.status || profile?.kyc_status || 'unverified';
+    if (!rawStatus || rawStatus === 'none' || rawStatus === 'unsubmitted') {
+      rawStatus = 'unverified';
+    }
+
+    const isApproved = rawStatus === 'approved';
+    const isPending = rawStatus === 'pending_review' || rawStatus === 'submitted' || rawStatus === 'in_review';
+    const isRejected = rawStatus === 'rejected';
+
+    const kycStatus = isApproved ? 'approved' : (isPending ? 'pending_review' : (isRejected ? 'rejected' : 'unverified'));
+    const tier = isApproved ? 2 : 0;
+    const p2pUnlocked = isApproved;
+    const p2pEligible = isApproved;
+
+    // Use DB expires_at or calculate 24h fallback from submitted_at / created_at
+    const submittedTime = kycCase?.submitted_at || kycCase?.created_at || new Date().toISOString();
+    const reviewDeadline = kycCase?.expires_at || new Date(new Date(submittedTime).getTime() + 24 * 60 * 60 * 1000).toISOString();
 
     return jsonResponse(res, 200, {
       success: true,
       data: {
-        ...caseStatus,
-        status: caseStatus.status || 'approved',
-        kyc_status: caseStatus.status || 'approved',
-        kycStatus: caseStatus.status || 'approved',
-        p2p_unlocked: true,
-        p2p_eligible: true,
-        is_poster: true,
-        tier: 2
+        status: kycStatus,
+        kyc_status: kycStatus,
+        kycStatus: kycStatus,
+        verification_level: isApproved ? 'tier2_p2p' : 'none',
+        p2p_unlocked: p2pUnlocked,
+        p2p_eligible: p2pEligible,
+        is_poster: isApproved,
+        tier: tier,
+        case_id: kycCase?.id || null,
+        submitted_at: submittedTime,
+        review_deadline: reviewDeadline
       },
-      status: caseStatus.status || 'approved',
-      kyc_status: caseStatus.status || 'approved',
-      p2p_eligible: true,
-      tier: 2,
+      status: kycStatus,
+      kyc_status: kycStatus,
+      p2p_eligible: p2pEligible,
+      tier: tier,
       email_hint: user.email ? user.email.replace(/(.{2}).+(@.+)/, '$1***$2') : null,
       trace_id: getTraceId(req)
     });
   } catch (err) {
-    console.error('KYC /me endpoint handler error:', err);
+    console.error('KYC /me endpoint error:', err);
     return jsonResponse(res, 200, {
       success: true,
       data: {
-        status: 'approved',
-        kyc_status: 'approved',
-        p2p_unlocked: true,
-        p2p_eligible: true,
-        tier: 2
+        status: 'unverified',
+        kyc_status: 'unverified',
+        p2p_unlocked: false,
+        p2p_eligible: false,
+        tier: 0
       },
-      status: 'approved',
-      kyc_status: 'approved',
-      p2p_eligible: true,
-      tier: 2
+      status: 'unverified',
+      kyc_status: 'unverified',
+      p2p_eligible: false,
+      tier: 0
     });
   }
 };

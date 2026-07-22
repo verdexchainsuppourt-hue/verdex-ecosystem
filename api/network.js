@@ -58,7 +58,7 @@ module.exports = async (req, res) => {
       registry: '/public-network.json'
     },
     apps: {
-      android: { version: '1.15.1-build65.apk' },
+      android: { version: '1.25.4-build81.apk', url: '/assets/downloads/Verdex-Android-1.25.4-build81.apk' },
       windows: { version: '4.0.2', url: '/updates/Verdex-Miner-Setup-4.0.2.exe' }
     },
     links: {

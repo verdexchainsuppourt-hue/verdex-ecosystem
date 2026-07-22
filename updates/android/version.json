@@ -1,22 +1,22 @@
 {
-  "version": "1.25.1",
-  "versionCode": 78,
+  "version": "1.25.4",
+  "versionCode": 81,
   "channel": "apk",
   "updateMode": "in_app_apk",
   "minVersion": "1.0.0",
   "minVersionCode": 1,
-  "mandatory": false,
+  "mandatory": true,
   "updateType": "full",
   "network": "mainnet",
   "chainId": 72010,
-  "apkUrl": "https://verdexswap.site/assets/downloads/Verdex-Android-1.25.1-build78.apk",
-  "sha256": "5da2e8101c7b8f2c659eacc95e76da4bd6aab1df518d0c1a494b16681fa53fd0",
+  "apkUrl": "https://verdexswap.site/assets/downloads/Verdex-Android-1.25.4-build81.apk",
+  "sha256": "7403cde949a7382ff50e3e6f5f27b5a4c27d3b0bf0cb16cb8c8bfe01d20d6754",
   "changelog": [
-    "NEW: Version 1.25.1 Build 78 official release",
-    "FIXED: In-App Explorer zero connection error guarantee",
-    "FIXED: Master Admin Panel Token Transfers (action=transfer-token)",
-    "FIXED: Mining points loss bug — VP balance now monotonically increases",
-    "NEW: Enhanced P2P Edit and Delete buttons on user listings"
+    "FIXED: Master Admin Panel Integration & System Health Status",
+    "FIXED: KYC Admin Routing & Moderation Queue Synchronization",
+    "FIXED: P2P Status Persistence & Timer Screen Glitch",
+    "FIXED: Custodial Vault Session & Balance Isolation",
+    "NEW: Official Production Release Version 1.25.4 Build 81"
   ],
-  "releasedAt": "2026-07-22T01:57:00.000Z"
+  "releasedAt": "2026-07-22T07:44:00.000Z"
 }

@@ -48,7 +48,9 @@ module.exports = async (req, res) => {
         if (body.username) profileUpdates.username = body.username;
         if (body.avatar_url) profileUpdates.avatar_url = body.avatar_url;
         if (Object.keys(profileUpdates).length > 0) {
-          await supabase.from('profiles').update(profileUpdates).eq('id', user.id).catch(() => {});
+          try {
+            await supabase.from('profiles').update(profileUpdates).eq('id', user.id);
+          } catch (_) {}
         }
       }
 

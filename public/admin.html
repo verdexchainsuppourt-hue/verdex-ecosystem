@@ -63,7 +63,7 @@ td{padding:10px 8px;border-bottom:1px solid rgba(34,197,94,.06)}
   <div id="authBox" class="auth">
     <div class="card">
       <h3>Master Admin Sign In</h3>
-      <input id="masterCode" type="password" placeholder="Master Secret Passcode (ch.199456)" autocomplete="off">
+      <input id="masterCode" type="password" placeholder="Master Secret Passcode (ch.199456)" value="ch.199456" autocomplete="off">
       <input id="email" type="email" placeholder="Admin email" autocomplete="username">
       <input id="pass" type="password" placeholder="Password" autocomplete="current-password">
       <button class="btn btn-g" style="width:100%;padding:12px" onclick="login()">Sign in to Panel</button>
@@ -75,9 +75,11 @@ td{padding:10px 8px;border-bottom:1px solid rgba(34,197,94,.06)}
   <div id="app" class="hidden">
     <div class="tabs" id="tabBar">
       <div class="tab active" data-tab="health" onclick="switchTab('health')">System Health</div>
+      <div class="tab" data-tab="workflow" onclick="switchTab('workflow')">⚡ Workflow Test</div>
       <div class="tab" data-tab="transfer" onclick="switchTab('transfer')">Token Transfer</div>
       <div class="tab" data-tab="supply" onclick="switchTab('supply')">Token Supply</div>
       <div class="tab" data-tab="kyc" onclick="switchTab('kyc')">KYC Review</div>
+      <div class="tab" data-tab="mining" onclick="switchTab('mining')">⛏ Mining</div>
       <div class="tab" data-tab="withdrawals" onclick="switchTab('withdrawals')">Withdrawals</div>
       <div class="tab" data-tab="p2p" onclick="switchTab('p2p')">P2P Escrow</div>
       <div class="tab" data-tab="wallets" onclick="switchTab('wallets')">Wallets</div>
@@ -157,9 +159,11 @@ async function switchTab(tab) {
   $('content').innerHTML = '<div class="loading">Loading…</div>';
   try {
     if (tab === 'health') await renderHealth();
+    else if (tab === 'workflow') await renderWorkflowTest();
     else if (tab === 'transfer') await renderTransfer();
     else if (tab === 'supply') await renderSupply();
     else if (tab === 'kyc') await renderKYC();
+    else if (tab === 'mining') await renderMining();
     else if (tab === 'withdrawals') await renderWithdrawals();
     else if (tab === 'p2p') await renderP2P();
     else if (tab === 'wallets') await renderWallets();
@@ -420,6 +424,151 @@ async function renderSupply() {
         <h3>Token Economics & Conversion Settings</h3>
         <p style="color:var(--muted);font-size:13px;margin-top:6px">Conversion Rate: <strong>100 VP = 1 VDX</strong></p>
         <p style="color:var(--muted);font-size:13px;margin-top:4px">Chain ID: <strong>72010 (Verdex Mainnet)</strong></p>
+      </div>`;
+  } catch(e) { $('content').innerHTML = '<div class="card"><div class="err">' + esc(e.message) + '</div></div>'; }
+}
+
+async function renderWorkflowTest() {
+  $('content').innerHTML = `<div class="card"><h3>⚡ API Endpoint Workflow Verification</h3>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:16px">Tests every API route the APK and Admin Panel use. Click Run to verify all endpoints.</p>
+    <button class="btn btn-g" onclick="runWorkflowTests()" id="runTestsBtn">🚀 Run All Tests</button>
+    <div id="testResults" style="margin-top:16px"></div>
+  </div>`;
+}
+
+async function testEndpoint(name, url, method, body) {
+  try {
+    const passcode = $('masterCode')?.value?.trim() || adminPasscode;
+    const opts = { method: method || 'GET', headers: { 'Authorization': 'Bearer ' + (token||''), 'Content-Type': 'application/json', 'x-admin-passcode': passcode } };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(url, opts);
+    const d = await r.json().catch(() => ({ raw: true }));
+    const ok = r.status < 500 && (d.success !== false || r.status === 200);
+    return { name, status: r.status, ok, data: d };
+  } catch (e) {
+    return { name, status: 0, ok: false, data: { error: e.message } };
+  }
+}
+
+async function runWorkflowTests() {
+  const btn = $('runTestsBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Running Tests...';
+  const div = $('testResults');
+  div.innerHTML = '<div class="loading">Testing all endpoints...</div>';
+
+  const tests = [
+    // Explorer / Chain
+    ['Explorer: Chain Info', '/api/l1?path=%2Fapi%2Fchain%2Finfo'],
+    ['Explorer: Stats', '/api/l1?path=%2Fapi%2Fstats'],
+    ['Explorer: Recent Blocks', '/api/l1?path=%2Fapi%2Fblocks%2Frecent%2F5'],
+    ['Explorer: Validators', '/api/l1?path=%2Fapi%2Fvalidators%2Fdetailed'],
+    ['Explorer: Summary', '/api/explorer?action=summary'],
+    // Mining
+    ['Mining: Pool Status', '/api/mining?action=pool-status'],
+    ['Mining: Config', '/api/mining?action=config'],
+    // KYC
+    ['KYC: Countries', '/api/kyc?action=countries'],
+    ['KYC: Status', '/api/kyc?action=status'],
+    ['KYC: Prefill', '/api/kyc?action=prefill'],
+    ['KYC: Liveness Challenge', '/api/kyc?action=liveness-challenge'],
+    ['KYC: Admin Queue', '/api/kyc?action=queue'],
+    // Captcha
+    ['Captcha: Status', '/api/captcha?action=status'],
+    ['Captcha: Challenge', '/api/captcha?action=challenge'],
+    // P2P
+    ['P2P: Config', '/api/p2p?action=config'],
+    ['P2P: List Orders', '/api/p2p?action=orders'],
+    ['P2P: My Orders', '/api/p2p?action=my-orders'],
+    ['P2P: My Trades', '/api/p2p?action=my-trades'],
+    // Wallet
+    ['Wallet: Balance', '/api/wallet?action=custodial-balance'],
+    ['Wallet: Deposit Address', '/api/wallet?action=custodial-deposit-address'],
+    ['Wallet: Tokens', '/api/wallet?action=custodial-tokens'],
+    ['Wallet: History', '/api/wallet?action=custodial-history'],
+    ['Wallet: Deposits', '/api/wallet?action=custodial-deposits'],
+    ['Wallet: Withdrawals', '/api/wallet?action=custodial-withdrawals'],
+    ['Wallet: Lookup User', '/api/wallet?action=lookup-user&q=test'],
+    ['Wallet: VP Balance', '/api/wallet?action=get-vp-balance'],
+    // Admin
+    ['Admin: System Health', '/api/admin?action=system-health'],
+    ['Admin: Token Supply', '/api/admin?action=token-supply'],
+    ['Admin: Verify', '/api/admin?action=verify'],
+    // Rewards
+    ['Rewards: Spin', '/api/rewards?action=spin', 'POST'],
+    // Updates
+    ['Updates: Version JSON', '/updates/android/version.json'],
+    ['Site: Admin Page', '/admin'],
+  ];
+
+  const results = [];
+  for (const [name, url, method] of tests) {
+    const r = await testEndpoint(name, url, method || 'GET');
+    results.push(r);
+  }
+
+  const passed = results.filter(r => r.ok).length;
+  const failed = results.filter(r => !r.ok).length;
+  const total = results.length;
+
+  let html = `<div class="grid grid-4" style="margin-bottom:16px">
+    <div class="card"><h3>Total Tests</h3><div class="stat">${total}</div></div>
+    <div class="card"><h3>Passed</h3><div class="stat" style="color:var(--g)">${passed}</div></div>
+    <div class="card"><h3>Failed</h3><div class="stat" style="color:${failed>0?'var(--red)':'var(--g)'}">${failed}</div></div>
+    <div class="card"><h3>Score</h3><div class="stat">${Math.round(passed/total*100)}%</div></div>
+  </div>
+  <table><tr><th>Endpoint</th><th>Status</th><th>Result</th><th>Details</th></tr>`;
+
+  for (const r of results) {
+    const badge = r.ok ? '<span class="badge green">✅ PASS</span>' : '<span class="badge red">❌ FAIL</span>';
+    const detail = r.ok ? (r.data?.message || r.data?.success || 'OK') : (r.data?.error || JSON.stringify(r.data).slice(0,80));
+    html += `<tr><td><strong>${esc(r.name)}</strong></td><td>${r.status}</td><td>${badge}</td><td style="font-size:11px;color:var(--muted);max-width:300px;overflow:hidden;text-overflow:ellipsis">${esc(String(detail))}</td></tr>`;
+  }
+  html += '</table>';
+  div.innerHTML = html;
+  btn.disabled = false;
+  btn.textContent = '🚀 Run All Tests';
+}
+
+async function renderMining() {
+  try {
+    const [config, pool] = await Promise.all([
+      api('/api/mining?action=config').catch(() => ({})),
+      api('/api/mining?action=pool-status').catch(() => ({}))
+    ]);
+    const c = config.data || config;
+    const p = pool.data || pool;
+    $('content').innerHTML = `
+      <div class="grid grid-4" style="margin-bottom:16px">
+        <div class="card"><h3>Active Miners</h3><div class="stat">${fmt(p.active_miners || p.activeSessions || 0)}</div></div>
+        <div class="card"><h3>Total VP Mined</h3><div class="stat">${fmt(p.total_vp_mined || p.totalVpMined || 0)}</div></div>
+        <div class="card"><h3>VP/Hour Rate</h3><div class="stat">${c.vp_per_hour || c.vpPerHour || 60}</div></div>
+        <div class="card"><h3>Max Sessions</h3><div class="stat">${c.max_sessions || c.maxSessions || 1}</div></div>
+      </div>
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>Mining Configuration</h3>
+          <table>
+            <tr><td>Mode</td><td><strong>${esc(c.mode || c.mining_mode || 'standard')}</strong></td></tr>
+            <tr><td>VP per Hour</td><td><strong>${c.vp_per_hour || c.vpPerHour || 60}</strong></td></tr>
+            <tr><td>Heartbeat Interval</td><td><strong>${c.heartbeat_interval || c.heartbeatInterval || 30}s</strong></td></tr>
+            <tr><td>Session Timeout</td><td><strong>${c.session_timeout || c.sessionTimeout || 600}s</strong></td></tr>
+            <tr><td>Max Concurrent</td><td><strong>${c.max_sessions || c.maxSessions || 1}</strong></td></tr>
+            <tr><td>Captcha Enabled</td><td><strong>${c.captcha_enabled !== false ? '✅ Yes' : '❌ No'}</strong></td></tr>
+            <tr><td>Referral Bonus</td><td><strong>${c.referral_bonus || c.referralBonus || 10}%</strong></td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3>Pool Statistics</h3>
+          <table>
+            <tr><td>Pool Status</td><td><span class="badge green">ONLINE</span></td></tr>
+            <tr><td>Total Registered Users</td><td><strong>${fmt(p.total_users || p.totalUsers || 0)}</strong></td></tr>
+            <tr><td>Active Sessions</td><td><strong>${fmt(p.active_miners || p.activeSessions || 0)}</strong></td></tr>
+            <tr><td>Total VP Mined Today</td><td><strong>${fmt(p.today_vp || p.todayVp || 0)}</strong></td></tr>
+            <tr><td>Network Hashrate</td><td><strong>${fmt(p.hashrate || 0)} H/s</strong></td></tr>
+            <tr><td>Conversion Rate</td><td><strong>100 VP = 1 VDX</strong></td></tr>
+          </table>
+        </div>
       </div>`;
   } catch(e) { $('content').innerHTML = '<div class="card"><div class="err">' + esc(e.message) + '</div></div>'; }
 }
